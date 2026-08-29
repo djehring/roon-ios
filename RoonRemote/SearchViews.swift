@@ -1,4 +1,7 @@
+import AVFoundation
+import PhotosUI
 import SwiftUI
+import UIKit
 
 struct SearchTabView: View {
   @Environment(MockStore.self) private var store
@@ -30,6 +33,7 @@ struct SearchTabView: View {
 
 struct AISearchView: View {
   @Environment(MockStore.self) private var store
+  @State private var recorder = VoiceRecorder()
 
   var body: some View {
     @Bindable var store = store
@@ -41,15 +45,28 @@ struct AISearchView: View {
           .background(Palette.surface)
           .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         Button {
-          store.runAISearch()
+          Task { await toggleVoice() }
         } label: {
-          Image(systemName: "mic.fill")
+          Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
             .frame(width: 44, height: 44)
             .background(Palette.surface)
             .clipShape(Circle())
+            .foregroundStyle(recorder.isRecording ? Color.red : Palette.primary)
         }
+        Button("Go") {
+          store.runAISearch()
+        }
+        .foregroundStyle(Palette.accent)
+        .padding(.trailing, 4)
       }
       .padding(.horizontal, 16)
+
+      if let error = store.aiError {
+        Text(error)
+          .font(.footnote)
+          .foregroundStyle(.red.opacity(0.85))
+          .padding(.horizontal, 16)
+      }
 
       if store.aiLoading {
         Spacer()
@@ -84,34 +101,85 @@ struct AISearchView: View {
           .onMove { store.aiResults.move(fromOffsets: $0, toOffset: $1) }
         }
         .scrollContentBackground(.hidden)
-        Button("Play selected tracks") {}
-          .buttonStyle(GoldFillButton())
-          .padding(16)
+        Button("Play selected tracks") {
+          store.playAIResults()
+        }
+        .buttonStyle(GoldFillButton())
+        .padding(16)
+        .disabled(store.aiResults.isEmpty)
       }
     }
+  }
+
+  private func toggleVoice() async {
+    do {
+      if let data = try await recorder.toggle() {
+        store.transcribeAI(audio: data)
+      }
+    } catch {
+      store.aiError = error.localizedDescription
+    }
+  }
+}
+
+@MainActor
+@Observable
+private final class VoiceRecorder {
+  var isRecording = false
+  private var recorder: AVAudioRecorder?
+  private var fileURL: URL {
+    FileManager.default.temporaryDirectory.appendingPathComponent("roon-ai.m4a")
+  }
+
+  func toggle() async throws -> Data? {
+    if isRecording {
+      recorder?.stop()
+      isRecording = false
+      try AVAudioSession.sharedInstance().setActive(false)
+      return try Data(contentsOf: fileURL)
+    }
+    let granted = await AVAudioApplication.requestRecordPermission()
+    guard granted else {
+      throw RoonAPIError.httpStatus(403, "Microphone permission is off.")
+    }
+    let session = AVAudioSession.sharedInstance()
+    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+    try session.setActive(true)
+    let settings: [String: Any] = [
+      AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+      AVSampleRateKey: 44100,
+      AVNumberOfChannelsKey: 1,
+      AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
+    ]
+    let next = try AVAudioRecorder(url: fileURL, settings: settings)
+    next.record()
+    recorder = next
+    isRecording = true
+    return nil
   }
 }
 
 struct CameraSearchView: View {
   @Environment(MockStore.self) private var store
+  @State private var pickerItem: PhotosPickerItem?
+  @State private var showCamera = false
+  @State private var pickedImage: Data?
 
   var body: some View {
     @Bindable var store = store
     VStack(spacing: 16) {
-      Button {
-        store.hasPhoto.toggle()
-        if store.hasPhoto {
-          store.recognizedAlbums = MockCatalog.recognized
-        } else {
-          store.recognizedAlbums = []
+      Menu {
+        Button("Take photo") { showCamera = true }
+        PhotosPicker(selection: $pickerItem, matching: .images) {
+          Text("Choose from library")
         }
       } label: {
         ZStack {
           RoundedRectangle(cornerRadius: 12, style: .continuous)
             .fill(Palette.surface)
             .frame(height: 220)
-          if store.hasPhoto {
-            CoverArt(title: "Kind of Blue", corner: 12)
+          if let pickedImage {
+            CoverArt(title: "cover", image: pickedImage, corner: 12)
               .padding(24)
           } else {
             VStack(spacing: 8) {
@@ -125,6 +193,16 @@ struct CameraSearchView: View {
         }
       }
       .padding(.horizontal, 16)
+      .onChange(of: pickerItem) { _, item in
+        guard let item else { return }
+        Task {
+          if let data = try? await item.loadTransferable(type: Data.self) {
+            pickedImage = data
+            store.hasPhoto = true
+            store.recognizeAlbum(image: data, mimeType: "image/jpeg")
+          }
+        }
+      }
 
       TextField("Album description (optional)", text: $store.cameraHint)
         .padding(12)
@@ -132,31 +210,44 @@ struct CameraSearchView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .padding(.horizontal, 16)
 
+      if let error = store.aiError, store.searchSegment == .camera {
+        Text(error)
+          .font(.footnote)
+          .foregroundStyle(.red.opacity(0.85))
+          .padding(.horizontal, 16)
+      }
+
       if store.recognizedAlbums.isEmpty {
         Button("Recognize album") {
-          store.hasPhoto = true
-          store.recognizedAlbums = MockCatalog.recognized
+          store.recognizeAlbum(image: pickedImage, mimeType: pickedImage == nil ? nil : "image/jpeg")
         }
         .buttonStyle(GoldFillButton())
         .padding(.horizontal, 16)
+        .disabled(pickedImage == nil && store.cameraHint.isEmpty)
       } else {
         List(store.recognizedAlbums) { album in
-          HStack {
-            CoverArt(title: album.title, corner: 6)
+          Button {
+            store.playRecognized(album)
+          } label: {
+            HStack {
+              CoverArt(
+                title: album.title,
+                image: store.imageData(for: album.imageKey),
+                corner: 6
+              )
               .frame(width: 48, height: 48)
-            VStack(alignment: .leading) {
-              Text(album.title)
-              Text(album.subtitle ?? "")
-                .font(.footnote)
-                .foregroundStyle(Palette.secondary)
+              VStack(alignment: .leading) {
+                Text(album.title)
+                  .foregroundStyle(Palette.primary)
+                Text(album.subtitle ?? "")
+                  .font(.footnote)
+                  .foregroundStyle(Palette.secondary)
+              }
+              Spacer()
+              Image(systemName: "play.circle.fill")
+                .foregroundStyle(Palette.accent)
+                .font(.title2)
             }
-            Spacer()
-            Circle()
-              .fill(Palette.accent)
-              .frame(width: 8, height: 8)
-            Image(systemName: "play.circle.fill")
-              .foregroundStyle(Palette.accent)
-              .font(.title2)
           }
           .listRowBackground(Palette.surface)
         }
@@ -164,10 +255,20 @@ struct CameraSearchView: View {
         Button("Search again") {
           store.hasPhoto = false
           store.recognizedAlbums = []
+          pickedImage = nil
+          pickerItem = nil
         }
         .foregroundStyle(Palette.accent)
       }
       Spacer()
+    }
+    .sheet(isPresented: $showCamera) {
+      CameraPicker { data in
+        pickedImage = data
+        store.hasPhoto = true
+        store.recognizeAlbum(image: data, mimeType: "image/jpeg")
+      }
+      .ignoresSafeArea()
     }
   }
 }
@@ -177,83 +278,88 @@ struct TrackStoryView: View {
 
   var body: some View {
     ScrollView {
-      if let track = store.currentTrack {
+      if store.storyLoading {
+        ProgressView()
+          .tint(Palette.accent)
+          .frame(maxWidth: .infinity)
+          .padding(.top, 48)
+      } else if let error = store.storyError {
+        ContentUnavailableView(
+          "Story unavailable",
+          systemImage: "text.book.closed",
+          description: Text(error)
+        )
+      } else if let track = store.currentTrack, !store.storyBody.isEmpty {
         VStack(alignment: .leading, spacing: 16) {
           Text("\(track.artist) — \(track.title)")
             .font(.title2.weight(.semibold))
-          Text("Kind of Blue, 1959")
+          Text(store.storyTitle)
             .font(.headline)
             .foregroundStyle(Palette.accent)
-          Text(
-            """
-            Recorded in one marathon session, So What opens Kind of Blue \
-            with a modal figure that still defines modern jazz. Miles \
-            barely states the theme before Cannonball and Coltrane take \
-            the room apart.
-
-            This is mock copy for the prototype. The live app asks the \
-            bridge for a track story when OPENAI_API_KEY is set.
-            """
-          )
-          .foregroundStyle(Palette.secondary)
-          .lineSpacing(4)
+          Text(store.storyBody)
+            .foregroundStyle(Palette.secondary)
+            .lineSpacing(4)
         }
         .padding(20)
-      } else {
+      } else if store.currentTrack == nil {
         ContentUnavailableView(
           "Nothing playing",
           systemImage: "text.book.closed",
           description: Text("Start a track to read its story.")
         )
+      } else {
+        ContentUnavailableView(
+          "No story yet",
+          systemImage: "text.book.closed",
+          description: Text("The bridge will write one when OpenAI is configured.")
+        )
       }
+    }
+    .onAppear { store.loadTrackStory() }
+    .onChange(of: store.currentTrack?.id) { _, _ in
+      store.loadTrackStory()
     }
   }
 }
 
-struct SharePreviewView: View {
+private struct CameraPicker: UIViewControllerRepresentable {
+  var onImage: (Data) -> Void
   @Environment(\.dismiss) private var dismiss
-  @State private var query = "Kind of Blue Miles Davis"
-  private let results = MockCatalog.recognized
 
-  var body: some View {
-    NavigationStack {
-      List {
-        Section("From Gramophone") {
-          Text("The 50 best jazz albums")
-          Text("https://www.gramophone.co.uk/…")
-            .font(.footnote)
-            .foregroundStyle(Palette.secondary)
-        }
-        Section("Search library") {
-          TextField("Search query", text: $query)
-        }
-        Section("Matches") {
-          ForEach(results) { album in
-            HStack {
-              CoverArt(title: album.title, corner: 6)
-                .frame(width: 48, height: 48)
-              VStack(alignment: .leading) {
-                Text(album.title)
-                Text(album.subtitle ?? "")
-                  .font(.footnote)
-                  .foregroundStyle(Palette.secondary)
-              }
-              Spacer()
-              Button("Play") { dismiss() }
-                .foregroundStyle(Palette.accent)
-            }
-          }
-        }
-      }
-      .scrollContentBackground(.hidden)
-      .background(Palette.background)
-      .navigationTitle("Play from Gramophone")
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Cancel") { dismiss() }
-        }
-      }
+  func makeCoordinator() -> Coordinator {
+    Coordinator(onImage: onImage, dismiss: dismiss)
+  }
+
+  func makeUIViewController(context: Context) -> UIImagePickerController {
+    let picker = UIImagePickerController()
+    picker.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
+    picker.delegate = context.coordinator
+    return picker
+  }
+
+  func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+  final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    let onImage: (Data) -> Void
+    let dismiss: DismissAction
+
+    init(onImage: @escaping (Data) -> Void, dismiss: DismissAction) {
+      self.onImage = onImage
+      self.dismiss = dismiss
     }
-    .presentationBackground(Palette.background)
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+      dismiss()
+    }
+
+    func imagePickerController(
+      _ picker: UIImagePickerController,
+      didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+    ) {
+      if let image = info[.originalImage] as? UIImage, let data = image.jpegData(compressionQuality: 0.8) {
+        onImage(data)
+      }
+      dismiss()
+    }
   }
 }

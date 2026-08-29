@@ -38,6 +38,15 @@ targets:
         NSLocalNetworkUsageDescription: >-
           Roon Remote finds the bridge on your Wi-Fi so it can
           control the rooms in your house.
+        NSCameraUsageDescription: >-
+          Roon Remote photographs album covers so the bridge can
+          match them in your library.
+        NSMicrophoneUsageDescription: >-
+          Roon Remote records a short clip so the bridge can turn
+          speech into an AI search.
+        NSPhotoLibraryUsageDescription: >-
+          Roon Remote reads a cover photo from your library so the
+          bridge can match the album.
         NSBonjourServices:
           - _roon-web-stack._tcp
         NSAppTransportSecurity:
