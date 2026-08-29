@@ -139,7 +139,7 @@ struct PinStep: View {
     @Bindable var store = store
     OnboardingChrome(
       title: "Enter the pairing code",
-      subtitle: "Open web Settings and type the six-digit PIN shown there."
+      subtitle: pinSubtitle
     ) {
       VStack(spacing: 22) {
         HStack(spacing: 10) {
@@ -162,6 +162,12 @@ struct PinStep: View {
                   )
               }
           }
+        }
+        if let failure = store.pairFailure {
+          Text(failure)
+            .font(.footnote)
+            .foregroundStyle(.red.opacity(0.85))
+            .multilineTextAlignment(.center)
         }
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3),
                   spacing: 12) {
@@ -191,6 +197,7 @@ struct PinStep: View {
 
   private func tap(_ key: String) {
     store.pinError = false
+    store.pairFailure = nil
     if key == "⌫" {
       if !store.pinDigits.isEmpty {
         store.pinDigits.removeLast()
@@ -202,6 +209,13 @@ struct PinStep: View {
     if store.pinDigits.count == 6 {
       store.submitPin()
     }
+  }
+
+  private var pinSubtitle: String {
+    if let bridge = store.selectedBridge {
+      return "PIN from web Settings on this Mac. Pairing \(bridge.host):\(bridge.port)."
+    }
+    return "Open web Settings and type the six-digit PIN shown there."
   }
 }
 
@@ -220,6 +234,12 @@ struct WaitingForCoreStep: View {
         Text(store.syncState.rawValue)
           .font(.caption.weight(.semibold))
           .foregroundStyle(Palette.tertiary)
+        if let error = store.discoveryError {
+          Text(error)
+            .font(.footnote)
+            .foregroundStyle(.red.opacity(0.85))
+            .multilineTextAlignment(.center)
+        }
       }
     }
   }

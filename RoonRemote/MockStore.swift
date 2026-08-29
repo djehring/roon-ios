@@ -9,6 +9,7 @@ final class MockStore {
   var appearance: Appearance
   var pinDigits = ""
   var pinError = false
+  var pairFailure: String?
   var selectedZoneId: String
   var isPlaying: Bool = false
   var showZonePicker = false
@@ -89,6 +90,9 @@ final class MockStore {
     }
     client.onConfig = { [weak self] config in
       Task { @MainActor in self?.applyConfig(config) }
+    }
+    client.onEventsFailed = { [weak self] error in
+      Task { @MainActor in self?.discoveryError = error.localizedDescription }
     }
     if client.isPaired {
       Task { await self.reconnect() }
@@ -596,11 +600,15 @@ final class MockStore {
     isDiscovering = true
     discoveryError = nil
     let results = await discovery.discover()
-    discoveredBridges = results
+    let preferred = results.filter { $0.host.hasPrefix("192.168.") }
+    discoveredBridges = preferred.isEmpty ? results : preferred
     isDiscovering = false
-    if results.count == 1, let only = results.first {
+    if discoveredBridges.count == 1,
+       let only = discoveredBridges.first,
+       only.host.hasPrefix("192.168.")
+    {
       selectBridge(only)
-    } else if results.isEmpty {
+    } else if discoveredBridges.isEmpty {
       discoveryError = "No bridge found. Enter the HTTP host and port."
     }
   }
@@ -612,10 +620,16 @@ final class MockStore {
       }
       try await client.pair(pin: pin)
       pinError = false
+      pairFailure = nil
       session = .onboarding(.waitingForCore)
       await waitForCore()
+    } catch RoonAPIError.invalidPIN {
+      pinError = true
+      pairFailure = "That PIN is wrong. Use the code from web Settings on this Mac."
+      pinDigits = ""
     } catch {
       pinError = true
+      pairFailure = error.localizedDescription
       pinDigits = ""
     }
   }
