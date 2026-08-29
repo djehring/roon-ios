@@ -97,6 +97,7 @@ final class MockStore {
     if client.isPaired {
       Task { await self.reconnect() }
     }
+    PhoneWatchSync.shared.activate(store: self)
   }
 
   var selectedZone: Zone {
@@ -126,6 +127,7 @@ final class MockStore {
     queue = []
     outputs = []
     session = .onboarding(.localNetwork)
+    publishWatchSnapshot()
   }
 
   func advanceOnboarding() {
@@ -143,6 +145,7 @@ final class MockStore {
       session = .onboarding(.chooseZone)
     case .chooseZone:
       session = .main
+      publishWatchSnapshot()
     }
   }
 
@@ -181,10 +184,12 @@ final class MockStore {
     zoneDefaults.set(id, forKey: "selectedZoneId")
     isPlaying = selectedZone.state == .playing
     showZonePicker = false
+    publishWatchSnapshot()
   }
 
   func finishOnboarding() {
     session = .main
+    publishWatchSnapshot()
   }
 
   func togglePlay() {
@@ -227,6 +232,7 @@ final class MockStore {
     if let index = outputs.firstIndex(where: { $0.id == output.id }) {
       outputs[index].volume = value
     }
+    publishWatchSnapshot()
     Task {
       try? await client.command([
         "type": "VOLUME",
@@ -593,7 +599,12 @@ final class MockStore {
     guard coverCache[key] == nil else { return }
     if let data = try? await client.image(imageKey: key) {
       coverCache[key] = data
+      publishWatchSnapshot()
     }
+  }
+
+  func publishWatchSnapshot() {
+    PhoneWatchSync.shared.publish()
   }
 
   func discoverBridges() async {
@@ -647,6 +658,7 @@ final class MockStore {
       try await client.start()
     } catch {
       session = .onboarding(.localNetwork)
+      publishWatchSnapshot()
     }
   }
 
@@ -669,6 +681,7 @@ final class MockStore {
     if state.state == .sync, case .onboarding(.waitingForCore) = session {
       session = .onboarding(.chooseZone)
     }
+    publishWatchSnapshot()
   }
 
   private func applyZone(_ payload: ZoneStatePayload) {
@@ -689,6 +702,7 @@ final class MockStore {
         Task { await fetchCover(key) }
       }
     }
+    publishWatchSnapshot()
   }
 
   private func applyQueue(_ payload: QueueStatePayload) {

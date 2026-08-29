@@ -20,6 +20,20 @@
                ReferencedContainer = "container:RoonRemote.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "989182402A69166E8E230D88"
+               BuildableName = "Roon.app"
+               BlueprintName = "RoonRemoteWatch"
+               ReferencedContainer = "container:RoonRemote.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
