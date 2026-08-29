@@ -34,6 +34,7 @@ struct SearchTabView: View {
 struct AISearchView: View {
   @Environment(MockStore.self) private var store
   @State private var recorder = VoiceRecorder()
+  @FocusState private var queryFocused: Bool
 
   var body: some View {
     @Bindable var store = store
@@ -44,7 +45,11 @@ struct AISearchView: View {
           .padding(12)
           .background(Palette.surface)
           .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          .focused($queryFocused)
+          .submitLabel(.search)
+          .onSubmit { search() }
         Button {
+          queryFocused = false
           Task { await toggleVoice() }
         } label: {
           Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
@@ -54,7 +59,7 @@ struct AISearchView: View {
             .foregroundStyle(recorder.isRecording ? Color.red : Palette.primary)
         }
         Button("Go") {
-          store.runAISearch()
+          search()
         }
         .foregroundStyle(Palette.accent)
         .padding(.trailing, 4)
@@ -101,7 +106,13 @@ struct AISearchView: View {
           .onMove { store.aiResults.move(fromOffsets: $0, toOffset: $1) }
         }
         .scrollContentBackground(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+      }
+    }
+    .safeAreaInset(edge: .bottom) {
+      if !store.aiLoading {
         Button("Play selected tracks") {
+          queryFocused = false
           store.playAIResults()
         }
         .buttonStyle(GoldFillButton())
@@ -109,6 +120,11 @@ struct AISearchView: View {
         .disabled(store.aiResults.isEmpty)
       }
     }
+  }
+
+  private func search() {
+    queryFocused = false
+    store.runAISearch()
   }
 
   private func toggleVoice() async {
