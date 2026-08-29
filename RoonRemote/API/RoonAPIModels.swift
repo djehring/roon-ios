@@ -102,6 +102,15 @@ struct QueueStatePayload: Decodable {
 
 struct SharedConfigPayload: Decodable {
   var customActions: [CustomActionPayload]
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    customActions = try container.decodeIfPresent([CustomActionPayload].self, forKey: .customActions) ?? []
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case customActions
+  }
 }
 
 struct CustomActionPayload: Decodable, Identifiable {

@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-final class BonjourDiscovery: NSObject, NetServiceBrowserDelegate, NetServiceDelegate {
+final class BonjourDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate, @preconcurrency NetServiceDelegate {
   private let browser = NetServiceBrowser()
   private var resolving: [NetService] = []
   private var found: [DiscoveredBridge] = []

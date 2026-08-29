@@ -70,17 +70,62 @@ struct FindingBridgeStep: View {
   @Environment(MockStore.self) private var store
 
   var body: some View {
+    @Bindable var store = store
     OnboardingChrome(
       title: "Looking for your Roon bridge",
-      subtitle: "This is a prototype, so discovery always succeeds."
+      subtitle: "Bonjour advertises _roon-web-stack._tcp on the HTTP port. Simulator: type host:port."
     ) {
-      ProgressView()
-        .tint(Palette.accent)
-        .controlSize(.large)
-    }
-    .onAppear {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-        store.advanceOnboarding()
+      VStack(spacing: 16) {
+        if store.isDiscovering {
+          ProgressView()
+            .tint(Palette.accent)
+            .controlSize(.large)
+        }
+        if let error = store.discoveryError {
+          Text(error)
+            .font(.footnote)
+            .foregroundStyle(.red.opacity(0.85))
+            .multilineTextAlignment(.center)
+        }
+        if !store.discoveredBridges.isEmpty {
+          VStack(spacing: 0) {
+            ForEach(store.discoveredBridges) { bridge in
+              Button {
+                store.selectBridge(bridge)
+              } label: {
+                HStack {
+                  VStack(alignment: .leading, spacing: 2) {
+                    Text(bridge.name)
+                      .foregroundStyle(Palette.primary)
+                    Text("\(bridge.host):\(bridge.port)")
+                      .font(.footnote)
+                      .foregroundStyle(Palette.secondary)
+                  }
+                  Spacer()
+                  Image(systemName: "chevron.right")
+                    .foregroundStyle(Palette.tertiary)
+                }
+                .padding(.vertical, 12)
+              }
+              if bridge.id != store.discoveredBridges.last?.id {
+                Divider().background(Palette.hairline)
+              }
+            }
+          }
+        }
+        TextField("192.168.0.14:3000", text: $store.manualHost)
+          .keyboardType(.URL)
+          .textInputAutocapitalization(.never)
+          .autocorrectionDisabled()
+          .padding(12)
+          .background(Palette.surface)
+          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        Button("Use this address") { store.useManualHost() }
+          .buttonStyle(GoldFillButton())
+        Button("Search again") {
+          Task { await store.discoverBridges() }
+        }
+        .foregroundStyle(Palette.accent)
       }
     }
   }
@@ -94,7 +139,7 @@ struct PinStep: View {
     @Bindable var store = store
     OnboardingChrome(
       title: "Enter the pairing code",
-      subtitle: "From web Settings, or Roon Settings > Extensions. Prototype: any code except 000000."
+      subtitle: "Open web Settings and type the six-digit PIN shown there."
     ) {
       VStack(spacing: 22) {
         HStack(spacing: 10) {
@@ -166,17 +211,21 @@ struct WaitingForCoreStep: View {
   var body: some View {
     OnboardingChrome(
       title: "Enable the extension",
-      subtitle: "In Roon Settings, enable this extension, then wait. This screen retries until Core is paired."
+      subtitle: waitingCopy
     ) {
-      ProgressView()
-        .tint(Palette.accent)
-        .controlSize(.large)
-        .onAppear {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            store.advanceOnboarding()
-          }
-        }
+      VStack(spacing: 12) {
+        ProgressView()
+          .tint(Palette.accent)
+          .controlSize(.large)
+        Text(store.syncState.rawValue)
+          .font(.caption.weight(.semibold))
+          .foregroundStyle(Palette.tertiary)
+      }
     }
+  }
+
+  private var waitingCopy: String {
+    "In Roon Settings, enable this extension. The phone waits until the bridge reports SYNC."
   }
 }
 
@@ -187,32 +236,39 @@ struct ChooseZoneStep: View {
     VStack(alignment: .leading, spacing: 16) {
       Text("Choose a room")
         .font(.system(size: 28, weight: .semibold))
-      Text("This is the zone the phone and Watch will control.")
+      Text("This is the zone the phone will control.")
         .foregroundStyle(Palette.secondary)
-      VStack(spacing: 0) {
-        ForEach(store.zones) { zone in
-          Button {
-            store.selectZone(zone.id)
-            store.session = .main
-          } label: {
-            HStack {
-              Image(systemName: "hifispeaker.fill")
-                .foregroundStyle(Palette.accent)
-              VStack(alignment: .leading, spacing: 2) {
-                Text(zone.name)
-                  .foregroundStyle(Palette.primary)
-                Text(zone.track?.title ?? "Nothing playing")
-                  .font(.footnote)
-                  .foregroundStyle(Palette.secondary)
+      if store.zones.isEmpty {
+        ProgressView()
+          .tint(Palette.accent)
+          .frame(maxWidth: .infinity)
+          .padding(.top, 24)
+      } else {
+        VStack(spacing: 0) {
+          ForEach(store.zones) { zone in
+            Button {
+              store.selectZone(zone.id)
+              store.finishOnboarding()
+            } label: {
+              HStack {
+                Image(systemName: "hifispeaker.fill")
+                  .foregroundStyle(Palette.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                  Text(zone.name)
+                    .foregroundStyle(Palette.primary)
+                  Text(zone.track?.title ?? "Nothing playing")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                  .foregroundStyle(Palette.tertiary)
               }
-              Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundStyle(Palette.tertiary)
+              .padding(.vertical, 14)
             }
-            .padding(.vertical, 14)
-          }
-          if zone.id != store.zones.last?.id {
-            Divider().background(Palette.hairline)
+            if zone.id != store.zones.last?.id {
+              Divider().background(Palette.hairline)
+            }
           }
         }
       }
