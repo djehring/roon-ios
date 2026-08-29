@@ -1,25 +1,26 @@
-# Roon Remote (iOS prototype)
+# Roon Remote
 
-Clickable SwiftUI screens with mock data. No network. Open
-`RoonRemote.xcodeproj` in Xcode and run the **Roon Remote** scheme
-on an iPhone simulator.
+Native iPhone client for [roon-web-stack](https://github.com/djehring/roon-web-stack).
+The signed-off SwiftUI screens talk to the Docker/extension API over HTTP
+on the LAN. There is no Watch companion, Live Activity, or share
+extension in this version.
 
-This is the design-sign-off gate for a native replacement of the
-roon-web-stack Angular client, plus a Watch companion.
+Open `RoonRemote.xcodeproj` and run the **Roon Remote** scheme on a
+physical iPhone. Simulator can pair if you type the bridge `host:port`
+during onboarding.
 
-## Prototype shortcuts
+## Pairing
 
-- The app starts on **Now Playing**. Replay onboarding from Settings.
-- PIN: any six digits except `000000`.
-- Finding the bridge always succeeds after a short pause.
-- Settings > Preview share sheet shows the Gramophone flow.
+1. Start roon-web-stack so the API is on HTTP (not the 3443 HTTPS port).
+2. In the web Settings dialog, read the six-digit PIN.
+3. On the phone, allow Local Network, pick the advertised
+   `_roon-web-stack._tcp` service (or enter `host:port`), and type that PIN.
+4. Enable the extension in Roon if it is not already paired, wait until
+   the bridge reports `SYNC`, then pick a zone.
 
-## Visual
+`client_id` is stored in the Keychain. Unpair from Settings.
 
-Dark-first, near-black, warm gold accent. Four tabs: Now Playing,
-Library, Search, Settings. Queue and volume are sheets.
+## Search
 
-Run the **Roon Remote** scheme on an iPhone simulator. The Watch
-app is a separate **RoonRemoteWatch** scheme so this prototype
-does not require a watchOS simulator runtime. Embed it later
-when wiring WatchConnectivity.
+AI search, cover recognition, and track story call the bridge. Those
+routes return HTTP 503 when `OPENAI_API_KEY` is missing.
