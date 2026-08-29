@@ -34,6 +34,7 @@ struct SearchTabView: View {
 struct AISearchView: View {
   @Environment(MockStore.self) private var store
   @State private var recorder = VoiceRecorder()
+  @FocusState private var queryFocused: Bool
 
   var body: some View {
     @Bindable var store = store
@@ -44,7 +45,11 @@ struct AISearchView: View {
           .padding(12)
           .background(Palette.surface)
           .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          .focused($queryFocused)
+          .submitLabel(.search)
+          .onSubmit { search() }
         Button {
+          queryFocused = false
           Task { await toggleVoice() }
         } label: {
           Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
@@ -54,7 +59,7 @@ struct AISearchView: View {
             .foregroundStyle(recorder.isRecording ? Color.red : Palette.primary)
         }
         Button("Go") {
-          store.runAISearch()
+          search()
         }
         .foregroundStyle(Palette.accent)
         .padding(.trailing, 4)
@@ -101,7 +106,13 @@ struct AISearchView: View {
           .onMove { store.aiResults.move(fromOffsets: $0, toOffset: $1) }
         }
         .scrollContentBackground(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+      }
+    }
+    .safeAreaInset(edge: .bottom) {
+      if !store.aiLoading {
         Button("Play selected tracks") {
+          queryFocused = false
           store.playAIResults()
         }
         .buttonStyle(GoldFillButton())
@@ -109,6 +120,11 @@ struct AISearchView: View {
         .disabled(store.aiResults.isEmpty)
       }
     }
+  }
+
+  private func search() {
+    queryFocused = false
+    store.runAISearch()
   }
 
   private func toggleVoice() async {
@@ -296,11 +312,10 @@ struct TrackStoryView: View {
           Text(store.storyTitle)
             .font(.headline)
             .foregroundStyle(Palette.accent)
-          Text(store.storyBody)
-            .foregroundStyle(Palette.secondary)
-            .lineSpacing(4)
+          StoryMarkdown(source: store.storyBody)
         }
         .padding(20)
+        .padding(.bottom, 28)
       } else if store.currentTrack == nil {
         ContentUnavailableView(
           "Nothing playing",
@@ -319,6 +334,119 @@ struct TrackStoryView: View {
     .onChange(of: store.currentTrack?.id) { _, _ in
       store.loadTrackStory()
     }
+  }
+}
+
+private struct StoryMarkdown: View {
+  let source: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      ForEach(Array(Self.blocks(from: source).enumerated()), id: \.offset) { _, block in
+        switch block {
+        case let .heading(text):
+          Text(Self.inline(text))
+            .font(.headline)
+            .foregroundStyle(Palette.primary)
+            .padding(.top, 4)
+        case let .paragraph(text):
+          Text(Self.inline(text))
+            .foregroundStyle(Palette.secondary)
+            .lineSpacing(5)
+        case let .bullet(text):
+          HStack(alignment: .top, spacing: 10) {
+            Text("•")
+              .foregroundStyle(Palette.accent)
+            Text(Self.inline(text))
+              .foregroundStyle(Palette.secondary)
+              .lineSpacing(4)
+          }
+        }
+      }
+    }
+  }
+
+  private enum Block {
+    case heading(String)
+    case paragraph(String)
+    case bullet(String)
+  }
+
+  private static func inline(_ raw: String) -> AttributedString {
+    let options = AttributedString.MarkdownParsingOptions(
+      interpretedSyntax: .inlineOnlyPreservingWhitespace
+    )
+    return (try? AttributedString(markdown: raw, options: options)) ?? AttributedString(raw)
+  }
+
+  private static func blocks(from source: String) -> [Block] {
+    var blocks: [Block] = []
+    var paragraph: [String] = []
+    var bullet: String?
+
+    func flushParagraph() {
+      let text = paragraph.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+      paragraph = []
+      guard !text.isEmpty else { return }
+      if isHeading(text) {
+        blocks.append(.heading(stripHeadingMarks(text)))
+      } else {
+        blocks.append(.paragraph(text))
+      }
+    }
+
+    func flushBullet() {
+      if let bullet {
+        blocks.append(.bullet(bullet.trimmingCharacters(in: .whitespacesAndNewlines)))
+      }
+      bullet = nil
+    }
+
+    for line in source.split(separator: "\n", omittingEmptySubsequences: false) {
+      let trimmed = line.trimmingCharacters(in: .whitespaces)
+      if trimmed.isEmpty {
+        flushBullet()
+        flushParagraph()
+        continue
+      }
+      if trimmed.hasPrefix("#") {
+        flushBullet()
+        flushParagraph()
+        blocks.append(.heading(stripHeadingMarks(trimmed)))
+        continue
+      }
+      if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
+        flushBullet()
+        flushParagraph()
+        bullet = String(trimmed.dropFirst(2))
+        continue
+      }
+      if bullet != nil {
+        bullet = "\(bullet ?? "")\n\(trimmed)"
+        continue
+      }
+      paragraph.append(trimmed)
+    }
+    flushBullet()
+    flushParagraph()
+    return blocks
+  }
+
+  private static func isHeading(_ text: String) -> Bool {
+    let lines = text.split(whereSeparator: \.isNewline)
+    guard lines.count == 1 else { return false }
+    let line = String(lines[0])
+    return line.hasPrefix("#") || (line.hasPrefix("**") && line.hasSuffix("**") && line.count > 4)
+  }
+
+  private static func stripHeadingMarks(_ text: String) -> String {
+    var line = text.trimmingCharacters(in: .whitespaces)
+    while line.hasPrefix("#") { line.removeFirst() }
+    line = line.trimmingCharacters(in: .whitespaces)
+    if line.hasPrefix("**"), line.hasSuffix("**"), line.count > 4 {
+      line = String(line.dropFirst(2).dropLast(2))
+    }
+    return line
   }
 }
 
