@@ -8,17 +8,20 @@ struct SettingsView: View {
     NavigationStack {
       List {
         Section("Bridge") {
-          LabeledContent("Name", value: "roon-web-stack")
-          LabeledContent("Version", value: "0.1.0-prototype")
+          LabeledContent("Name", value: store.selectedBridge?.name ?? "roon-web-stack")
+          LabeledContent("Version", value: store.bridgeVersion.isEmpty ? "—" : store.bridgeVersion)
           Button("Unpair…") { store.replayOnboarding() }
-          LabeledContent("PIN", value: "482193")
-          Button("Rotate PIN") {}
+          LabeledContent("PIN", value: store.pairingPinDisplay.isEmpty ? "—" : store.pairingPinDisplay)
+          Button("Rotate PIN") { store.rotatePin() }
         }
         Section("Zone") {
           Picker("Displayed zone", selection: $store.selectedZoneId) {
             ForEach(store.zones) { zone in
               Text(zone.name).tag(zone.id)
             }
+          }
+          .onChange(of: store.selectedZoneId) { _, id in
+            store.selectZone(id)
           }
         }
         Section("Appearance") {
@@ -28,30 +31,34 @@ struct SettingsView: View {
             }
           }
           .pickerStyle(.inline)
+          .onChange(of: store.appearance) { _, _ in
+            store.saveAppearance()
+          }
         }
         Section("Now Playing toolbar") {
           ForEach(store.toolbar) { action in
             Label(action.label, systemImage: action.symbol)
           }
-          .onMove { store.toolbar.move(fromOffsets: $0, toOffset: $1) }
-          .onDelete { store.toolbar.remove(atOffsets: $0) }
+          .onMove { offsets, destination in
+            store.toolbar.move(fromOffsets: offsets, toOffset: destination)
+            store.saveToolbar()
+          }
+          .onDelete { offsets in
+            store.toolbar.remove(atOffsets: offsets)
+            store.saveToolbar()
+          }
         }
         Section("Custom actions") {
           ForEach(store.customActions) { action in
             Label(action.label, systemImage: action.symbol)
           }
-          Button("Record a custom action") {
-            store.isRecordingAction = true
-            store.selectedTab = .library
+          .onDelete { offsets in
+            store.customActions.remove(atOffsets: offsets)
+            store.saveCustomActions()
           }
-        }
-        Section("Watch") {
-          Text("Controls the same zone as the phone.")
-            .foregroundStyle(Palette.secondary)
-        }
-        Section("Prototype") {
-          Button("Replay onboarding") { store.replayOnboarding() }
-          Button("Preview share sheet") { store.showSharePreview = true }
+          Button("Record a custom action") {
+            store.beginRecordingAction()
+          }
         }
         Section("About") {
           LabeledContent("App", value: "0.1.0")
@@ -61,9 +68,7 @@ struct SettingsView: View {
       .background(Palette.background)
       .navigationTitle("Settings")
       .environment(\.editMode, .constant(.active))
-    }
-    .sheet(isPresented: $store.showSharePreview) {
-      SharePreviewView()
+      .onAppear { store.refreshPairingPin() }
     }
   }
 }
