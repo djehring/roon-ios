@@ -88,10 +88,14 @@ struct NowPlayingView: View {
   }
 
   private var art: some View {
-    CoverArt(title: store.currentTrack?.album ?? "empty", corner: 12)
-      .aspectRatio(1, contentMode: .fit)
-      .frame(maxWidth: 340)
-      .animation(Motion.sheet, value: store.currentTrack?.id)
+    CoverArt(
+      title: store.currentTrack?.album ?? "empty",
+      image: store.imageData(for: store.currentTrack?.imageKey),
+      corner: 12
+    )
+    .aspectRatio(1, contentMode: .fit)
+    .frame(maxWidth: 340)
+    .animation(Motion.sheet, value: store.currentTrack?.id)
   }
 
   @ViewBuilder
@@ -145,24 +149,32 @@ struct NowPlayingView: View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 8) {
         ForEach(store.toolbar) { action in
-          Label(action.label, systemImage: action.symbol)
-            .font(.footnote.weight(.medium))
-            .foregroundStyle(Palette.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Palette.surface)
-            .clipShape(Capsule())
-            .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
+          Button {
+            store.runToolbar(action)
+          } label: {
+            Label(action.label, systemImage: action.symbol)
+              .font(.footnote.weight(.medium))
+              .foregroundStyle(Palette.primary)
+              .padding(.horizontal, 12)
+              .padding(.vertical, 8)
+              .background(Palette.surface)
+              .clipShape(Capsule())
+              .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
+          }
         }
         ForEach(store.customActions) { action in
-          Label(action.label, systemImage: action.symbol)
-            .font(.footnote.weight(.medium))
-            .foregroundStyle(Palette.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Palette.surface)
-            .clipShape(Capsule())
-            .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
+          Button {
+            store.runCustomAction(action)
+          } label: {
+            Label(action.label, systemImage: action.symbol)
+              .font(.footnote.weight(.medium))
+              .foregroundStyle(Palette.primary)
+              .padding(.horizontal, 12)
+              .padding(.vertical, 8)
+              .background(Palette.surface)
+              .clipShape(Capsule())
+              .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
+          }
         }
       }
     }
@@ -217,6 +229,7 @@ struct TransportControls: View {
     HStack(spacing: 36) {
       Button {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        store.previous()
       } label: {
         Image(systemName: "backward.end.fill")
           .font(.system(size: 22))

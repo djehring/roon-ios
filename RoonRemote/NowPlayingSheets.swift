@@ -49,10 +49,9 @@ struct VolumeSheet: View {
           } label: {
             Image(systemName: "arrow.left.arrow.right")
           }
-          if store.outputs.count > 1 {
+          if store.outputs.count > 1 || !store.groupableHouseOutputs.isEmpty {
             Button {
-              store.showVolume = false
-              store.showGrouping = true
+              store.openGrouping()
             } label: {
               Image(systemName: "link")
             }
@@ -70,12 +69,18 @@ struct VolumeSheet: View {
             } else {
               HStack {
                 Button {
-                  output.muted.toggle()
+                  store.toggleMute(output)
                 } label: {
                   Image(systemName: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                 }
-                Slider(value: $output.volume, in: output.min...output.max)
-                  .tint(Palette.accent)
+                Slider(
+                  value: Binding(
+                    get: { output.volume },
+                    set: { store.setVolume(output, value: $0) }
+                  ),
+                  in: output.min...max(output.max, output.min + 1)
+                )
+                .tint(Palette.accent)
                 Text("\(Int(output.volume))")
                   .foregroundStyle(Palette.secondary)
                   .frame(width: 36, alignment: .trailing)
@@ -113,7 +118,7 @@ struct TransferView: View {
         Section("To zone") {
           ForEach(store.zones.filter { $0.id != store.selectedZoneId }) { zone in
             Button {
-              store.selectZone(zone.id)
+              store.transfer(to: zone.id)
               dismiss()
             } label: {
               Label(zone.name, systemImage: "hifispeaker.fill")
@@ -147,11 +152,16 @@ struct GroupingView: View {
           ForEach(store.outputs) { output in
             Toggle(output.name, isOn: bind(output.id))
               .tint(Palette.accent)
+              .disabled(output.id == store.outputs.first?.id)
           }
         }
-        Section("Add to zone") {
-          Toggle("Kitchen", isOn: .constant(false))
-          Toggle("Office", isOn: .constant(false))
+        if !store.groupableHouseOutputs.isEmpty {
+          Section("Add to zone") {
+            ForEach(store.groupableHouseOutputs, id: \.outputId) { output in
+              Toggle(output.displayName, isOn: bind(output.outputId))
+                .tint(Palette.accent)
+            }
+          }
         }
       }
       .scrollContentBackground(.hidden)
@@ -159,7 +169,10 @@ struct GroupingView: View {
       .navigationTitle("Grouping")
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
-          Button("Save") { dismiss() }
+          Button("Save") {
+            store.saveGrouping()
+            dismiss()
+          }
         }
       }
     }
@@ -206,8 +219,12 @@ struct QueueList: View {
             store.playFromHere(item)
           } label: {
             HStack(spacing: 12) {
-              CoverArt(title: item.album, corner: 6)
-                .frame(width: 56, height: 56)
+              CoverArt(
+                title: item.album,
+                image: store.imageData(for: item.imageKey),
+                corner: 6
+              )
+              .frame(width: 56, height: 56)
               VStack(alignment: .leading, spacing: 2) {
                 Text(item.title)
                   .foregroundStyle(Palette.primary)

@@ -55,32 +55,44 @@ enum Motion {
 
 struct CoverArt: View {
   let title: String
+  var image: Data? = nil
   var corner: CGFloat = 12
   @Environment(\.colorScheme) private var colorScheme
 
   var body: some View {
-    let colors = Self.colors(for: title, scheme: colorScheme)
-    RoundedRectangle(cornerRadius: corner, style: .continuous)
-      .fill(
-        LinearGradient(
-          colors: colors,
-          startPoint: .topLeading,
-          endPoint: .bottomTrailing
-        )
-      )
-      .overlay {
-        Image(systemName: "music.note")
-          .font(.system(size: 28, weight: .light))
-          .foregroundStyle(
-            colorScheme == .dark
-              ? Color.white.opacity(0.35)
-              : Color.black.opacity(0.28)
+    if let image, let ui = UIImage(data: image) {
+      Image(uiImage: ui)
+        .resizable()
+        .scaledToFill()
+        .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        .overlay {
+          RoundedRectangle(cornerRadius: corner, style: .continuous)
+            .stroke(Palette.hairline, lineWidth: 1)
+        }
+    } else {
+      let colors = Self.colors(for: title, scheme: colorScheme)
+      RoundedRectangle(cornerRadius: corner, style: .continuous)
+        .fill(
+          LinearGradient(
+            colors: colors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
           )
-      }
-      .overlay {
-        RoundedRectangle(cornerRadius: corner, style: .continuous)
-          .stroke(Palette.hairline, lineWidth: 1)
-      }
+        )
+        .overlay {
+          Image(systemName: "music.note")
+            .font(.system(size: 28, weight: .light))
+            .foregroundStyle(
+              colorScheme == .dark
+                ? Color.white.opacity(0.35)
+                : Color.black.opacity(0.28)
+            )
+        }
+        .overlay {
+          RoundedRectangle(cornerRadius: corner, style: .continuous)
+            .stroke(Palette.hairline, lineWidth: 1)
+        }
+    }
   }
 
   static func colors(for title: String, scheme: ColorScheme) -> [Color] {
