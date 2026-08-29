@@ -15,6 +15,7 @@ struct Track: Identifiable, Hashable {
   var position: String
   var remaining: String
   var progress: Double
+  var imageKey: String?
 }
 
 struct Zone: Identifiable, Hashable {
@@ -29,16 +30,24 @@ struct QueueItem: Identifiable, Hashable {
   var title: String
   var artist: String
   var album: String
+  var imageKey: String?
 }
 
 struct Output: Identifiable, Hashable {
   let id: String
+  var zoneId: String
   var name: String
   var volume: Double
   var min: Double
   var max: Double
   var muted: Bool
   var isFixed: Bool
+  var canGroupWith: [String]
+}
+
+struct BrowsePage: Hashable {
+  var title: String
+  var items: [BrowseNode]
 }
 
 struct BrowseNode: Identifiable, Hashable {
@@ -49,13 +58,33 @@ struct BrowseNode: Identifiable, Hashable {
   var actions: [String]
   var isPrompt: Bool
   var children: [BrowseNode]
+  var itemKey: String?
+  var imageKey: String?
+  var hierarchy: String?
+  var hint: String?
 }
 
 struct LibraryEntry: Identifiable, Hashable {
   let id: String
   var title: String
   var symbol: String
-  var root: BrowseNode
+  var hierarchy: String
+
+  var root: BrowseNode {
+    BrowseNode(
+      id: id,
+      title: title,
+      subtitle: nil,
+      symbol: symbol,
+      actions: [],
+      isPrompt: false,
+      children: [],
+      itemKey: nil,
+      imageKey: nil,
+      hierarchy: hierarchy,
+      hint: nil
+    )
+  }
 }
 
 struct SuggestedTrack: Identifiable, Hashable {
@@ -71,12 +100,16 @@ struct CustomAction: Identifiable, Hashable {
   let id: String
   var label: String
   var symbol: String
+  var hierarchy: String
+  var path: [String]
+  var actionIndex: Int?
 }
 
-struct ToolbarAction: Identifiable, Hashable {
+struct ToolbarAction: Identifiable, Hashable, Codable {
   let id: String
   var label: String
   var symbol: String
+  var hierarchy: String
 }
 
 enum AppTab: String, CaseIterable {
@@ -94,7 +127,7 @@ enum OnboardingStep: Int {
   case chooseZone
 }
 
-enum AppSession {
+enum AppSession: Equatable {
   case onboarding(OnboardingStep)
   case main
 }
@@ -109,4 +142,8 @@ enum SearchSegment: String, CaseIterable {
   case ai
   case camera
   case story
+}
+
+enum MockCatalog {
+  static let recognized: [BrowseNode] = []
 }

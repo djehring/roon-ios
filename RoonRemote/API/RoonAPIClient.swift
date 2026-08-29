@@ -274,7 +274,7 @@ final class RoonAPIClient: @unchecked Sendable {
   func playItem(zoneId: String, itemKey: String, actionTitle: String) async throws {
     let clientId = try requireClient()
     let request = try jsonRequest(
-      path: "/api/\(clientId)/play-item",
+      path: "/api/\(clientId)/library/play-item",
       method: "POST",
       object: [
         "zoneId": zoneId,
