@@ -1,0 +1,87 @@
+name: RoonRemote
+options:
+  bundleIdPrefix: com.djehring
+  deploymentTarget:
+    iOS: "18.0"
+    watchOS: "11.0"
+  createIntermediateGroups: true
+settings:
+  SWIFT_VERSION: "5.0"
+  MARKETING_VERSION: "0.1.0"
+  CURRENT_PROJECT_VERSION: 1
+targets:
+  RoonRemote:
+    type: application
+    platform: iOS
+    sources:
+      - path: RoonRemote
+        excludes:
+          - Info.plist
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote
+        PRODUCT_NAME: Roon Remote
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: RoonRemote/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: RoonRemote/Info.plist
+      properties:
+        CFBundleDisplayName: Roon Remote
+        UILaunchScreen: {}
+        NSLocalNetworkUsageDescription: >-
+          Roon Remote finds the bridge on your Wi-Fi so it can
+          control the rooms in your house.
+        NSBonjourServices:
+          - _roon-web-stack._tcp
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  RoonRemoteWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: RoonRemoteWatch
+        excludes:
+          - Info.plist
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.watchkitapp
+        PRODUCT_NAME: Roon
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: RoonRemoteWatch/Info.plist
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+    info:
+      path: RoonRemoteWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Roon
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.djehring.roonremote
+        WKRunsIndependentlyOfCompanionApp: false
+schemes:
+  RoonRemote:
+    build:
+      targets:
+        RoonRemote: all
+    run:
+      config: Debug
+  RoonRemoteWatch:
+    build:
+      targets:
+        RoonRemoteWatch: all
+    run:
+      config: Debug
