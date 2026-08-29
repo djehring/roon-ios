@@ -15,8 +15,9 @@ final class MockStore {
   var showZonePicker = false
   var showVolume = false
   var showQueue = false
-  var showTransfer = false
-  var showGrouping = false
+  var showStory = false
+  var showZonePanel = false
+  var zonePanelTab: ZonePanelTab = .switchZone
   var showSharePreview = false
   var isRecordingAction = false
   var searchSegment: SearchSegment = .ai
@@ -33,6 +34,7 @@ final class MockStore {
   var pendingGroupIds: Set<String> = []
   var zones: [Zone] = []
   var queue: [QueueItem] = []
+  private var queuesByZone: [String: [QueueItem]] = [:]
   var outputs: [Output] = []
   var library: [LibraryEntry]
   var discoveredBridges: [DiscoveredBridge] = []
@@ -57,6 +59,8 @@ final class MockStore {
   let client = RoonAPIClient()
   private let discovery = BonjourDiscovery()
   private let zoneDefaults = UserDefaults.standard
+  private var pinnedTrack: Track?
+  private var replacedTrack: Track?
 
   init() {
     library = Self.libraryRoots
@@ -97,7 +101,9 @@ final class MockStore {
     if client.isPaired {
       Task { await self.reconnect() }
     }
+    #if os(iOS)
     PhoneWatchSync.shared.activate(store: self)
+    #endif
   }
 
   var selectedZone: Zone {
@@ -125,6 +131,7 @@ final class MockStore {
     pinError = false
     zones = []
     queue = []
+    queuesByZone = [:]
     outputs = []
     session = .onboarding(.localNetwork)
     publishWatchSnapshot()
@@ -180,9 +187,11 @@ final class MockStore {
   }
 
   func selectZone(_ id: String) {
+    clearPinnedTrack()
     selectedZoneId = id
     zoneDefaults.set(id, forKey: "selectedZoneId")
     isPlaying = selectedZone.state == .playing
+    queue = queuesByZone[id] ?? []
     showZonePicker = false
     publishWatchSnapshot()
   }
@@ -190,6 +199,11 @@ final class MockStore {
   func finishOnboarding() {
     session = .main
     publishWatchSnapshot()
+  }
+
+  func resumeSync() {
+    guard client.isPaired, session == .main else { return }
+    client.refreshEvents()
   }
 
   func togglePlay() {
@@ -202,6 +216,7 @@ final class MockStore {
   }
 
   func skip() {
+    clearPinnedTrack()
     Task {
       try? await client.command([
         "type": "NEXT",
@@ -211,6 +226,7 @@ final class MockStore {
   }
 
   func previous() {
+    clearPinnedTrack()
     Task {
       try? await client.command([
         "type": "PREVIOUS",
@@ -219,7 +235,18 @@ final class MockStore {
     }
   }
 
+  func stop() {
+    clearPinnedTrack()
+    Task {
+      try? await client.command([
+        "type": "STOP",
+        "data": ["zone_id": selectedZoneId],
+      ])
+    }
+  }
+
   func playFromHere(_ item: QueueItem) {
+    showNowPlaying(Self.track(from: item), playing: true)
     Task {
       try? await client.command([
         "type": "PLAY_FROM_HERE",
@@ -247,6 +274,10 @@ final class MockStore {
   }
 
   func toggleMute(_ output: Output) {
+    if let index = outputs.firstIndex(where: { $0.id == output.id }) {
+      outputs[index].muted.toggle()
+    }
+    publishWatchSnapshot()
     Task {
       try? await client.command([
         "type": "MUTE",
@@ -269,11 +300,11 @@ final class MockStore {
     }
   }
 
-  func openGrouping() {
+  func openZonePanel(tab: ZonePanelTab = .switchZone) {
     pendingGroupIds = Set(outputs.map(\.id))
     groupedOutputIds = pendingGroupIds
-    showVolume = false
-    showGrouping = true
+    zonePanelTab = tab
+    showZonePanel = true
   }
 
   var groupableHouseOutputs: [OutputDescription] {
@@ -286,7 +317,7 @@ final class MockStore {
 
   func saveGrouping() {
     guard let main = outputs.first else {
-      showGrouping = false
+      showZonePanel = false
       return
     }
     let currentIds = Set(outputs.map(\.id))
@@ -310,7 +341,7 @@ final class MockStore {
         }
       }
       groupedOutputIds = desired
-      showGrouping = false
+      showZonePanel = false
     }
   }
 
@@ -604,7 +635,9 @@ final class MockStore {
   }
 
   func publishWatchSnapshot() {
+    #if os(iOS)
     PhoneWatchSync.shared.publish()
+    #endif
   }
 
   func discoverBridges() async {
@@ -681,20 +714,28 @@ final class MockStore {
     if state.state == .sync, case .onboarding(.waitingForCore) = session {
       session = .onboarding(.chooseZone)
     }
-    publishWatchSnapshot()
   }
 
   private func applyZone(_ payload: ZoneStatePayload) {
-    let track = Self.track(from: payload.nicePlaying)
+    let incoming = Self.track(from: payload.nicePlaying)
     let playback = PlaybackState(rawValue: payload.state) ?? .stopped
+    let previous = zones.first { $0.id == payload.zoneId }
+    let track = chooseTrack(
+      incoming: incoming,
+      previous: previous?.track,
+      playback: playback,
+      zoneId: payload.zoneId
+    )
     let zone = Zone(id: payload.zoneId, name: payload.displayName, track: track, state: playback)
     if let index = zones.firstIndex(where: { $0.id == payload.zoneId }) {
-      zones[index] = zone
+      var next = zones
+      next[index] = zone
+      zones = next
     } else {
       zones.append(zone)
     }
     if payload.zoneId == selectedZoneId {
-      isPlaying = playback == .playing
+      isPlaying = playback == .playing || playback == .loading
       outputs = payload.outputs.map(Self.output(from:))
       groupedOutputIds = Set(payload.outputs.map(\.outputId))
       pendingGroupIds = groupedOutputIds
@@ -705,9 +746,42 @@ final class MockStore {
     publishWatchSnapshot()
   }
 
+  private func chooseTrack(
+    incoming: Track?,
+    previous: Track?,
+    playback: PlaybackState,
+    zoneId: String
+  ) -> Track? {
+    if zoneId == selectedZoneId, let pinned = pinnedTrack {
+      if let incoming {
+        if Self.sameSong(incoming, pinned) {
+          clearPinnedTrack()
+          return incoming
+        }
+        if let replaced = replacedTrack, Self.sameSong(incoming, replaced) {
+          return pinned
+        }
+        clearPinnedTrack()
+        return incoming
+      }
+      return pinned
+    }
+    if let incoming {
+      return incoming
+    }
+    if playback == .stopped {
+      return nil
+    }
+    return previous
+  }
+
+  private func clearPinnedTrack() {
+    pinnedTrack = nil
+    replacedTrack = nil
+  }
+
   private func applyQueue(_ payload: QueueStatePayload) {
-    guard payload.zoneId == selectedZoneId else { return }
-    queue = payload.tracks.map {
+    let items = payload.tracks.map {
       QueueItem(
         id: $0.id,
         title: $0.title,
@@ -716,6 +790,11 @@ final class MockStore {
         imageKey: $0.imageKey
       )
     }
+    queuesByZone[payload.zoneId] = items
+    if payload.zoneId == selectedZone.id || payload.zoneId == selectedZoneId {
+      queue = items
+    }
+    publishWatchSnapshot()
   }
 
   private func applyConfig(_ config: SharedConfigPayload) {
@@ -749,12 +828,43 @@ final class MockStore {
     return nil
   }
 
+  private func showNowPlaying(_ track: Track, playing: Bool) {
+    replacedTrack = selectedZone.track
+    pinnedTrack = track
+    isPlaying = playing
+    if let index = zones.firstIndex(where: { $0.id == selectedZoneId }) {
+      var zone = zones[index]
+      zone.track = track
+      zone.state = playing ? .playing : zone.state
+      var next = zones
+      next[index] = zone
+      zones = next
+    }
+    if let key = track.imageKey {
+      Task { await fetchCover(key) }
+    }
+    publishWatchSnapshot()
+  }
+
+  private static func track(from item: QueueItem) -> Track {
+    Track(
+      id: item.id,
+      title: item.title,
+      artist: item.artist,
+      album: item.album,
+      position: "0:00",
+      remaining: "",
+      progress: 0,
+      imageKey: item.imageKey
+    )
+  }
+
   private static func track(from playing: ZoneNicePlaying?) -> Track? {
     guard let playing else { return nil }
     let album = playing.track.disk?.title ?? playing.track.title
     let remaining = playing.totalQueueRemainingTime ?? playing.track.length ?? ""
     return Track(
-      id: playing.track.imageKey ?? playing.track.title,
+      id: [playing.track.title, playing.track.artist ?? "", playing.track.imageKey ?? ""].joined(separator: "|"),
       title: playing.track.title,
       artist: playing.track.artist ?? "",
       album: album,
@@ -763,6 +873,10 @@ final class MockStore {
       progress: (playing.track.seekPercentage ?? 0) / 100,
       imageKey: playing.track.imageKey
     )
+  }
+
+  private static func sameSong(_ a: Track, _ b: Track) -> Bool {
+    a.title == b.title && a.artist == b.artist
   }
 
   private static func output(from payload: ZoneOutput) -> Output {

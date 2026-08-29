@@ -1,10 +1,11 @@
 import Foundation
 import UIKit
 import WatchConnectivity
+import os.log
 
-@MainActor
 final class PhoneWatchSync: NSObject, WCSessionDelegate {
   static let shared = PhoneWatchSync()
+  private static let log = Logger(subsystem: "com.djehring.roonremote", category: "watch")
 
   private weak var store: MockStore?
   private var lastEncoded: Data?
@@ -17,20 +18,30 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     session.activate()
   }
 
+  @MainActor
   func publish() {
     guard let store else { return }
     let snapshot = Self.snapshot(from: store)
     guard let data = try? JSONEncoder().encode(snapshot), data != lastEncoded else { return }
-    lastEncoded = data
     let payload = [WatchMessageKey.snapshot: data]
     let session = WCSession.default
     guard session.activationState == .activated else { return }
-    if session.isPaired, session.isWatchAppInstalled, session.isReachable {
-      session.sendMessage(payload, replyHandler: nil, errorHandler: nil)
+
+    var delivered = false
+    do {
+      try session.updateApplicationContext(payload)
+      delivered = true
+    } catch {
+      Self.log.error("applicationContext failed: \(error.localizedDescription, privacy: .public)")
     }
-    try? session.updateApplicationContext(payload)
-    if session.isComplicationEnabled {
-      session.transferCurrentComplicationUserInfo(payload)
+    if session.isReachable {
+      session.sendMessage(payload, replyHandler: nil) { error in
+        Self.log.error("sendMessage failed: \(error.localizedDescription, privacy: .public)")
+      }
+      delivered = true
+    }
+    if delivered {
+      lastEncoded = data
     }
   }
 
@@ -39,6 +50,9 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     activationDidCompleteWith activationState: WCSessionActivationState,
     error: Error?
   ) {
+    Self.log.info(
+      "phone session \(String(describing: activationState.rawValue), privacy: .public) paired=\(session.isPaired) watchApp=\(session.isWatchAppInstalled) reachable=\(session.isReachable) error=\(error?.localizedDescription ?? "none", privacy: .public)"
+    )
     Task { @MainActor in self.publish() }
   }
 
@@ -53,6 +67,7 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   }
 
   func sessionReachabilityDidChange(_ session: WCSession) {
+    Self.log.info("phone reachable=\(session.isReachable)")
     Task { @MainActor in self.publish() }
   }
 
@@ -69,6 +84,10 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     replyHandler(["ok": true])
   }
 
+  func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
+    handle(userInfo)
+  }
+
   private func handle(_ message: [String: Any]) {
     guard let data = message[WatchMessageKey.command] as? Data,
           let command = try? JSONDecoder().decode(WatchCommand.self, from: data)
@@ -82,6 +101,13 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
         store.skip()
       case .previous:
         store.previous()
+      case .stop:
+        store.stop()
+      case .mute:
+        let output = store.outputs.first { !$0.isFixed } ?? store.outputs.first
+        if let output {
+          store.toggleMute(output)
+        }
       case let .setVolume(outputId, value):
         let output = store.outputs.first { $0.id == outputId } ?? store.outputs.first
         if let output {
@@ -89,10 +115,17 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
         }
       case let .selectZone(id):
         store.selectZone(id)
+      case let .playFromHere(id):
+        if let item = store.queue.first(where: { $0.id == id }) {
+          store.playFromHere(item)
+        }
+      case let .transfer(toZoneId):
+        store.transfer(to: toZoneId)
       }
     }
   }
 
+  @MainActor
   private static func snapshot(from store: MockStore) -> WatchSnapshot {
     let track = store.currentTrack
     let output = store.outputs.first { !$0.isFixed } ?? store.outputs.first
@@ -118,13 +151,17 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
       volumeMax: max(output?.max ?? 100, (output?.min ?? 0) + 1),
       volumeOutputId: output?.id,
       volumeIsFixed: output?.isFixed ?? true,
+      muted: output?.muted ?? false,
       zones: store.zones.map {
         WatchZoneRow(id: $0.id, name: $0.name, subtitle: $0.track?.title)
+      },
+      queue: Array(store.queue.prefix(50)).map {
+        WatchQueueRow(id: $0.id, title: $0.title, artist: $0.artist)
       }
     )
   }
 
-  private static func compactJPEG(_ data: Data, dimension: CGFloat = 96) -> Data? {
+  private static func compactJPEG(_ data: Data, dimension: CGFloat = 180) -> Data? {
     guard let image = UIImage(data: data) else { return nil }
     let format = UIGraphicsImageRendererFormat.default()
     format.scale = 1

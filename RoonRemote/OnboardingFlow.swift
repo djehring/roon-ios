@@ -296,14 +296,3 @@ struct ChooseZoneStep: View {
     }
   }
 }
-
-struct GoldFillButton: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .font(.system(size: 17, weight: .semibold))
-      .foregroundStyle(Palette.onAccent)
-      .frame(maxWidth: .infinity, minHeight: 50)
-      .background(Palette.accent.opacity(configuration.isPressed ? 0.75 : 1))
-      .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-  }
-}

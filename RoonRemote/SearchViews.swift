@@ -2,6 +2,7 @@ import AVFoundation
 import PhotosUI
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct SearchTabView: View {
   @Environment(MockStore.self) private var store
@@ -13,7 +14,6 @@ struct SearchTabView: View {
         Picker("Search", selection: $store.searchSegment) {
           Text("AI").tag(SearchSegment.ai)
           Text("Camera").tag(SearchSegment.camera)
-          Text("Story").tag(SearchSegment.story)
         }
         .pickerStyle(.segmented)
         .padding(16)
@@ -21,7 +21,6 @@ struct SearchTabView: View {
           switch store.searchSegment {
           case .ai: AISearchView()
           case .camera: CameraSearchView()
-          case .story: TrackStoryView()
           }
         }
       }
@@ -73,6 +72,16 @@ struct AISearchView: View {
           .padding(.horizontal, 16)
       }
 
+      if !store.aiLoading {
+        Button("Play selected tracks") {
+          queryFocused = false
+          store.playAIResults()
+        }
+        .buttonStyle(GoldFillButton())
+        .padding(.horizontal, 16)
+        .disabled(store.aiResults.isEmpty)
+      }
+
       if store.aiLoading {
         Spacer()
         ProgressView().tint(Palette.accent)
@@ -109,15 +118,10 @@ struct AISearchView: View {
         .scrollDismissesKeyboard(.interactively)
       }
     }
-    .safeAreaInset(edge: .bottom) {
-      if !store.aiLoading {
-        Button("Play selected tracks") {
-          queryFocused = false
-          store.playAIResults()
-        }
-        .buttonStyle(GoldFillButton())
-        .padding(16)
-        .disabled(store.aiResults.isEmpty)
+    .toolbar {
+      ToolbarItemGroup(placement: .keyboard) {
+        Spacer()
+        Button("Done") { queryFocused = false }
       }
     }
   }
@@ -178,113 +182,174 @@ private final class VoiceRecorder {
 struct CameraSearchView: View {
   @Environment(MockStore.self) private var store
   @State private var pickerItem: PhotosPickerItem?
+  @State private var showSourcePicker = false
   @State private var showCamera = false
+  @State private var showLibrary = false
   @State private var pickedImage: Data?
+  @FocusState private var hintFocused: Bool
 
   var body: some View {
     @Bindable var store = store
-    VStack(spacing: 16) {
-      Menu {
-        Button("Take photo") { showCamera = true }
-        PhotosPicker(selection: $pickerItem, matching: .images) {
-          Text("Choose from library")
-        }
-      } label: {
-        ZStack {
-          RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(Palette.surface)
-            .frame(height: 220)
-          if let pickedImage {
-            CoverArt(title: "cover", image: pickedImage, corner: 12)
-              .padding(24)
-          } else {
-            VStack(spacing: 8) {
-              Image(systemName: "camera.fill")
-                .font(.largeTitle)
-                .foregroundStyle(Palette.accent)
-              Text("Take or choose a cover")
-                .foregroundStyle(Palette.secondary)
-            }
-          }
-        }
-      }
-      .padding(.horizontal, 16)
-      .onChange(of: pickerItem) { _, item in
-        guard let item else { return }
-        Task {
-          if let data = try? await item.loadTransferable(type: Data.self) {
-            pickedImage = data
-            store.hasPhoto = true
-            store.recognizeAlbum(image: data, mimeType: "image/jpeg")
-          }
-        }
-      }
-
-      TextField("Album description (optional)", text: $store.cameraHint)
-        .padding(12)
-        .background(Palette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .padding(.horizontal, 16)
-
-      if let error = store.aiError, store.searchSegment == .camera {
-        Text(error)
-          .font(.footnote)
-          .foregroundStyle(.red.opacity(0.85))
-          .padding(.horizontal, 16)
-      }
-
-      if store.recognizedAlbums.isEmpty {
-        Button("Recognize album") {
-          store.recognizeAlbum(image: pickedImage, mimeType: pickedImage == nil ? nil : "image/jpeg")
-        }
-        .buttonStyle(GoldFillButton())
-        .padding(.horizontal, 16)
-        .disabled(pickedImage == nil && store.cameraHint.isEmpty)
-      } else {
-        List(store.recognizedAlbums) { album in
-          Button {
-            store.playRecognized(album)
-          } label: {
-            HStack {
-              CoverArt(
-                title: album.title,
-                image: store.imageData(for: album.imageKey),
-                corner: 6
-              )
-              .frame(width: 48, height: 48)
-              VStack(alignment: .leading) {
-                Text(album.title)
-                  .foregroundStyle(Palette.primary)
-                Text(album.subtitle ?? "")
-                  .font(.footnote)
+    ScrollView {
+      VStack(spacing: 16) {
+        Button {
+          hintFocused = false
+          showSourcePicker = true
+        } label: {
+          ZStack {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+              .fill(Palette.surface)
+              .frame(height: 220)
+            if let pickedImage {
+              CoverArt(title: "cover", image: pickedImage, corner: 12)
+                .padding(24)
+            } else {
+              VStack(spacing: 8) {
+                Image(systemName: "camera.fill")
+                  .font(.largeTitle)
+                  .foregroundStyle(Palette.accent)
+                Text("Take or choose a cover")
                   .foregroundStyle(Palette.secondary)
               }
-              Spacer()
-              Image(systemName: "play.circle.fill")
-                .foregroundStyle(Palette.accent)
-                .font(.title2)
             }
           }
-          .listRowBackground(Palette.surface)
         }
-        .scrollContentBackground(.hidden)
-        Button("Search again") {
-          store.hasPhoto = false
-          store.recognizedAlbums = []
-          pickedImage = nil
-          pickerItem = nil
+        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+
+        TextField("Album description (optional)", text: $store.cameraHint)
+          .padding(12)
+          .background(Palette.surface)
+          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          .padding(.horizontal, 16)
+          .focused($hintFocused)
+          .submitLabel(.done)
+          .onSubmit { hintFocused = false }
+
+        if let error = store.aiError, store.searchSegment == .camera {
+          Text(error)
+            .font(.footnote)
+            .foregroundStyle(.red.opacity(0.85))
+            .padding(.horizontal, 16)
         }
-        .foregroundStyle(Palette.accent)
+
+        if store.recognizedAlbums.isEmpty {
+          Button("Recognize album") {
+            hintFocused = false
+            store.recognizeAlbum(
+              image: pickedImage,
+              mimeType: pickedImage == nil ? nil : "image/jpeg"
+            )
+          }
+          .buttonStyle(GoldFillButton())
+          .padding(.horizontal, 16)
+          .disabled(pickedImage == nil && store.cameraHint.isEmpty)
+        } else {
+          Button("Search again") {
+            hintFocused = false
+            store.hasPhoto = false
+            store.recognizedAlbums = []
+            pickedImage = nil
+            pickerItem = nil
+          }
+          .foregroundStyle(Palette.accent)
+          .frame(maxWidth: .infinity)
+          .padding(.horizontal, 16)
+
+          LazyVStack(spacing: 0) {
+            ForEach(store.recognizedAlbums) { album in
+              Button {
+                hintFocused = false
+                store.playRecognized(album)
+              } label: {
+                HStack {
+                  CoverArt(
+                    title: album.title,
+                    image: store.imageData(for: album.imageKey),
+                    corner: 6
+                  )
+                  .frame(width: 48, height: 48)
+                  VStack(alignment: .leading) {
+                    Text(album.title)
+                      .foregroundStyle(Palette.primary)
+                    Text(album.subtitle ?? "")
+                      .font(.footnote)
+                      .foregroundStyle(Palette.secondary)
+                  }
+                  Spacer()
+                  Image(systemName: "play.circle.fill")
+                    .foregroundStyle(Palette.accent)
+                    .font(.title2)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+              }
+              .buttonStyle(.plain)
+            }
+          }
+        }
       }
-      Spacer()
+      .padding(.bottom, 24)
+    }
+    .scrollDismissesKeyboard(.interactively)
+    .confirmationDialog("Cover image", isPresented: $showSourcePicker, titleVisibility: .visible) {
+      Button("Take photo") { showCamera = true }
+      Button("Choose from library") { showLibrary = true }
+      Button("Cancel", role: .cancel) {}
+    }
+    .photosPicker(isPresented: $showLibrary, selection: $pickerItem, matching: .images)
+    .onChange(of: pickerItem) { _, item in
+      guard let item else { return }
+      hintFocused = false
+      Task { await loadPickedImage(item) }
+    }
+    .toolbar {
+      ToolbarItemGroup(placement: .keyboard) {
+        Spacer()
+        Button("Done") { hintFocused = false }
+      }
     }
     .sheet(isPresented: $showCamera) {
       CameraPicker { data in
-        pickedImage = data
-        store.hasPhoto = true
-        store.recognizeAlbum(image: data, mimeType: "image/jpeg")
+        applyPickedImage(data)
       }
       .ignoresSafeArea()
+    }
+  }
+
+  private func loadPickedImage(_ item: PhotosPickerItem) async {
+    if let data = try? await item.loadTransferable(type: Data.self), UIImage(data: data) != nil {
+      applyPickedImage(jpegData(from: data))
+      return
+    }
+    if let transfer = try? await item.loadTransferable(type: PickedImageData.self) {
+      applyPickedImage(transfer.data)
+      return
+    }
+    store.aiError = "Couldn’t read that photo. Try another image."
+  }
+
+  private func applyPickedImage(_ data: Data) {
+    hintFocused = false
+    pickedImage = data
+    store.hasPhoto = true
+    store.aiError = nil
+    store.recognizeAlbum(image: data, mimeType: "image/jpeg")
+  }
+
+  private func jpegData(from data: Data) -> Data {
+    guard let image = UIImage(data: data) else { return data }
+    return image.jpegData(compressionQuality: 0.85) ?? data
+  }
+}
+
+private struct PickedImageData: Transferable {
+  let data: Data
+
+  static var transferRepresentation: some TransferRepresentation {
+    DataRepresentation(importedContentType: .image) { data in
+      let jpeg = UIImage(data: data)?.jpegData(compressionQuality: 0.85) ?? data
+      return PickedImageData(data: jpeg)
     }
   }
 }

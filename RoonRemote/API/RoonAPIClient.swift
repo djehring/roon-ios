@@ -306,6 +306,11 @@ final class RoonAPIClient: @unchecked Sendable {
     version = http.value(forHTTPHeaderField: "x-roon-web-stack-version")
   }
 
+  func refreshEvents() {
+    guard isPaired else { return }
+    startEventStream()
+  }
+
   private func startEventStream() {
     stopEvents()
     guard let clientId else { return }
@@ -315,36 +320,43 @@ final class RoonAPIClient: @unchecked Sendable {
   }
 
   private func readEvents(clientId: String) async {
-    do {
-      var request = try rawRequest(path: "/api/\(clientId)/events", method: "GET")
-      request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-      request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-      request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-      request.cachePolicy = .reloadIgnoringLocalCacheData
+    while !Task.isCancelled {
+      eventTask?.cancel()
+      eventSession?.invalidateAndCancel()
+      eventSession = nil
+      eventDelegate = nil
+      do {
+        var request = try rawRequest(path: "/api/\(clientId)/events", method: "GET")
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
 
-      let delegate = EventStreamDelegate()
-      let config = URLSessionConfiguration.default
-      config.timeoutIntervalForRequest = TimeInterval.infinity
-      config.timeoutIntervalForResource = TimeInterval.infinity
-      config.waitsForConnectivity = false
-      config.requestCachePolicy = .reloadIgnoringLocalCacheData
-      let streamSession = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
-      eventDelegate = delegate
-      eventSession = streamSession
-      let task = streamSession.dataTask(with: request)
-      eventTask = task
-      task.resume()
+        let delegate = EventStreamDelegate()
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = TimeInterval.infinity
+        config.timeoutIntervalForResource = TimeInterval.infinity
+        config.waitsForConnectivity = false
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let streamSession = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+        eventDelegate = delegate
+        eventSession = streamSession
+        let task = streamSession.dataTask(with: request)
+        eventTask = task
+        task.resume()
 
-      var buffer = Data()
-      for try await chunk in delegate.chunks {
+        var buffer = Data()
+        for try await chunk in delegate.chunks {
+          if Task.isCancelled { return }
+          buffer.append(chunk)
+          consumeSSE(from: &buffer)
+        }
+      } catch {
         if Task.isCancelled { return }
-        buffer.append(chunk)
-        consumeSSE(from: &buffer)
-      }
-    } catch {
-      if !Task.isCancelled {
         onEventsFailed?(error)
       }
+      if Task.isCancelled { return }
+      try? await Task.sleep(nanoseconds: 1_000_000_000)
     }
   }
 
@@ -395,19 +407,28 @@ final class RoonAPIClient: @unchecked Sendable {
         onEventsFailed?(error)
       }
     case "zone":
-      if let value = try? decoder.decode(ZoneStatePayload.self, from: payload) {
-        onZone?(value)
+      do {
+        onZone?(try decoder.decode(ZoneStatePayload.self, from: payload))
+      } catch {
+        NSLog("zone decode failed: %@", error.localizedDescription)
       }
     case "queue":
-      if let value = try? decoder.decode(QueueStatePayload.self, from: payload) {
-        onQueue?(value)
+      do {
+        onQueue?(try decoder.decode(QueueStatePayload.self, from: payload))
+      } catch {
+        NSLog("queue decode failed: %@", error.localizedDescription)
       }
     case "config":
       if let value = try? decoder.decode(SharedConfigPayload.self, from: payload) {
         onConfig?(value)
       }
     default:
-      break
+      if let object = try? JSONSerialization.jsonObject(with: payload) as? [String: Any],
+         object["tracks"] != nil || object["items"] != nil,
+         let queue = try? decoder.decode(QueueStatePayload.self, from: payload)
+      {
+        onQueue?(queue)
+      }
     }
   }
 

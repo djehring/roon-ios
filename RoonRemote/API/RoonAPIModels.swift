@@ -48,12 +48,44 @@ struct PlayingTrack: Decodable {
   var seekPercentage: Double?
   var imageKey: String?
   var disk: PlayingDisk?
+
+  private enum CodingKeys: String, CodingKey {
+    case title, artist, length, seekPosition, seekPercentage, imageKey, disk
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    title = try container.decode(String.self, forKey: .title)
+    artist = try container.decodeIfPresent(String.self, forKey: .artist)
+    length = try container.decodeIfPresent(String.self, forKey: .length)
+    imageKey = try container.decodeIfPresent(String.self, forKey: .imageKey)
+    disk = try container.decodeIfPresent(PlayingDisk.self, forKey: .disk)
+    seekPercentage = try container.decodeIfPresent(Double.self, forKey: .seekPercentage)
+    if let value = try? container.decode(String.self, forKey: .seekPosition) {
+      seekPosition = value
+    } else if let value = try? container.decode(Double.self, forKey: .seekPosition) {
+      seekPosition = String(value)
+    } else {
+      seekPosition = nil
+    }
+  }
 }
 
 struct PlayingDisk: Decodable {
   var title: String
   var artist: String?
   var imageKey: String?
+
+  private enum CodingKeys: String, CodingKey {
+    case title, artist, imageKey
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+    artist = try container.decodeIfPresent(String.self, forKey: .artist)
+    imageKey = try container.decodeIfPresent(String.self, forKey: .imageKey)
+  }
 }
 
 struct OutputVolume: Decodable {
@@ -83,6 +115,24 @@ struct ZoneStatePayload: Decodable {
   var isNextAllowed: Bool?
   var isPauseAllowed: Bool?
   var isPlayAllowed: Bool?
+
+  private enum CodingKeys: String, CodingKey {
+    case zoneId, displayName, outputs, state, nicePlaying
+    case isPreviousAllowed, isNextAllowed, isPauseAllowed, isPlayAllowed
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    zoneId = try container.decode(String.self, forKey: .zoneId)
+    displayName = try container.decodeIfPresent(String.self, forKey: .displayName) ?? ""
+    outputs = try container.decodeIfPresent([ZoneOutput].self, forKey: .outputs) ?? []
+    state = try container.decodeIfPresent(String.self, forKey: .state) ?? "stopped"
+    nicePlaying = try? container.decode(ZoneNicePlaying.self, forKey: .nicePlaying)
+    isPreviousAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPreviousAllowed)
+    isNextAllowed = try container.decodeIfPresent(Bool.self, forKey: .isNextAllowed)
+    isPauseAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPauseAllowed)
+    isPlayAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPlayAllowed)
+  }
 }
 
 struct QueueTrackPayload: Decodable, Identifiable {
@@ -93,11 +143,59 @@ struct QueueTrackPayload: Decodable, Identifiable {
   var imageKey: String?
   var length: String?
   var disk: PlayingDisk?
+
+  private enum CodingKeys: String, CodingKey {
+    case queueItemId, title, artist, imageKey, length, disk
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    if let value = try? container.decode(Int.self, forKey: .queueItemId) {
+      queueItemId = value
+    } else if let value = try? container.decode(Double.self, forKey: .queueItemId) {
+      queueItemId = Int(value)
+    } else if let value = try? container.decode(String.self, forKey: .queueItemId),
+              let parsed = Int(value)
+    {
+      queueItemId = parsed
+    } else {
+      throw DecodingError.dataCorruptedError(
+        forKey: .queueItemId,
+        in: container,
+        debugDescription: "queue_item_id"
+      )
+    }
+    title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+    artist = try container.decodeIfPresent(String.self, forKey: .artist)
+    imageKey = try container.decodeIfPresent(String.self, forKey: .imageKey)
+    disk = try container.decodeIfPresent(PlayingDisk.self, forKey: .disk)
+    if let value = try? container.decode(String.self, forKey: .length) {
+      length = value
+    } else if let value = try? container.decode(Double.self, forKey: .length) {
+      length = String(value)
+    } else {
+      length = nil
+    }
+  }
 }
 
 struct QueueStatePayload: Decodable {
   var zoneId: String
   var tracks: [QueueTrackPayload]
+
+  private enum CodingKeys: String, CodingKey {
+    case zoneId, tracks, items
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    zoneId = try container.decodeIfPresent(String.self, forKey: .zoneId) ?? ""
+    if let tracks = try? container.decode([QueueTrackPayload].self, forKey: .tracks) {
+      self.tracks = tracks
+    } else {
+      self.tracks = (try? container.decode([QueueTrackPayload].self, forKey: .items)) ?? []
+    }
+  }
 }
 
 struct SharedConfigPayload: Decodable {
