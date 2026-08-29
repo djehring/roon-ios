@@ -63,7 +63,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       body: ["pin": pin]
     )
-    let (_, response) = try await session.data(for: request)
+    let (_, response) = try await data(for: request)
     let http = try http(response)
     if http.statusCode == 403 {
       throw RoonAPIError.invalidPIN
@@ -82,7 +82,7 @@ final class RoonAPIClient: @unchecked Sendable {
       path += "/\(clientId)"
     }
     let request = try jsonRequest(path: path, method: "POST", body: nil as [String: String]?)
-    let (_, response) = try await session.data(for: request)
+    let (_, response) = try await data(for: request)
     let http = try http(response)
     guard http.statusCode == 201 else {
       throw RoonAPIError.httpStatus(http.statusCode, nil)
@@ -123,14 +123,14 @@ final class RoonAPIClient: @unchecked Sendable {
 
   func pairingPin() async throws -> String {
     let request = try jsonRequest(path: "/api/pairing", method: "GET", body: nil as [String: String]?)
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
     return try decoder.decode(PairingPinResponse.self, from: data).pin
   }
 
   func rotatePairingPin() async throws -> String {
     let request = try jsonRequest(path: "/api/pairing", method: "POST", body: nil as [String: String]?)
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
     return try decoder.decode(PairingPinResponse.self, from: data).pin
   }
@@ -142,7 +142,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: payload
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data, ok: [202])
   }
 
@@ -153,7 +153,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: options
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
     return try decoder.decode(BrowseResponse.self, from: data)
   }
@@ -165,7 +165,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: options
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
     return try decoder.decode(LoadResponse.self, from: data)
   }
@@ -189,7 +189,7 @@ final class RoonAPIClient: @unchecked Sendable {
     var request = try rawRequest(path: "/api/\(clientId)/aisearch", method: "POST")
     request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
     request.httpBody = Data(query.utf8)
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfOpenAI(response, data: data)
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }
@@ -201,7 +201,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: ["zoneId": zoneId, "tracks": tracks]
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }
@@ -224,7 +224,7 @@ final class RoonAPIClient: @unchecked Sendable {
     body.append(audio)
     body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
     request.httpBody = body
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfOpenAI(response, data: data)
     struct TextBody: Decodable { var text: String }
     return try decoder.decode(TextBody.self, from: data).text
@@ -237,7 +237,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: ["artist": artist, "track": track]
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfOpenAI(response, data: data)
     struct Wrapper: Decodable { var story: TrackStoryPayload }
     if let wrapped = try? decoder.decode(Wrapper.self, from: data) {
@@ -268,7 +268,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: payload
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfOpenAI(response, data: data)
     return try decoder.decode(RecognizeAlbumResponse.self, from: data)
   }
@@ -284,7 +284,7 @@ final class RoonAPIClient: @unchecked Sendable {
         "actionTitle": actionTitle,
       ]
     )
-    let (data, response) = try await session.data(for: request)
+    let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data, ok: [204, 200])
   }
 
@@ -298,7 +298,7 @@ final class RoonAPIClient: @unchecked Sendable {
   private func pingVersion() async throws {
     var request = try rawRequest(path: "/api/version", method: "GET")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
-    let (_, response) = try await session.data(for: request)
+    let (_, response) = try await data(for: request)
     let http = try http(response)
     guard http.statusCode == 204 else {
       throw RoonAPIError.httpStatus(http.statusCode, nil)
@@ -431,6 +431,35 @@ final class RoonAPIClient: @unchecked Sendable {
   private func requireClient() throws -> String {
     guard let clientId else { throw RoonAPIError.unpaired }
     return clientId
+  }
+
+  private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+    let first = try await session.data(for: request)
+    let path = request.url?.path ?? ""
+    if (try? http(first.1))?.statusCode != 403 {
+      return first
+    }
+    if path.contains("/pair") || path.contains("/register") || path.contains("/pairing") {
+      return first
+    }
+    try await reregister()
+    return try await session.data(for: request)
+  }
+
+  private func reregister() async throws {
+    let id = try requireClient()
+    let request = try jsonRequest(
+      path: "/api/register/\(id)",
+      method: "POST",
+      body: nil as [String: String]?
+    )
+    let (_, response) = try await session.data(for: request)
+    let http = try http(response)
+    guard http.statusCode == 201 else {
+      throw RoonAPIError.httpStatus(http.statusCode, nil)
+    }
+    try storeClient(from: http)
+    startEventStream()
   }
 
   private func jsonRequest<T: Encodable>(
