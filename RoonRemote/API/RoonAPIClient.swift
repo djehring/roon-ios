@@ -12,7 +12,9 @@ final class RoonAPIClient: @unchecked Sendable {
   }()
 
   private let session: URLSession
-  private let eventSession: URLSession
+  private var eventSession: URLSession?
+  private var eventDelegate: EventStreamDelegate?
+  private var eventTask: URLSessionDataTask?
   private var eventsTask: Task<Void, Never>?
   private var clientId: String?
 
@@ -33,11 +35,6 @@ final class RoonAPIClient: @unchecked Sendable {
     config.timeoutIntervalForRequest = 20
     config.waitsForConnectivity = true
     session = URLSession(configuration: config)
-    let eventConfig = URLSessionConfiguration.default
-    eventConfig.timeoutIntervalForRequest = TimeInterval.infinity
-    eventConfig.timeoutIntervalForResource = TimeInterval.infinity
-    eventConfig.waitsForConnectivity = true
-    eventSession = URLSession(configuration: eventConfig)
     if let savedHost = KeychainStore.get(Self.hostAccount),
        let savedPort = KeychainStore.get(Self.portAccount).flatMap(Int.init)
     {
@@ -97,6 +94,11 @@ final class RoonAPIClient: @unchecked Sendable {
   func stopEvents() {
     eventsTask?.cancel()
     eventsTask = nil
+    eventTask?.cancel()
+    eventTask = nil
+    eventSession?.invalidateAndCancel()
+    eventSession = nil
+    eventDelegate = nil
   }
 
   func unpair() async {
@@ -316,27 +318,28 @@ final class RoonAPIClient: @unchecked Sendable {
     do {
       var request = try rawRequest(path: "/api/\(clientId)/events", method: "GET")
       request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+      request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
       request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-      let (bytes, response) = try await eventSession.bytes(for: request)
-      let http = try http(response)
-      guard http.statusCode == 200 else {
-        throw RoonAPIError.httpStatus(http.statusCode, nil)
-      }
-      var eventName = ""
-      var dataLines: [String] = []
-      for try await line in bytes.lines {
+      request.cachePolicy = .reloadIgnoringLocalCacheData
+
+      let delegate = EventStreamDelegate()
+      let config = URLSessionConfiguration.default
+      config.timeoutIntervalForRequest = TimeInterval.infinity
+      config.timeoutIntervalForResource = TimeInterval.infinity
+      config.waitsForConnectivity = false
+      config.requestCachePolicy = .reloadIgnoringLocalCacheData
+      let streamSession = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+      eventDelegate = delegate
+      eventSession = streamSession
+      let task = streamSession.dataTask(with: request)
+      eventTask = task
+      task.resume()
+
+      var buffer = Data()
+      for try await chunk in delegate.chunks {
         if Task.isCancelled { return }
-        if line.isEmpty {
-          flushSSE(event: eventName, data: dataLines.joined(separator: "\n"))
-          eventName = ""
-          dataLines = []
-          continue
-        }
-        if line.hasPrefix("event:") {
-          eventName = String(line.dropFirst(6)).trimmingCharacters(in: .whitespaces)
-        } else if line.hasPrefix("data:") {
-          dataLines.append(String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces))
-        }
+        buffer.append(chunk)
+        consumeSSE(from: &buffer)
       }
     } catch {
       if !Task.isCancelled {
@@ -345,12 +348,51 @@ final class RoonAPIClient: @unchecked Sendable {
     }
   }
 
+  private func consumeSSE(from buffer: inout Data) {
+    let lf = Data("\n\n".utf8)
+    let crlf = Data("\r\n\r\n".utf8)
+    while true {
+      let lfRange = buffer.range(of: lf)
+      let crlfRange = buffer.range(of: crlf)
+      let range: Range<Data.Index>?
+      if let lfRange, let crlfRange {
+        range = lfRange.lowerBound <= crlfRange.lowerBound ? lfRange : crlfRange
+      } else {
+        range = lfRange ?? crlfRange
+      }
+      guard let range else { return }
+      let packet = buffer.subdata(in: buffer.startIndex..<range.lowerBound)
+      buffer.removeSubrange(buffer.startIndex..<range.upperBound)
+      parseSSEPacket(packet)
+    }
+  }
+
+  private func parseSSEPacket(_ packet: Data) {
+    guard let text = String(data: packet, encoding: .utf8) else { return }
+    var eventName = ""
+    var dataLines: [String] = []
+    for raw in text.split(separator: "\n", omittingEmptySubsequences: false) {
+      var line = String(raw)
+      if line.hasSuffix("\r") { line.removeLast() }
+      if line.hasPrefix("event:") {
+        eventName = String(line.dropFirst(6)).trimmingCharacters(in: .whitespaces)
+      } else if line.hasPrefix("data:") {
+        var value = String(line.dropFirst(5))
+        if value.hasPrefix(" ") { value.removeFirst() }
+        dataLines.append(value)
+      }
+    }
+    flushSSE(event: eventName, data: dataLines.joined(separator: "\n"))
+  }
+
   private func flushSSE(event: String, data: String) {
     guard !data.isEmpty, let payload = data.data(using: .utf8) else { return }
     switch event {
     case "state":
-      if let value = try? decoder.decode(ApiStatePayload.self, from: payload) {
-        onState?(value)
+      do {
+        onState?(try decoder.decode(ApiStatePayload.self, from: payload))
+      } catch {
+        onEventsFailed?(error)
       }
     case "zone":
       if let value = try? decoder.decode(ZoneStatePayload.self, from: payload) {
@@ -370,7 +412,11 @@ final class RoonAPIClient: @unchecked Sendable {
   }
 
   private func storeClient(from http: HTTPURLResponse) throws {
-    guard let location = http.value(forHTTPHeaderField: "Location") else {
+    guard let location = http.value(forHTTPHeaderField: "Location")
+      ?? http.value(forHTTPHeaderField: "location")
+      ?? http.allHeaderFields["Location"] as? String
+      ?? http.allHeaderFields["location"] as? String
+    else {
       throw RoonAPIError.missingLocation
     }
     let id = location.split(separator: "/").last.map(String.init) ?? location.replacingOccurrences(
@@ -450,5 +496,59 @@ final class RoonAPIClient: @unchecked Sendable {
       throw RoonAPIError.missingOpenAI
     }
     try throwIfNeeded(response, data: data)
+  }
+}
+
+private final class EventStreamDelegate: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+  let chunks: AsyncThrowingStream<Data, Error>
+  private let continuation: AsyncThrowingStream<Data, Error>.Continuation
+  private var finished = false
+
+  override init() {
+    var continuation: AsyncThrowingStream<Data, Error>.Continuation!
+    chunks = AsyncThrowingStream { continuation = $0 }
+    self.continuation = continuation
+    super.init()
+  }
+
+  func urlSession(
+    _ session: URLSession,
+    dataTask: URLSessionDataTask,
+    didReceive response: URLResponse,
+    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
+  ) {
+    guard let http = response as? HTTPURLResponse else {
+      finish(RoonAPIError.invalidURL)
+      completionHandler(.cancel)
+      return
+    }
+    guard http.statusCode == 200 else {
+      finish(RoonAPIError.httpStatus(http.statusCode, nil))
+      completionHandler(.cancel)
+      return
+    }
+    completionHandler(.allow)
+  }
+
+  func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+    continuation.yield(data)
+  }
+
+  func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    if let error, (error as NSError).code != NSURLErrorCancelled {
+      finish(error)
+    } else {
+      finish(nil)
+    }
+  }
+
+  private func finish(_ error: Error?) {
+    guard !finished else { return }
+    finished = true
+    if let error {
+      continuation.finish(throwing: error)
+    } else {
+      continuation.finish()
+    }
   }
 }
