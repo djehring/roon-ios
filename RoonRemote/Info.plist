@@ -31,6 +31,12 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Roon Remote finds the bridge on your Wi-Fi so it can control the rooms in your house.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Roon Remote photographs album covers so the bridge can match them in your library.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Roon Remote records a short clip so the bridge can turn speech into an AI search.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Roon Remote reads a cover photo from your library so the bridge can match the album.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
