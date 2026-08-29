@@ -1,0 +1,4 @@
+{
+  "name": "Roon Remote (iOS) — Swift toolchain",
+  "install": "bash .cursor/install.sh"
+}
