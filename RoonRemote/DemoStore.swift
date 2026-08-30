@@ -29,10 +29,24 @@ extension MockStore {
       progress: 0.35,
       imageKey: nil
     )
+    let pausedTrack = Track(
+      id: "demo-paused",
+      title: "Violin Sonata in F-flat Major",
+      artist: "Mozart",
+      album: "The Complete Sonatas",
+      position: "1:08",
+      remaining: "5:21",
+      progress: 0.17,
+      imageKey: nil
+    )
     zones = [
-      Zone(id: "living", name: "Living Room", track: track, state: .playing),
+      Zone(id: "living", name: "Big Sitting Room", track: track, state: .playing),
+      Zone(id: "conservatory", name: "Conservatory", track: pausedTrack, state: .paused),
+      Zone(id: "dining", name: "Dining Room", track: nil, state: .stopped),
+      Zone(id: "gym", name: "Gym", track: nil, state: .stopped),
       Zone(id: "kitchen", name: "Kitchen", track: nil, state: .stopped),
-      Zone(id: "study", name: "Study", track: nil, state: .paused),
+      Zone(id: "office", name: "Office", track: nil, state: .stopped),
+      Zone(id: "snug", name: "Snug", track: nil, state: .stopped),
     ]
     selectedZoneId = "living"
     isPlaying = true
@@ -40,19 +54,23 @@ extension MockStore {
       Output(
         id: "living-main",
         zoneId: "living",
-        name: "Living Room",
+        name: "Big Sitting Room",
         volume: 42,
         min: 0,
         max: 100,
         muted: false,
         isFixed: false,
-        canGroupWith: ["kitchen-main", "study-main"]
+        canGroupWith: ["conservatory-main", "dining-main", "gym-main", "kitchen-main", "office-main", "snug-main"]
       ),
     ]
     houseOutputs = [
-      OutputDescription(displayName: "Living Room", zoneId: "living", outputId: "living-main"),
+      OutputDescription(displayName: "Big Sitting Room", zoneId: "living", outputId: "living-main"),
+      OutputDescription(displayName: "Conservatory", zoneId: "conservatory", outputId: "conservatory-main"),
+      OutputDescription(displayName: "Dining Room", zoneId: "dining", outputId: "dining-main"),
+      OutputDescription(displayName: "Gym", zoneId: "gym", outputId: "gym-main"),
       OutputDescription(displayName: "Kitchen", zoneId: "kitchen", outputId: "kitchen-main"),
-      OutputDescription(displayName: "Study", zoneId: "study", outputId: "study-main"),
+      OutputDescription(displayName: "Office", zoneId: "office", outputId: "office-main"),
+      OutputDescription(displayName: "Snug", zoneId: "snug", outputId: "snug-main"),
     ]
     queue = [
       QueueItem(

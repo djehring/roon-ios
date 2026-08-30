@@ -10,7 +10,7 @@ struct PlaybackSheets: ViewModifier {
   func body(content: Content) -> some View {
     @Bindable var store = store
     content
-      .sheet(isPresented: $store.showZonePicker) {
+      .sheet(isPresented: zoneSheetPresented) {
         ZonePickerSheet()
           .presentationDetents([.medium, .large])
       }
@@ -32,6 +32,13 @@ struct PlaybackSheets: ViewModifier {
       .fullScreenCover(isPresented: storyPresented(whenRegular: true)) {
         StorySheet()
       }
+  }
+
+  private var zoneSheetPresented: Binding<Bool> {
+    Binding(
+      get: { store.showZonePicker && hSize != .regular },
+      set: { store.showZonePicker = $0 }
+    )
   }
 
   private func storyPresented(whenRegular: Bool) -> Binding<Bool> {
@@ -56,37 +63,88 @@ extension View {
 }
 
 struct ZonePickerSheet: View {
-  @Environment(MockStore.self) private var store
-
   var body: some View {
     NavigationStack {
-      List(store.zones) { zone in
-        Button {
-          store.selectZone(zone.id)
-        } label: {
-          HStack {
-            VStack(alignment: .leading, spacing: 2) {
-              Text(zone.name)
-                .foregroundStyle(Palette.primary)
-              Text(zone.track?.title ?? "Nothing playing")
-                .font(.footnote)
-                .foregroundStyle(Palette.secondary)
-            }
-            Spacer()
-            if zone.id == store.selectedZoneId {
-              Image(systemName: "checkmark")
-                .foregroundStyle(Palette.accent)
-            }
-          }
-        }
-        .listRowBackground(Palette.surface)
-      }
-      .scrollContentBackground(.hidden)
-      .background(Palette.background)
+      RoomPickerContent()
       .navigationTitle("Rooms")
       .navigationBarTitleDisplayMode(.inline)
     }
     .presentationBackground(Palette.background)
+  }
+}
+
+struct RoomPickerContent: View {
+  var showsHeader = false
+  @Environment(MockStore.self) private var store
+
+  var body: some View {
+    VStack(spacing: 0) {
+      if showsHeader {
+        Text("Rooms")
+          .font(.headline)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.horizontal, 18)
+          .padding(.vertical, 16)
+        Divider()
+      }
+
+      ScrollView {
+        LazyVStack(spacing: 0) {
+          ForEach(store.zones) { zone in
+            roomRow(zone)
+            if zone.id != store.zones.last?.id {
+              Divider()
+                .padding(.leading, 70)
+            }
+          }
+        }
+        .padding(.horizontal, 12)
+      }
+    }
+    .background(Palette.background)
+  }
+
+  private func roomRow(_ zone: Zone) -> some View {
+    let selected = zone.id == store.selectedZoneId
+    return Button {
+      store.selectZone(zone.id)
+    } label: {
+      HStack(spacing: 14) {
+        Image(systemName: RoomPresentation.symbol(for: zone.name))
+          .font(.system(size: 18, weight: .medium))
+          .foregroundStyle(selected ? Palette.onAccent : Palette.primary)
+          .frame(width: 42, height: 42)
+          .background(selected ? Palette.accent : Palette.surface)
+          .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+        VStack(alignment: .leading, spacing: 3) {
+          Text(zone.name)
+            .font(.body.weight(selected ? .semibold : .regular))
+            .foregroundStyle(Palette.primary)
+            .lineLimit(1)
+          Text(RoomPresentation.status(for: zone))
+            .font(.caption)
+            .foregroundStyle(Palette.secondary)
+            .lineLimit(1)
+        }
+
+        Spacer(minLength: 8)
+
+        if let stateSymbol = RoomPresentation.stateSymbol(for: zone.state) {
+          Image(systemName: stateSymbol)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(zone.state == .playing ? Palette.accent : Palette.secondary)
+            .symbolEffect(.variableColor.iterative, isActive: zone.state == .playing)
+        }
+        if selected {
+          Image(systemName: "checkmark.circle.fill")
+            .foregroundStyle(Palette.accent)
+        }
+      }
+      .frame(minHeight: RoomPickerLayout.rowHeight)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
   }
 }
 

@@ -74,6 +74,21 @@ struct RegularNowPlayingView: View {
           .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
       }
       .buttonStyle(.plain)
+      .popover(
+        isPresented: Binding(
+          get: { store.showZonePicker },
+          set: { store.showZonePicker = $0 }
+        ),
+        attachmentAnchor: .rect(.bounds),
+        arrowEdge: .top
+      ) {
+        RoomPickerContent(showsHeader: true)
+          .frame(
+            width: RoomPickerLayout.width,
+            height: RoomPickerLayout.height(roomCount: store.zones.count)
+          )
+          .presentationCompactAdaptation(.popover)
+      }
 
       Spacer()
 
