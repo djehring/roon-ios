@@ -6,12 +6,13 @@ import UIKit
 /// one another. Both arrangements sit over artwork-derived ambience and keep
 /// the queue in an inspector rather than permanently surrendering detail width.
 struct RegularNowPlayingView: View {
+  @Binding var columnVisibility: NavigationSplitViewVisibility
   @Environment(MockStore.self) private var store
   @State private var queuePresented = false
 
   var body: some View {
     GeometryReader { geometry in
-      let mode = RegularNowPlayingLayout.mode(for: geometry.size.width)
+      let mode = RegularNowPlayingLayout.mode(for: geometry.size)
 
       ZStack(alignment: .top) {
         backdrop
@@ -55,6 +56,12 @@ struct RegularNowPlayingView: View {
 
   private var topControls: some View {
     HStack(spacing: 12) {
+      roundHeaderButton(label: "Toggle Sidebar", symbol: "sidebar.left") {
+        withAnimation(Motion.sheet) {
+          columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
+        }
+      }
+
       Button {
         store.showZonePicker = true
       } label: {

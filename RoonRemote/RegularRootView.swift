@@ -11,35 +11,51 @@ struct RegularRootView: View {
   // Optional because that is the shape a sidebar `List(selection:)` binds to.
   @State private var selection: SidebarItem? = .nowPlaying
   @State private var path = NavigationPath()
+  @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
   var body: some View {
-    NavigationSplitView {
-      sidebar
-    } detail: {
-      NavigationStack(path: $path) {
-        detail
+    GeometryReader { geometry in
+      NavigationSplitView(columnVisibility: $columnVisibility) {
+        sidebar
+          .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 320)
+      } detail: {
+        NavigationStack(path: $path) {
+          detail
+        }
+      }
+      .navigationSplitViewStyle(.prominentDetail)
+      .playbackSheets()
+      .onAppear {
+        adaptColumns(to: geometry.size.width)
+      }
+      .onChange(of: geometry.size.width) { _, width in
+        adaptColumns(to: width)
+      }
+      .onChange(of: selection) { _, item in
+        // Each destination is its own root, so a drill-down does not survive a
+        // jump to a different category.
+        path = NavigationPath()
+        guard let item else { return }
+        store.selectedTab = item.tab
+        if case let .search(segment) = item {
+          store.searchSegment = segment
+        }
+      }
+      .onChange(of: store.selectedTab) { _, tab in
+        syncSelection(to: tab)
+      }
+      .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
+        guard let hierarchy else { return }
+        selection = .libraryRow(forHierarchy: hierarchy, in: store.library)
+        store.libraryLaunchHierarchy = nil
       }
     }
-    .navigationSplitViewStyle(.balanced)
-    .playbackSheets()
-    .onChange(of: selection) { _, item in
-      // Each destination is its own root, so a drill-down does not survive a
-      // jump to a different category.
-      path = NavigationPath()
-      guard let item else { return }
-      store.selectedTab = item.tab
-      if case let .search(segment) = item {
-        store.searchSegment = segment
-      }
-    }
-    .onChange(of: store.selectedTab) { _, tab in
-      syncSelection(to: tab)
-    }
-    .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
-      guard let hierarchy else { return }
-      selection = .libraryRow(forHierarchy: hierarchy, in: store.library)
-      store.libraryLaunchHierarchy = nil
-    }
+  }
+
+  private func adaptColumns(to width: CGFloat) {
+    columnVisibility = RegularShellLayout.prefersPersistentSidebar(containerWidth: width)
+      ? .all
+      : .detailOnly
   }
 
   private var sidebar: some View {
@@ -73,7 +89,7 @@ struct RegularRootView: View {
   private var detail: some View {
     switch selection {
     case .nowPlaying:
-      RegularNowPlayingView()
+      RegularNowPlayingView(columnVisibility: $columnVisibility)
     case .rooms:
       RegularRoomsView()
     case .library:

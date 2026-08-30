@@ -49,8 +49,10 @@ enum RegularNowPlayingLayout: Equatable {
 
   static let sideBySideMinimumWidth: CGFloat = 860
 
-  static func mode(for width: CGFloat) -> Self {
-    width >= sideBySideMinimumWidth ? .sideBySide : .stacked
+  static func mode(for size: CGSize) -> Self {
+    size.width >= sideBySideMinimumWidth && size.width > size.height
+      ? .sideBySide
+      : .stacked
   }
 
   static func artWidth(containerWidth: CGFloat, mode: Self) -> CGFloat {
@@ -60,5 +62,13 @@ enum RegularNowPlayingLayout: Equatable {
     case .sideBySide:
       max(0, min(520, containerWidth * 0.46))
     }
+  }
+}
+
+enum RegularShellLayout {
+  static let persistentSidebarMinimumWidth: CGFloat = 1100
+
+  static func prefersPersistentSidebar(containerWidth: CGFloat) -> Bool {
+    containerWidth >= persistentSidebarMinimumWidth
   }
 }
