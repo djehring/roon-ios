@@ -22,6 +22,15 @@ struct RegularRootView: View {
         NavigationStack(path: $path) {
           detail
         }
+        // Applied to the detail column so the queue reflows it rather than
+        // covering it. Presented from Now Playing's header button it would sit
+        // inside the content and hide that button, leaving no way to close it.
+        .inspector(isPresented: queueInspectorPresented) {
+          QueueList(embedded: true) {
+            store.showQueue = false
+          }
+          .inspectorColumnWidth(min: 300, ideal: 360, max: 440)
+        }
       }
       .navigationSplitViewStyle(.prominentDetail)
       .playbackSheets()
@@ -50,6 +59,13 @@ struct RegularRootView: View {
         store.libraryLaunchHierarchy = nil
       }
     }
+  }
+
+  private var queueInspectorPresented: Binding<Bool> {
+    Binding(
+      get: { store.showQueue },
+      set: { store.showQueue = $0 }
+    )
   }
 
   private func adaptColumns(to width: CGFloat) {

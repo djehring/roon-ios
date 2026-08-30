@@ -217,7 +217,9 @@ final class MockStore {
     selectedZoneId = id
     zoneDefaults.set(id, forKey: "selectedZoneId")
     isPlaying = selectedZone.state == .playing
-    queue = queuesByZone[id] ?? []
+    // Empty rather than the previous room's tracks: a stale queue reads as this
+    // room's, which is worse than showing nothing until the event arrives.
+    queue = queuesByZone[selectedZone.id] ?? []
     showZonePicker = false
     publishWatchSnapshot()
   }
@@ -1280,8 +1282,12 @@ final class MockStore {
         imageKey: $0.imageKey
       )
     }
-    queuesByZone[payload.zoneId] = items
-    if payload.zoneId == selectedZone.id || payload.zoneId == selectedZoneId {
+    guard let zoneId = QueueRouting.zoneId(
+      payloadZoneId: payload.zoneId,
+      displayedZoneId: selectedZone.id
+    ) else { return }
+    queuesByZone[zoneId] = items
+    if zoneId == selectedZone.id {
       queue = items
     }
     publishWatchSnapshot()

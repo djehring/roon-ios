@@ -40,6 +40,8 @@
 		480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */; };
 		4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		50220EBCA240F22C39952FFF /* LibraryIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80506818538B2F6597E20D61 /* LibraryIndexTests.swift */; };
+		505425BC9AF914974F327171 /* QueueRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */; };
+		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
 		60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34BDEF88D54EB957842C41A5 /* Assets.xcassets */; };
@@ -57,6 +59,7 @@
 		8D41AF696B6304473C14FE3D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38E999F7921AA6BB8403FC7 /* RootView.swift */; };
 		9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
 		A1DCC3705F85009C8B41C699 /* PlaybackAdjustmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */; };
+		A4C8EBC9FDC73AC2DDAA79CE /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		ADA7C268DF266772B7C2F2CC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		ADAAEB9E3406A514F3E6C127 /* SidebarSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */; };
@@ -91,6 +94,7 @@
 		F3E1BE3506F4AF0D187F9A1C /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BEADFB2D74AE470C4AE825 /* Layout.swift */; };
+		FBF67225AB0CC91ED99F9D98 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFB1CDA9C5D44EFAF558CDC /* TVApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -150,6 +154,7 @@
 		2C593B07F14E89605669C1AD /* WatchPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPayload.swift; sourceTree = "<group>"; };
 		2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPresentationTests.swift; sourceTree = "<group>"; };
 		2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriPlayIntent.swift; sourceTree = "<group>"; };
+		2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRoutingTests.swift; sourceTree = "<group>"; };
 		2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularRoomsView.swift; sourceTree = "<group>"; };
 		34BDEF88D54EB957842C41A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoonRemoteWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -195,6 +200,7 @@
 		DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularRootView.swift; sourceTree = "<group>"; };
 		E3AB5E20236375416F21B172 /* LibraryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViews.swift; sourceTree = "<group>"; };
 		E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelectionTests.swift; sourceTree = "<group>"; };
+		EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRouting.swift; sourceTree = "<group>"; };
 		F19655EC02847FD92A59DBE6 /* RoonRemoteTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RoonRemoteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSelectionTests.swift; sourceTree = "<group>"; };
 		F4CD925CA7A704A07C1A93F4 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -239,6 +245,7 @@
 				99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */,
 				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
 				25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */,
+				EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */,
 				2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */,
 				D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */,
 				2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */,
@@ -265,6 +272,7 @@
 				A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */,
 				80506818538B2F6597E20D61 /* LibraryIndexTests.swift */,
 				5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */,
+				2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */,
 				2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */,
 				E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */,
 				F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */,
@@ -537,6 +545,7 @@
 				4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */,
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
 				89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */,
+				A4C8EBC9FDC73AC2DDAA79CE /* QueueRouting.swift in Sources */,
 				03882B4209A659F450A93828 /* RoonAPIClient.swift in Sources */,
 				C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */,
 				FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */,
@@ -568,6 +577,8 @@
 				76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */,
 				B38B7FF3838694CFF40A5768 /* PlaybackAdjustment.swift in Sources */,
 				A1DCC3705F85009C8B41C699 /* PlaybackAdjustmentTests.swift in Sources */,
+				FBF67225AB0CC91ED99F9D98 /* QueueRouting.swift in Sources */,
+				505425BC9AF914974F327171 /* QueueRoutingTests.swift in Sources */,
 				364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */,
 				859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */,
 				2F265711F9C366490043E056 /* SearchSelection.swift in Sources */,
@@ -609,6 +620,7 @@
 				061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */,
 				E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */,
 				ADA7C268DF266772B7C2F2CC /* PlaybackAdjustment.swift in Sources */,
+				54C29928665633135687FD19 /* QueueRouting.swift in Sources */,
 				1D51A3E3481F5F363FD8DC04 /* RegularBrowseView.swift in Sources */,
 				B73EBC27D6282D064D90FE48 /* RegularNowPlayingView.swift in Sources */,
 				B3F1A9FEED87FDC267626CF7 /* RegularRoomsView.swift in Sources */,

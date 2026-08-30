@@ -76,6 +76,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/LibraryDragItem.swift
       - path: RoonRemote/PlaybackAdjustment.swift
+      - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/Sidebar.swift
@@ -156,6 +157,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
       - path: RoonRemote/DemoStore.swift
+      - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/PlaybackAdjustment.swift
       - path: RoonRemote/API
     settings:

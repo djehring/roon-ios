@@ -8,7 +8,6 @@ import UIKit
 struct RegularNowPlayingView: View {
   @Binding var columnVisibility: NavigationSplitViewVisibility
   @Environment(MockStore.self) private var store
-  @State private var queuePresented = false
 
   var body: some View {
     GeometryReader { geometry in
@@ -21,10 +20,6 @@ struct RegularNowPlayingView: View {
           .padding(.horizontal, 24)
           .padding(.top, 12)
       }
-    }
-    .inspector(isPresented: $queuePresented) {
-      QueueList(embedded: true)
-        .inspectorColumnWidth(min: 300, ideal: 360, max: 440)
     }
   }
 
@@ -96,7 +91,7 @@ struct RegularNowPlayingView: View {
         store.showVolume = true
       }
       roundHeaderButton(label: "Queue", symbol: "list.bullet") {
-        queuePresented.toggle()
+        store.showQueue.toggle()
       }
     }
     .foregroundStyle(Palette.primary)
@@ -147,7 +142,7 @@ struct RegularNowPlayingView: View {
       actionChips
 
       Button {
-        queuePresented = true
+        store.showQueue = true
       } label: {
         HStack(spacing: 10) {
           Image(systemName: "list.bullet")
