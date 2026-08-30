@@ -60,6 +60,10 @@ struct SettingsView: View {
             store.beginRecordingAction()
           }
         }
+        Section("Watch") {
+          Text("Controls the same zone as the phone")
+            .foregroundStyle(Palette.secondary)
+        }
         Section("About") {
           LabeledContent("App", value: "0.1.0")
         }

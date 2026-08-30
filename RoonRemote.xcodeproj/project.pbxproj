@@ -10,32 +10,92 @@
 		002E894085A1205658FC7A5B /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */; };
 		09995FA90839CD6F1D1D1702 /* RoonAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */; };
+		14D20892A4BD928CB792959E /* RoonRemoteWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C82F953539BF55800236CA9A /* RoonRemoteWatch.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
+		1EF21BEA5BE9F8993BCEF636 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
+		1F9CAD48A41AB0D65F6E59AB /* RoonRemoteWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4814FEAE30516219F5ED8F68 /* SearchViews.swift */; };
 		2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
 		43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		45403E597B935611457A6527 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
+		60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34BDEF88D54EB957842C41A5 /* Assets.xcassets */; };
 		66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		6B16278C6389EA4D84AE1C00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5803354A53F4E76B9554B232 /* Assets.xcassets */; };
+		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B895799574E60D21626345F2 /* RoonRemoteApp.swift */; };
 		8D41AF696B6304473C14FE3D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38E999F7921AA6BB8403FC7 /* RootView.swift */; };
 		9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
 		BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */; };
 		BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC17B2323BEB8BE438F3955A /* SettingsView.swift */; };
+		C59E170BB27ADEAA8413A98C /* WatchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1283D159767D98835D1EB6 /* WatchStore.swift */; };
+		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
+		DBCEF94C8DCA24BD22DC4D1D /* RoonWatchWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */; };
 		E68F80420248573C98BAC2B7 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
+		E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794CD25D854C7A16C017574F /* PhoneWatchSync.swift */; };
 		EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97C1EA62154B94FECA419F8 /* WatchApp.swift */; };
 		F1CF64E9E17F9947219A9C01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7FD23085EEDE73DD20363A0D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9E23412C38A36CF9486780B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 989182402A69166E8E230D88;
+			remoteInfo = RoonRemoteWatch;
+		};
+		EBED3D273197EA9B868AD713 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9E23412C38A36CF9486780B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8E96D2D45CC6B6EEF6052C88;
+			remoteInfo = RoonRemoteWatchWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		14C50AB08B977B044562FC49 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1F9CAD48A41AB0D65F6E59AB /* RoonRemoteWatchWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C489FF8A2CF5FBFA6C6B696A /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				14D20892A4BD928CB792959E /* RoonRemoteWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2AE17D25F7DC793302FC135B /* MockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockStore.swift; sourceTree = "<group>"; };
+		2C593B07F14E89605669C1AD /* WatchPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPayload.swift; sourceTree = "<group>"; };
+		34BDEF88D54EB957842C41A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoonRemoteWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4814FEAE30516219F5ED8F68 /* SearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViews.swift; sourceTree = "<group>"; };
+		4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonWatchWidgets.swift; sourceTree = "<group>"; };
 		4F1E40CD7B16597224C17356 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		5803354A53F4E76B9554B232 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		581604138A659F8F43EAA5B2 /* RoonRemoteWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatch.entitlements; sourceTree = "<group>"; };
 		78EC37C6E30577680508614E /* RoonRemote.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RoonRemote.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		794CD25D854C7A16C017574F /* PhoneWatchSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWatchSync.swift; sourceTree = "<group>"; };
+		827EBF13E8DFB957EFA65453 /* RoonRemoteWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatchWidgets.entitlements; sourceTree = "<group>"; };
+		8C1283D159767D98835D1EB6 /* WatchStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStore.swift; sourceTree = "<group>"; };
 		9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSheets.swift; sourceTree = "<group>"; };
 		99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIClient.swift; sourceTree = "<group>"; };
@@ -62,6 +122,7 @@
 				9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */,
 				0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */,
 				99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */,
+				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
 				B895799574E60D21626345F2 /* RoonRemoteApp.swift */,
 				D38E999F7921AA6BB8403FC7 /* RootView.swift */,
 				4814FEAE30516219F5ED8F68 /* SearchViews.swift */,
@@ -75,6 +136,7 @@
 			isa = PBXGroup;
 			children = (
 				A111F24DBFE4E98B06B0E140 /* Theme.swift */,
+				2C593B07F14E89605669C1AD /* WatchPayload.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -84,15 +146,28 @@
 			children = (
 				78EC37C6E30577680508614E /* RoonRemote.app */,
 				C82F953539BF55800236CA9A /* RoonRemoteWatch.app */,
+				37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		70FB007050EBD18A10F9A449 /* RoonRemoteWatchWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				34BDEF88D54EB957842C41A5 /* Assets.xcassets */,
+				827EBF13E8DFB957EFA65453 /* RoonRemoteWatchWidgets.entitlements */,
+				4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */,
+			);
+			path = RoonRemoteWatchWidgets;
 			sourceTree = "<group>";
 		};
 		7A314C0BC5ACA61A3F28199C /* RoonRemoteWatch */ = {
 			isa = PBXGroup;
 			children = (
 				5803354A53F4E76B9554B232 /* Assets.xcassets */,
+				581604138A659F8F43EAA5B2 /* RoonRemoteWatch.entitlements */,
 				A97C1EA62154B94FECA419F8 /* WatchApp.swift */,
+				8C1283D159767D98835D1EB6 /* WatchStore.swift */,
 			);
 			path = RoonRemoteWatch;
 			sourceTree = "<group>";
@@ -102,6 +177,7 @@
 			children = (
 				1A2719353E2F538E0BADB9E7 /* RoonRemote */,
 				7A314C0BC5ACA61A3F28199C /* RoonRemoteWatch */,
+				70FB007050EBD18A10F9A449 /* RoonRemoteWatchWidgets */,
 				32F70187F02D42DA657CAF0A /* Shared */,
 				582D9B359127088A7B33CA42 /* Products */,
 			);
@@ -121,16 +197,36 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		8E96D2D45CC6B6EEF6052C88 /* RoonRemoteWatchWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58F297500249D40B0EFB9EE4 /* Build configuration list for PBXNativeTarget "RoonRemoteWatchWidgets" */;
+			buildPhases = (
+				B26651E5BC48E0BCA2343171 /* Sources */,
+				65B724486E60AE51E82E528A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RoonRemoteWatchWidgets;
+			packageProductDependencies = (
+			);
+			productName = RoonRemoteWatchWidgets;
+			productReference = 37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		989182402A69166E8E230D88 /* RoonRemoteWatch */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 88D26600D1610326DEF7A74B /* Build configuration list for PBXNativeTarget "RoonRemoteWatch" */;
 			buildPhases = (
 				4F7E390D0516AF8240CEC2B8 /* Sources */,
 				AE0C67DDBDBBDC856E85047F /* Resources */,
+				14C50AB08B977B044562FC49 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				5E986229FEF9C12F31318C0D /* PBXTargetDependency */,
 			);
 			name = RoonRemoteWatch;
 			packageProductDependencies = (
@@ -145,10 +241,12 @@
 			buildPhases = (
 				716E2C2D21433579862ED4C7 /* Sources */,
 				02B3B0332CDDC14325BC4299 /* Resources */,
+				C489FF8A2CF5FBFA6C6B696A /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2E6A71568E14C566E21DDB77 /* PBXTargetDependency */,
 			);
 			name = RoonRemote;
 			packageProductDependencies = (
@@ -166,6 +264,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					8E96D2D45CC6B6EEF6052C88 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
 					989182402A69166E8E230D88 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -192,6 +294,7 @@
 			targets = (
 				DEA0488C852F27408F183911 /* RoonRemote */,
 				989182402A69166E8E230D88 /* RoonRemoteWatch */,
+				8E96D2D45CC6B6EEF6052C88 /* RoonRemoteWatchWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -202,6 +305,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1CF64E9E17F9947219A9C01 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		65B724486E60AE51E82E528A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,6 +333,8 @@
 			files = (
 				66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */,
 				EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */,
+				D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */,
+				C59E170BB27ADEAA8413A98C /* WatchStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +350,7 @@
 				BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */,
 				45403E597B935611457A6527 /* NowPlayingView.swift in Sources */,
 				061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */,
+				E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */,
 				09995FA90839CD6F1D1D1702 /* RoonAPIClient.swift in Sources */,
 				E68F80420248573C98BAC2B7 /* RoonAPIModels.swift in Sources */,
 				8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */,
@@ -244,16 +358,58 @@
 				21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */,
 				BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */,
 				43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */,
+				14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B26651E5BC48E0BCA2343171 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DBCEF94C8DCA24BD22DC4D1D /* RoonWatchWidgets.swift in Sources */,
+				1EF21BEA5BE9F8993BCEF636 /* Theme.swift in Sources */,
+				7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		2E6A71568E14C566E21DDB77 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 989182402A69166E8E230D88 /* RoonRemoteWatch */;
+			targetProxy = 7FD23085EEDE73DD20363A0D /* PBXContainerItemProxy */;
+		};
+		5E986229FEF9C12F31318C0D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8E96D2D45CC6B6EEF6052C88 /* RoonRemoteWatchWidgets */;
+			targetProxy = EBED3D273197EA9B868AD713 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		22B0057F028ADCA6CF855F5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatchWidgets/RoonRemoteWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RoonRemoteWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp.widgets;
+				PRODUCT_NAME = RoonWatchWidgets;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
 		295269B95493FF6DFE7A60AA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -265,6 +421,23 @@
 				TARGETED_DEVICE_FAMILY = 4;
 			};
 			name = Release;
+		};
+		608A7F7F802B694D350C775A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatchWidgets/RoonRemoteWatchWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RoonRemoteWatchWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp.widgets;
+				PRODUCT_NAME = RoonWatchWidgets;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
 		};
 		67D2DDD860A4BD7EAB6B4FCF /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -437,6 +610,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
@@ -452,6 +626,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		58F297500249D40B0EFB9EE4 /* Build configuration list for PBXNativeTarget "RoonRemoteWatchWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				608A7F7F802B694D350C775A /* Debug */,
+				22B0057F028ADCA6CF855F5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		6F85C32FC805C779D8BE9C28 /* Build configuration list for PBXProject "RoonRemote" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

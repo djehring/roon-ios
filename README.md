@@ -2,12 +2,17 @@
 
 Native iPhone client for [roon-web-stack](https://github.com/djehring/roon-web-stack).
 The signed-off SwiftUI screens talk to the Docker/extension API over HTTP
-on the LAN. There is no Watch companion, Live Activity, or share
-extension in this version.
+on the LAN. The Watch app is a companion: it does not talk to the bridge.
+It shows the phone's selected zone, transport, Digital Crown volume, and
+a room list over `WCSession`.
 
 Open `RoonRemote.xcodeproj` and run the **Roon Remote** scheme on a
-physical iPhone. Simulator can pair if you type the bridge `host:port`
-during onboarding.
+physical iPhone (that installs the Watch app when a paired watch is
+present). Simulator can pair if you type the bridge `host:port`
+during onboarding. To debug Watch UI, run the **RoonRemoteWatch** scheme
+with the iPhone app already paired.
+
+## Pairing
 
 ## Pairing
 
@@ -19,6 +24,14 @@ during onboarding.
    the bridge reports `SYNC`, then pick a zone.
 
 `client_id` is stored in the Keychain. Unpair from Settings.
+
+## Watch
+
+Install Roon Remote on the iPhone first and finish pairing. The Watch
+app follows that session: play/pause, skip, Digital Crown volume on the
+zone's first output, and a second page to pick a room. Complications
+show art or the current title. Open the iPhone app if the Watch says it
+cannot reach the phone.
 
 ## Search
 

@@ -23,18 +23,26 @@ extension Color {
   }
 
   static func adaptive(light: UInt32, dark: UInt32) -> Color {
+    #if os(watchOS)
+    Color(hex: dark)
+    #else
     Color(uiColor: UIColor { traits in
       UIColor(hex: traits.userInterfaceStyle == .dark ? dark : light)
     })
+    #endif
   }
 
   static func adaptiveFill(lightBlack: CGFloat, darkWhite: CGFloat) -> Color {
+    #if os(watchOS)
+    Color.white.opacity(darkWhite)
+    #else
     Color(uiColor: UIColor { traits in
       if traits.userInterfaceStyle == .dark {
         return UIColor(white: 1, alpha: darkWhite)
       }
       return UIColor(white: 0, alpha: lightBlack)
     })
+    #endif
   }
 }
 
