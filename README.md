@@ -63,3 +63,16 @@ Regenerate the Xcode project after editing `project.yml`:
 ```bash
 xcodegen generate
 ```
+
+## Tests
+
+`RoonRemoteTests` is a logic-only bundle (no host app), so it covers the pure
+types rather than views or the store. Run it with the **Roon Remote** scheme:
+
+```bash
+xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+Files under test are listed explicitly in the target's `sources`, so add new
+ones there when they need coverage.
