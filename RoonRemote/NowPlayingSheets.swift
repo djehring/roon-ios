@@ -18,7 +18,9 @@ struct PlaybackSheets: ViewModifier {
         VolumeSheet()
           .presentationDetents([.medium, .large])
       }
-      .sheet(isPresented: $store.showQueue) {
+      // Regular width shows the queue as an inspector alongside the detail
+      // column, so only compact presents it as a sheet.
+      .sheet(isPresented: queueSheetPresented) {
         QueueSheet()
           .presentationDetents([.large])
       }
@@ -38,6 +40,13 @@ struct PlaybackSheets: ViewModifier {
     Binding(
       get: { store.showZonePicker && hSize != .regular },
       set: { store.showZonePicker = $0 }
+    )
+  }
+
+  private var queueSheetPresented: Binding<Bool> {
+    Binding(
+      get: { store.showQueue && hSize != .regular },
+      set: { store.showQueue = $0 }
     )
   }
 
@@ -356,8 +365,12 @@ struct StorySheet: View {
 }
 
 struct QueueList: View {
-  @Environment(MockStore.self) private var store
   var embedded: Bool
+  /// Supplied by the inspector, which has no navigation bar of its own to hang a
+  /// dismiss control on.
+  var onClose: (() -> Void)?
+
+  @Environment(MockStore.self) private var store
 
   var body: some View {
     Group {
@@ -399,10 +412,28 @@ struct QueueList: View {
     .background(Palette.background)
     .safeAreaInset(edge: .top, spacing: 0) {
       if embedded {
-        Text("Queue")
-          .font(.headline)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(16)
+        HStack {
+          Text("Queue")
+            .font(.headline)
+          Spacer()
+          if let onClose {
+            Button {
+              onClose()
+            } label: {
+              Image(systemName: "xmark")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Palette.primary)
+                .frame(width: 30, height: 30)
+                .background(Palette.surface)
+                .clipShape(Circle())
+                .overlay { Circle().stroke(Palette.hairline, lineWidth: 1) }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close Queue")
+          }
+        }
+        .padding(16)
+        .background(Palette.background)
       }
     }
   }
