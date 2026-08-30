@@ -484,7 +484,12 @@ final class MockStore {
   }
 
   func loadLibrary(hierarchy: String, itemKey: String? = nil, input: String? = nil) async -> BrowsePage {
-    await withBrowseSession {
+    #if DEBUG
+    if Self.wantsDemoContent {
+      return demoBrowsePage(hierarchy: hierarchy, itemKey: itemKey, input: input)
+    }
+    #endif
+    return await withBrowseSession {
       await self.performLoadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
     }
   }

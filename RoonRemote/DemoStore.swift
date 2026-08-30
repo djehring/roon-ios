@@ -76,5 +76,77 @@ extension MockStore {
     bridgeVersion = "demo"
     session = .main
   }
+
+  func demoBrowsePage(
+    hierarchy: String,
+    itemKey: String?,
+    input: String?
+  ) -> BrowsePage {
+    if let itemKey {
+      let tracks = [
+        ("So What", "Miles Davis"),
+        ("Freddie Freeloader", "Miles Davis"),
+        ("Blue in Green", "Miles Davis"),
+        ("All Blues", "Miles Davis"),
+        ("Flamenco Sketches", "Miles Davis"),
+      ]
+      return BrowsePage(
+        title: itemKey.replacingOccurrences(of: "-", with: " ").capitalized,
+        items: tracks.enumerated().map { index, track in
+          BrowseNode(
+            id: "\(itemKey)-track-\(index)",
+            title: track.0,
+            subtitle: track.1,
+            symbol: "music.note",
+            actions: ["Play Now", "Queue", "Play Next"],
+            isPrompt: false,
+            children: [],
+            itemKey: "\(itemKey)-track-\(index)",
+            imageKey: nil,
+            hierarchy: hierarchy,
+            hint: nil
+          )
+        }
+      )
+    }
+
+    let names: [(String, String)] = [
+      ("A Love Supreme", "John Coltrane"),
+      ("Blue Train", "John Coltrane"),
+      ("Chet Baker Sings", "Chet Baker"),
+      ("Ellington at Newport", "Duke Ellington"),
+      ("Getz/Gilberto", "Stan Getz & João Gilberto"),
+      ("Head Hunters", "Herbie Hancock"),
+      ("Kind of Blue", "Miles Davis"),
+      ("Mingus Ah Um", "Charles Mingus"),
+      ("Night Train", "Oscar Peterson Trio"),
+      ("Saxophone Colossus", "Sonny Rollins"),
+      ("The Black Saint", "Charles Mingus"),
+      ("Time Out", "The Dave Brubeck Quartet"),
+      ("Waltz for Debby", "Bill Evans Trio"),
+      ("1958 Miles", "Miles Davis"),
+    ]
+    let filtered = input.map { query in
+      names.filter { $0.0.localizedCaseInsensitiveContains(query) }
+    } ?? names
+    return BrowsePage(
+      title: library.first { $0.hierarchy == hierarchy }?.title ?? hierarchy.capitalized,
+      items: filtered.enumerated().map { index, album in
+        BrowseNode(
+          id: "demo-\(hierarchy)-\(index)",
+          title: album.0,
+          subtitle: album.1,
+          symbol: "opticaldisc",
+          actions: ["Play Now", "Queue", "Play Next"],
+          isPrompt: false,
+          children: [],
+          itemKey: album.0.lowercased().replacingOccurrences(of: " ", with: "-"),
+          imageKey: nil,
+          hierarchy: hierarchy,
+          hint: nil
+        )
+      }
+    )
+  }
 }
 #endif

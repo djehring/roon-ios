@@ -18,6 +18,9 @@ struct ArtworkCache {
   /// Pixel size for artwork in list rows.
   static let thumbnailPixels = 128
 
+  /// Pixel size for cover-grid cells, large enough for a 220pt card at 2x.
+  static let gridPixels = 512
+
   /// Pixel size for full-bleed and Now Playing artwork. One size covers every
   /// display: a 340pt iPhone hero at 3x wants ~1020px and a 520pt iPad hero at
   /// 2x wants ~1040px, so resizing a window never forces a second fetch.

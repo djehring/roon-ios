@@ -78,7 +78,7 @@ struct RegularRootView: View {
       RegularRoomsView()
     case .library:
       if let entry = libraryEntry {
-        BrowseListView(hierarchy: entry.hierarchy, title: entry.title)
+        RegularBrowseView(hierarchy: entry.hierarchy, title: entry.title)
           .id(entry.id)
       }
     case .search(.ai):

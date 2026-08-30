@@ -76,7 +76,7 @@ struct BrowseListView: View {
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
   @State private var prompt = ""
-  @State private var jump: String?
+  @State private var jump: Character?
 
   private static let titlesWithIndex = [
     "Albums", "Artists", "Composers", "My Live Radio", "Playlists", "Tags", "Radios",
@@ -101,8 +101,8 @@ struct BrowseListView: View {
             .scrollContentBackground(.hidden)
             .onChange(of: jump) { _, letter in
               guard let letter else { return }
-              if let match = page.items.first(where: { $0.title.uppercased().hasPrefix(letter) }) {
-                proxy.scrollTo(match.id, anchor: .top)
+              if let target = LibraryIndex.jumpTarget(for: letter, in: page.items) {
+                proxy.scrollTo(target, anchor: .top)
               }
               jump = nil
             }
@@ -259,9 +259,9 @@ struct BrowseListView: View {
 
   private var indexBar: some View {
     VStack(spacing: 0) {
-      ForEach(Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ#"), id: \.self) { letter in
+      ForEach(LibraryIndex.letters, id: \.self) { letter in
         Button {
-          jump = String(letter)
+          jump = letter
         } label: {
           Text(String(letter))
             .font(.system(size: 9, weight: .semibold))
