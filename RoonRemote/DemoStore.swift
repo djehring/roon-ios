@@ -7,6 +7,10 @@ extension MockStore {
     ProcessInfo.processInfo.arguments.contains("-roon-demo-store")
   }
 
+  static var wantsDemoOnboarding: Bool {
+    ProcessInfo.processInfo.arguments.contains("-roon-demo-onboarding")
+  }
+
   /// Fills the store with stand-in content and skips straight to the main
   /// session.
   ///

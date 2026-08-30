@@ -29,6 +29,18 @@ enum Layout {
     }
     return [GridItem(.adaptive(minimum: regularLibraryCardMinimum), spacing: gridSpacing)]
   }
+
+  static func onboardingContentWidth(_ width: UserInterfaceSizeClass?) -> CGFloat? {
+    width == .regular ? 620 : nil
+  }
+
+  static func onboardingControlHeight(_ width: UserInterfaceSizeClass?) -> CGFloat {
+    width == .regular ? 58 : 48
+  }
+
+  static func onboardingTitleSize(_ width: UserInterfaceSizeClass?) -> CGFloat {
+    width == .regular ? 36 : 28
+  }
 }
 
 enum RegularNowPlayingLayout: Equatable {

@@ -87,4 +87,19 @@ struct LayoutTests {
       RegularNowPlayingLayout.artWidth(containerWidth: -1, mode: .sideBySide) == 0
     )
   }
+
+  @Test("regular onboarding is capped to a readable card")
+  func regularOnboardingWidth() {
+    #expect(Layout.onboardingContentWidth(.regular) == 620)
+    #expect(Layout.onboardingContentWidth(.compact) == nil)
+    #expect(Layout.onboardingContentWidth(nil) == nil)
+  }
+
+  @Test("regular onboarding scales controls and titles without changing compact")
+  func onboardingScale() {
+    #expect(Layout.onboardingControlHeight(.compact) == 48)
+    #expect(Layout.onboardingControlHeight(.regular) > Layout.onboardingControlHeight(.compact))
+    #expect(Layout.onboardingTitleSize(.compact) == 28)
+    #expect(Layout.onboardingTitleSize(.regular) > Layout.onboardingTitleSize(.compact))
+  }
 }
