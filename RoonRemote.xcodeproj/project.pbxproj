@@ -44,12 +44,14 @@
 		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
+		5F05823BD86BCFCA73DC4F85 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34BDEF88D54EB957842C41A5 /* Assets.xcassets */; };
 		66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		6B16278C6389EA4D84AE1C00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5803354A53F4E76B9554B232 /* Assets.xcassets */; };
 		6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
+		76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		8514E9B729B06628FEE83258 /* LibraryDragItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */; };
@@ -69,6 +71,7 @@
 		B3F1A9FEED87FDC267626CF7 /* RegularRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */; };
 		B73EBC27D6282D064D90FE48 /* RegularNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */; };
 		B80D386BEA1D8073967BF6DE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */; };
+		BB2C55005E407D06424B7B06 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */; };
 		BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC17B2323BEB8BE438F3955A /* SettingsView.swift */; };
 		BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */; };
@@ -82,6 +85,7 @@
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		D6FF75819BBF7B47B3DF3FC7 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
+		D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */; };
 		DBCEF94C8DCA24BD22DC4D1D /* RoonWatchWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */; };
 		E28516659718EAD2006B53B4 /* TVNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */; };
 		E68F80420248573C98BAC2B7 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
@@ -180,6 +184,7 @@
 		88E5D62E10B64D53BD824441 /* RoonCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonCommands.swift; sourceTree = "<group>"; };
 		8C1283D159767D98835D1EB6 /* WatchStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchStore.swift; sourceTree = "<group>"; };
 		9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSheets.swift; sourceTree = "<group>"; };
+		98EC1B18319F044EE6619B3D /* QueueTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueTimeline.swift; sourceTree = "<group>"; };
 		99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIClient.swift; sourceTree = "<group>"; };
 		9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIModels.swift; sourceTree = "<group>"; };
@@ -202,6 +207,7 @@
 		E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelectionTests.swift; sourceTree = "<group>"; };
 		EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRouting.swift; sourceTree = "<group>"; };
 		F19655EC02847FD92A59DBE6 /* RoonRemoteTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RoonRemoteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueTimelineTests.swift; sourceTree = "<group>"; };
 		F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSelectionTests.swift; sourceTree = "<group>"; };
 		F4CD925CA7A704A07C1A93F4 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -246,6 +252,7 @@
 				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
 				25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */,
 				EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */,
+				98EC1B18319F044EE6619B3D /* QueueTimeline.swift */,
 				2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */,
 				D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */,
 				2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */,
@@ -273,6 +280,7 @@
 				80506818538B2F6597E20D61 /* LibraryIndexTests.swift */,
 				5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */,
 				2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */,
+				F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */,
 				2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */,
 				E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */,
 				F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */,
@@ -546,6 +554,7 @@
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
 				89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */,
 				A4C8EBC9FDC73AC2DDAA79CE /* QueueRouting.swift in Sources */,
+				BB2C55005E407D06424B7B06 /* QueueTimeline.swift in Sources */,
 				03882B4209A659F450A93828 /* RoonAPIClient.swift in Sources */,
 				C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */,
 				FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */,
@@ -579,6 +588,8 @@
 				A1DCC3705F85009C8B41C699 /* PlaybackAdjustmentTests.swift in Sources */,
 				FBF67225AB0CC91ED99F9D98 /* QueueRouting.swift in Sources */,
 				505425BC9AF914974F327171 /* QueueRoutingTests.swift in Sources */,
+				5F05823BD86BCFCA73DC4F85 /* QueueTimeline.swift in Sources */,
+				D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */,
 				364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */,
 				859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */,
 				2F265711F9C366490043E056 /* SearchSelection.swift in Sources */,
@@ -621,6 +632,7 @@
 				E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */,
 				ADA7C268DF266772B7C2F2CC /* PlaybackAdjustment.swift in Sources */,
 				54C29928665633135687FD19 /* QueueRouting.swift in Sources */,
+				76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */,
 				1D51A3E3481F5F363FD8DC04 /* RegularBrowseView.swift in Sources */,
 				B73EBC27D6282D064D90FE48 /* RegularNowPlayingView.swift in Sources */,
 				B3F1A9FEED87FDC267626CF7 /* RegularRoomsView.swift in Sources */,

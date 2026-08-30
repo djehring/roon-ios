@@ -30,6 +30,17 @@ final class MockStore {
   var hasPhoto = false
   var recognizedAlbums: [BrowseNode] = []
   var recognizeLoading = false
+
+  /// What the queue screens should show: the tracks still to come. `queue` keeps
+  /// the bridge's payload verbatim, current track included, because
+  /// `playFromHere` addresses items by their queue id.
+  var upcomingQueue: [QueueItem] {
+    QueueTimeline.upcoming(queue: queue, current: currentTrack)
+  }
+
+  var upNext: QueueItem? {
+    QueueTimeline.upNext(queue: queue, current: currentTrack)
+  }
   var toolbar: [ToolbarAction]
   var customActions: [CustomAction] = []
   var groupedOutputIds: Set<String> = []

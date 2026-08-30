@@ -159,7 +159,7 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
       zones: store.zones.map {
         WatchZoneRow(id: $0.id, name: $0.name, subtitle: $0.track?.title)
       },
-      queue: Array(store.queue.prefix(50)).map {
+      queue: Array(store.upcomingQueue.prefix(50)).map {
         WatchQueueRow(id: $0.id, title: $0.title, artist: $0.artist)
       }
     )

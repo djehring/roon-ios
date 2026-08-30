@@ -129,8 +129,8 @@ struct TVQueuePanel: View {
           VStack(alignment: .leading, spacing: 8) {
             Text("Queue")
               .font(.system(size: 44, weight: .bold))
-            if !store.queue.isEmpty {
-              Text("\(store.queue.count) tracks  ·  select to play from here")
+            if !store.upcomingQueue.isEmpty {
+              Text("\(store.upcomingQueue.count) tracks  ·  select to play from here")
                 .font(.title3)
                 .foregroundStyle(Palette.secondary)
             }
@@ -142,13 +142,13 @@ struct TVQueuePanel: View {
             .foregroundStyle(Palette.secondary)
         }
 
-        if store.queue.isEmpty {
+        if store.upcomingQueue.isEmpty {
           Spacer()
           VStack(spacing: 16) {
             Image(systemName: "music.note.list")
               .font(.system(size: 56, weight: .light))
               .foregroundStyle(Palette.tertiary)
-            Text("Queue is empty")
+            Text("Nothing up next")
               .font(.title)
             Text("Add music from Library or Search.")
               .font(.title3)
@@ -159,7 +159,7 @@ struct TVQueuePanel: View {
         } else {
           ScrollView {
             LazyVStack(spacing: 14) {
-              ForEach(Array(store.queue.enumerated()), id: \.element.id) { index, item in
+              ForEach(Array(store.upcomingQueue.enumerated()), id: \.element.id) { index, item in
                 queueRow(item, index: index)
               }
             }
