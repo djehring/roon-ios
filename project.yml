@@ -76,6 +76,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/LibraryDragItem.swift
       - path: RoonRemote/PlaybackAdjustment.swift
+      - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/Sidebar.swift
     settings:
