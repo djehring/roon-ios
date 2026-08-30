@@ -5,6 +5,7 @@ import SwiftUI
 /// so the sidebar's mini player can open them from any destination.
 struct PlaybackSheets: ViewModifier {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
 
   func body(content: Content) -> some View {
     @Bindable var store = store
@@ -21,10 +22,23 @@ struct PlaybackSheets: ViewModifier {
         QueueSheet()
           .presentationDetents([.large])
       }
-      .sheet(isPresented: $store.showStory) {
+      // A story is long-form reading, and iPad ignores presentation detents:
+      // as a sheet it lands in a ~430pt form sheet adrift in the screen. Only
+      // one of these bindings is ever live, so it cannot double-present.
+      .sheet(isPresented: storyPresented(whenRegular: false)) {
         StorySheet()
           .presentationDetents([.large])
       }
+      .fullScreenCover(isPresented: storyPresented(whenRegular: true)) {
+        StorySheet()
+      }
+  }
+
+  private func storyPresented(whenRegular: Bool) -> Binding<Bool> {
+    Binding(
+      get: { store.showStory && (hSize == .regular) == whenRegular },
+      set: { store.showStory = $0 }
+    )
   }
 }
 
@@ -268,6 +282,9 @@ struct StorySheet: View {
   var body: some View {
     NavigationStack {
       TrackStoryView()
+        // Painted here rather than with `presentationBackground`, which only
+        // applies to the sheet presentation and not the full-screen cover.
+        .background(Palette.background)
         .navigationTitle("Story")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

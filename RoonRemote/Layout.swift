@@ -41,6 +41,14 @@ enum Layout {
   static func onboardingTitleSize(_ width: UserInterfaceSizeClass?) -> CGFloat {
     width == .regular ? 36 : 28
   }
+
+  /// Comfortable measure for long-form prose. Full-screen story text would
+  /// otherwise run the whole width of a landscape iPad, which is unreadable.
+  static let readingWidth: CGFloat = 720
+
+  static func storyTitleSize(_ width: UserInterfaceSizeClass?) -> CGFloat {
+    width == .regular ? 34 : 22
+  }
 }
 
 enum RegularNowPlayingLayout: Equatable {

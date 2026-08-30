@@ -530,6 +530,7 @@ private struct PickedImageData: Transferable {
 
 struct TrackStoryView: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
 
   var body: some View {
     ScrollView {
@@ -545,16 +546,30 @@ struct TrackStoryView: View {
           description: Text(error)
         )
       } else if let track = store.currentTrack, !store.storyBody.isEmpty {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
+          if hSize == .regular {
+            CoverArt(
+              title: track.album,
+              image: store.imageData(for: track.imageKey, pixels: ArtworkCache.gridPixels),
+              corner: 12
+            )
+            .frame(width: 132, height: 132)
+            .shadow(color: .black.opacity(0.28), radius: 18, y: 8)
+          }
           Text("\(track.artist) — \(track.title)")
-            .font(.title2.weight(.semibold))
+            .font(.system(size: Layout.storyTitleSize(hSize), weight: .semibold))
           Text(store.storyTitle)
-            .font(.headline)
+            .font(hSize == .regular ? .title3 : .headline)
             .foregroundStyle(Palette.accent)
           StoryMarkdown(source: store.storyBody)
         }
-        .padding(20)
-        .padding(.bottom, 28)
+        .padding(.horizontal, hSize == .regular ? 40 : 20)
+        .padding(.top, hSize == .regular ? 28 : 20)
+        .padding(.bottom, 40)
+        // Prose is held to a readable measure and centred, so a full-screen
+        // story on a landscape iPad does not run line-for-line across 1300pt.
+        .frame(maxWidth: Layout.readingWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
       } else if store.currentTrack == nil {
         ContentUnavailableView(
           "Nothing playing",
