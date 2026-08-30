@@ -133,6 +133,28 @@ extension MockStore {
       ),
     ]
     bridgeVersion = "demo"
+    storyTitle = "Modal jazz finds its shape"
+    storyBody = """
+    ## The session
+
+    Recorded in two afternoons at Columbia's 30th Street Studio in 1959, *Kind of
+    Blue* traded chord changes for scales. Miles handed the band sketches rather
+    than charts, so what you hear is first-take music being decided in the room.
+
+    - Bill Evans shapes the harmony from underneath
+    - Paul Chambers holds the pulse without ever crowding it
+    - Jimmy Cobb keeps the ride cymbal conversational
+
+    **So What** is the thesis: two chords, sixteen bars each, and enough space
+    that every soloist has to bring an idea rather than a pattern. Coltrane
+    answers Miles with density; Evans answers both with restraint.
+
+    ## Why it endured
+
+    The record sold on atmosphere and survived on structure. Modal playing gave
+    improvisers room to think melodically instead of racing the changes, and that
+    permission reshaped the next decade of jazz.
+    """
     session = .main
   }
 

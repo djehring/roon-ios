@@ -485,6 +485,11 @@ final class MockStore {
 
   func loadTrackStory() {
     guard let track = currentTrack else { return }
+    #if DEBUG
+    // Demo fixtures already carry a story; fetching would replace it with a
+    // pairing error and hide the layout under an empty state.
+    if Self.wantsDemoContent, !storyBody.isEmpty { return }
+    #endif
     storyLoading = true
     storyError = nil
     Task {

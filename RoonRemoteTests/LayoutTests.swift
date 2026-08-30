@@ -126,6 +126,20 @@ struct LayoutTests {
     #expect(Layout.onboardingContentWidth(nil) == nil)
   }
 
+  @Test("story prose is held to a readable measure narrower than an iPad")
+  func storyReadingWidth() {
+    // Full-screen story text must not run the width of a landscape iPad.
+    #expect(Layout.readingWidth < 1024)
+    #expect(Layout.readingWidth > (Layout.onboardingContentWidth(.regular) ?? 0))
+  }
+
+  @Test("regular story titles scale up without changing compact")
+  func storyTitleScale() {
+    #expect(Layout.storyTitleSize(.compact) == 22)
+    #expect(Layout.storyTitleSize(nil) == Layout.storyTitleSize(.compact))
+    #expect(Layout.storyTitleSize(.regular) > Layout.storyTitleSize(.compact))
+  }
+
   @Test("regular onboarding scales controls and titles without changing compact")
   func onboardingScale() {
     #expect(Layout.onboardingControlHeight(.compact) == 48)
