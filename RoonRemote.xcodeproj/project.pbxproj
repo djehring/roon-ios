@@ -37,6 +37,7 @@
 		66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		6B16278C6389EA4D84AE1C00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5803354A53F4E76B9554B232 /* Assets.xcassets */; };
 		6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
+		76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B895799574E60D21626345F2 /* RoonRemoteApp.swift */; };
@@ -53,15 +54,18 @@
 		C5EDBF95A1E19AF624A53628 /* TVSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7188ADDF1853116C4EF3C301 /* TVSearchView.swift */; };
 		C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		CB97143509BB7DCB9796C955 /* TVRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */; };
+		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		DBCEF94C8DCA24BD22DC4D1D /* RoonWatchWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */; };
 		E28516659718EAD2006B53B4 /* TVNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */; };
 		E68F80420248573C98BAC2B7 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794CD25D854C7A16C017574F /* PhoneWatchSync.swift */; };
+		EABD78CB4E0234C91AB75E80 /* SidebarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */; };
 		EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97C1EA62154B94FECA419F8 /* WatchApp.swift */; };
 		F03A419E62B302FCDB3E57E4 /* LayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */; };
 		F1CF64E9E17F9947219A9C01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */; };
 		F3E1BE3506F4AF0D187F9A1C /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
+		F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BEADFB2D74AE470C4AE825 /* Layout.swift */; };
 		FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AFB1CDA9C5D44EFAF558CDC /* TVApp.swift */; };
 /* End PBXBuildFile section */
@@ -123,6 +127,7 @@
 		396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTests.swift; sourceTree = "<group>"; };
 		4814FEAE30516219F5ED8F68 /* SearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViews.swift; sourceTree = "<group>"; };
 		4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonWatchWidgets.swift; sourceTree = "<group>"; };
+		4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
 		4F1E40CD7B16597224C17356 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		528C1553E1FA5E8BA2BC9DD8 /* TVNowPlayingSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVNowPlayingSheets.swift; sourceTree = "<group>"; };
 		5803354A53F4E76B9554B232 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -155,6 +160,7 @@
 		F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkCache.swift; sourceTree = "<group>"; };
 		FDF18A3204F7E657E19AC108 /* TVLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVLibraryView.swift; sourceTree = "<group>"; };
+		FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -192,6 +198,7 @@
 				D38E999F7921AA6BB8403FC7 /* RootView.swift */,
 				4814FEAE30516219F5ED8F68 /* SearchViews.swift */,
 				AC17B2323BEB8BE438F3955A /* SettingsView.swift */,
+				4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */,
 				2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */,
 				BE048B8AFBC186ABF845EBA5 /* API */,
 			);
@@ -203,6 +210,7 @@
 			children = (
 				D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */,
 				396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */,
+				FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */,
 			);
 			path = RoonRemoteTests;
 			sourceTree = "<group>";
@@ -493,6 +501,9 @@
 				BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */,
 				FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */,
 				F03A419E62B302FCDB3E57E4 /* LayoutTests.swift in Sources */,
+				76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */,
+				F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */,
+				EABD78CB4E0234C91AB75E80 /* SidebarTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -529,6 +540,7 @@
 				8D41AF696B6304473C14FE3D /* RootView.swift in Sources */,
 				21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */,
 				BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */,
+				CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */,
 				480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */,
 				43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */,
 				14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */,

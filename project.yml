@@ -72,6 +72,8 @@ targets:
       - path: RoonRemoteTests
       - path: Shared/ArtworkCache.swift
       - path: RoonRemote/Layout.swift
+      - path: RoonRemote/Models.swift
+      - path: RoonRemote/Sidebar.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
