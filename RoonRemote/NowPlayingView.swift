@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct NowPlayingView: View {
+  /// The compact root has nowhere else to put the playback sheets, so Now
+  /// Playing presents them. The regular root presents them itself, above the
+  /// split view, so the mini player can reach them from any destination.
+  var presentsSheets = true
+
   @Environment(MockStore.self) private var store
   @Environment(\.horizontalSizeClass) private var hSize
 
@@ -22,22 +27,7 @@ struct NowPlayingView: View {
         }
       }
     }
-    .sheet(isPresented: bind(\.showZonePicker)) {
-      ZonePickerSheet()
-        .presentationDetents([.medium, .large])
-    }
-    .sheet(isPresented: bind(\.showVolume)) {
-      VolumeSheet()
-        .presentationDetents([.medium, .large])
-    }
-    .sheet(isPresented: bind(\.showQueue)) {
-      QueueSheet()
-        .presentationDetents([.large])
-    }
-    .sheet(isPresented: bind(\.showStory)) {
-      StorySheet()
-        .presentationDetents([.large])
-    }
+    .playbackSheets(enabled: presentsSheets)
   }
 
   private var phoneColumn: some View {
@@ -216,14 +206,6 @@ struct NowPlayingView: View {
     .padding(.top, 10)
   }
 
-  private func bind(_ keyPath: ReferenceWritableKeyPath<MockStore, Bool>)
-    -> Binding<Bool>
-  {
-    Binding(
-      get: { store[keyPath: keyPath] },
-      set: { store[keyPath: keyPath] = $0 }
-    )
-  }
 }
 
 private extension MockStore {

@@ -1,5 +1,46 @@
 import SwiftUI
 
+/// The playback sheets, presented by whichever root owns them. The compact root
+/// leaves them on Now Playing; the regular root hoists them above the split view
+/// so the sidebar's mini player can open them from any destination.
+struct PlaybackSheets: ViewModifier {
+  @Environment(MockStore.self) private var store
+
+  func body(content: Content) -> some View {
+    @Bindable var store = store
+    content
+      .sheet(isPresented: $store.showZonePicker) {
+        ZonePickerSheet()
+          .presentationDetents([.medium, .large])
+      }
+      .sheet(isPresented: $store.showVolume) {
+        VolumeSheet()
+          .presentationDetents([.medium, .large])
+      }
+      .sheet(isPresented: $store.showQueue) {
+        QueueSheet()
+          .presentationDetents([.large])
+      }
+      .sheet(isPresented: $store.showStory) {
+        StorySheet()
+          .presentationDetents([.large])
+      }
+  }
+}
+
+extension View {
+  /// `enabled` is fixed per call site rather than reactive, so this never
+  /// changes a view's identity mid-flight.
+  @ViewBuilder
+  func playbackSheets(enabled: Bool = true) -> some View {
+    if enabled {
+      modifier(PlaybackSheets())
+    } else {
+      self
+    }
+  }
+}
+
 struct ZonePickerSheet: View {
   @Environment(MockStore.self) private var store
 
