@@ -75,6 +75,13 @@ extension MockStore {
     ]
     queue = [
       QueueItem(
+        id: "q0",
+        title: "So What",
+        artist: "Miles Davis",
+        album: "Kind of Blue",
+        imageKey: "demo-cover"
+      ),
+      QueueItem(
         id: "q1",
         title: "Freddie Freeloader",
         artist: "Miles Davis",

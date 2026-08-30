@@ -187,7 +187,7 @@ struct NowPlayingView: View {
     } label: {
       HStack {
         Image(systemName: "list.bullet")
-        Text(store.queue.first.map { "Up next  \($0.title)" } ?? "Queue is empty")
+        Text(store.upNext.map { "Up next  \($0.title)" } ?? "Nothing up next")
           .lineLimit(1)
         Spacer()
         Image(systemName: "chevron.up")

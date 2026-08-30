@@ -71,7 +71,7 @@ struct TVNowPlayingView: View {
             } label: {
               HStack(spacing: 12) {
                 Image(systemName: "list.bullet")
-                Text(store.queue.first.map { "Up next  ·  \($0.title)" } ?? "Queue")
+                Text(store.upNext.map { "Up next  ·  \($0.title)" } ?? "Queue")
                   .lineLimit(1)
                 Image(systemName: "chevron.right")
                   .font(.caption.weight(.semibold))

@@ -374,14 +374,14 @@ struct QueueList: View {
 
   var body: some View {
     Group {
-      if store.queue.isEmpty {
+      if store.upcomingQueue.isEmpty {
         ContentUnavailableView(
-          "Queue is empty",
+          "Nothing up next",
           systemImage: "music.note.list",
           description: Text("Add music from Library or Search.")
         )
       } else {
-        List(store.queue) { item in
+        List(store.upcomingQueue) { item in
           Button {
             store.playFromHere(item)
           } label: {
