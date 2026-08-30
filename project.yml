@@ -150,6 +150,7 @@ targets:
           - WatchPayload.swift
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
+      - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/API
     settings:
       base:

@@ -25,6 +25,7 @@
 		21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4814FEAE30516219F5ED8F68 /* SearchViews.swift */; };
 		29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
 		2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
+		2D55E443D846F1C5359C9A68 /* DemoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8301FD882C4D88D26DBC910 /* DemoStore.swift */; };
 		32D769EDFCBB7360155F202E /* DemoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8301FD882C4D88D26DBC910 /* DemoStore.swift */; };
 		43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
@@ -480,6 +481,7 @@
 			files = (
 				1134E0E879601513D081BA55 /* ArtworkCache.swift in Sources */,
 				29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */,
+				2D55E443D846F1C5359C9A68 /* DemoStore.swift in Sources */,
 				47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */,
 				4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */,
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
