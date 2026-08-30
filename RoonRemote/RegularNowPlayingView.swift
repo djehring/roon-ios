@@ -204,23 +204,8 @@ struct RegularNowPlayingView: View {
   }
 
   private func progress(_ track: Track) -> some View {
-    VStack(spacing: 8) {
-      GeometryReader { geometry in
-        ZStack(alignment: .leading) {
-          Capsule().fill(Palette.hairline)
-          Capsule()
-            .fill(Palette.accent)
-            .frame(width: max(4, geometry.size.width * track.progress))
-        }
-      }
-      .frame(height: 5)
-      HStack {
-        Text(track.position)
-        Spacer()
-        Text(track.remaining)
-      }
-      .font(.callout.monospacedDigit())
-      .foregroundStyle(Palette.tertiary)
+    ProgressScrubber(track: track) { progress in
+      store.seek(toProgress: progress)
     }
   }
 

@@ -16,6 +16,12 @@ struct Track: Identifiable, Hashable {
   var remaining: String
   var progress: Double
   var imageKey: String?
+  /// Total track length in seconds when known (needed for absolute seek).
+  var durationSeconds: Double? = nil
+
+  var isSeekable: Bool {
+    (durationSeconds ?? 0) > 0
+  }
 }
 
 struct Zone: Identifiable, Hashable {
@@ -137,6 +143,24 @@ enum Appearance: String, CaseIterable {
   case system
   case dark
   case light
+}
+
+struct VolumeHUD: Equatable {
+  var value: Double
+  var muted: Bool
+  var minimum: Double
+  var maximum: Double
+
+  var displayValue: Int { Int(value.rounded()) }
+
+  var symbolName: String {
+    if muted || value <= minimum { return "speaker.slash.fill" }
+    let span = max(maximum - minimum, 1)
+    let fraction = (value - minimum) / span
+    if fraction < 0.34 { return "speaker.wave.1.fill" }
+    if fraction < 0.67 { return "speaker.wave.2.fill" }
+    return "speaker.wave.3.fill"
+  }
 }
 
 enum SearchSegment: String, CaseIterable {

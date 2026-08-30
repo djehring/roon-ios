@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct LibraryRootView: View {
   @Environment(MockStore.self) private var store
@@ -77,10 +78,17 @@ struct BrowseListView: View {
   @State private var loading = true
   @State private var prompt = ""
   @State private var jump: Character?
+  @State private var actionPicker: ActionPicker?
 
   private static let titlesWithIndex = [
     "Albums", "Artists", "Composers", "My Live Radio", "Playlists", "Tags", "Radios",
   ]
+
+  private struct ActionPicker: Identifiable {
+    let id: String
+    let title: String
+    let actions: [BrowseNode]
+  }
 
   var body: some View {
     ZStack(alignment: .trailing) {
@@ -130,10 +138,32 @@ struct BrowseListView: View {
         recordingBar
       }
     }
+    .confirmationDialog(
+      actionPicker?.title ?? "Actions",
+      isPresented: Binding(
+        get: { actionPicker != nil },
+        set: { if !$0 { actionPicker = nil } }
+      ),
+      titleVisibility: .visible
+    ) {
+      if let actionPicker {
+        ForEach(actionPicker.actions) { action in
+          Button(action.title) {
+            run(action, title: action.title)
+          }
+        }
+      }
+      Button("Cancel", role: .cancel) { actionPicker = nil }
+    }
   }
 
   private var showsIndex: Bool {
     Self.titlesWithIndex.contains(page.title.isEmpty ? title : page.title)
+  }
+
+  /// True when browsing the tracks inside a playlist (not the playlist list itself).
+  private var isPlaylistContents: Bool {
+    hierarchy == "playlists" && itemKey != nil
   }
 
   @ViewBuilder
@@ -141,32 +171,29 @@ struct BrowseListView: View {
     if child.isPrompt {
       promptRow(child)
     } else if child.hint == "action" {
-      Button {
+      listButton {
         run(child, title: child.title)
       } label: {
         rowLabel(child)
       }
     } else if child.hint == "action_list" {
-      rowLabel(child)
-        .contextMenu {
-          ForEach(child.actions, id: \.self) { action in
-            Button(action) { run(child, title: action) }
-          }
-        }
-    } else if child.itemKey != nil, isPlaylistContents {
-      Button {
-        playFromTrack(child)
+      listButton {
+        openActionList(child)
       } label: {
         rowLabel(child)
       }
+    } else if child.itemKey != nil, isPlaylistContents {
+      listButton {
+        playFromTrack(child)
+      } label: {
+        rowLabel(child, showPlay: true)
+      }
       .contextMenu {
         Button("Play From Here") { playFromTrack(child) }
-        ForEach(["Play Now", "Queue", "Play Next"], id: \.self) { action in
-          Button(action) { run(child, title: action) }
-        }
-        NavigationLink(value: child) {
-          Text("Open")
-        }
+        Button("Play Now") { run(child, title: "Play Now") }
+        Button("Queue") { run(child, title: "Queue") }
+        Button("Play Next") { run(child, title: "Play Next") }
+        Button("Actions…") { openActionList(child) }
       }
     } else if child.itemKey != nil {
       NavigationLink(value: child) {
@@ -182,13 +209,22 @@ struct BrowseListView: View {
     }
   }
 
-  /// True when browsing the tracks inside a playlist (not the playlist list itself).
-  private var isPlaylistContents: Bool {
-    hierarchy == "playlists" && itemKey != nil
+  /// List rows swallow default Button taps; borderless + full-row hit target fixes that.
+  private func listButton(
+    action: @escaping () -> Void,
+    @ViewBuilder label: () -> some View
+  ) -> some View {
+    Button(action: action) {
+      label()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+    .buttonStyle(.borderless)
   }
 
   private func playFromTrack(_ child: BrowseNode) {
     guard let key = child.itemKey else { return }
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
       store.finishRecording(actionTitle: "Play From Here", actionIndex: 0)
@@ -197,8 +233,23 @@ struct BrowseListView: View {
     store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
   }
 
+  private func openActionList(_ child: BrowseNode) {
+    guard let key = child.itemKey else { return }
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    Task {
+      let actions = await store.loadItemActions(hierarchy: hierarchy, itemKey: key)
+      if actions.isEmpty {
+        // Fall back to playing if Roon didn't expose a menu.
+        store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
+        return
+      }
+      actionPicker = ActionPicker(id: child.id, title: child.title, actions: actions)
+    }
+  }
+
   private func run(_ child: BrowseNode, title: String) {
     guard let key = child.itemKey else { return }
+    UIImpactFeedbackGenerator(style: .light).impactOccurred()
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
       let index = child.actions.firstIndex(of: title) ?? 0
@@ -213,7 +264,7 @@ struct BrowseListView: View {
     )
   }
 
-  private func rowLabel(_ child: BrowseNode) -> some View {
+  private func rowLabel(_ child: BrowseNode, showPlay: Bool = false) -> some View {
     HStack(spacing: 12) {
       CoverArt(
         title: child.title,
@@ -229,8 +280,8 @@ struct BrowseListView: View {
             .foregroundStyle(Palette.secondary)
         }
       }
-      if isPlaylistContents, child.hint != "action", child.hint != "action_list" {
-        Spacer(minLength: 0)
+      Spacer(minLength: 0)
+      if showPlay {
         Image(systemName: "play.circle.fill")
           .foregroundStyle(Palette.accent)
           .font(.title3)

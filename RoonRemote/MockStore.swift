@@ -18,6 +18,9 @@ final class MockStore {
   var showQueue = false
   var showStory = false
   var showZonePanel = false
+  /// Transient hardware/keyboard volume readout (Roon-style overlay).
+  var volumeHUD: VolumeHUD?
+  @ObservationIgnored private var volumeHUDHideTask: Task<Void, Never>?
   var zonePanelTab: ZonePanelTab = .switchZone
   var showSharePreview = false
   var isRecordingAction = false
@@ -275,6 +278,30 @@ final class MockStore {
     }
   }
 
+  /// Seeks the current track to an absolute position (`progress` is 0...1).
+  func seek(toProgress progress: Double) {
+    guard var track = currentTrack, let duration = track.durationSeconds, duration > 0 else { return }
+    let clamped = min(1, max(0, progress))
+    let seconds = duration * clamped
+    track.progress = clamped
+    track.position = TimeCode.string(from: seconds)
+    track.remaining = TimeCode.string(from: max(0, duration - seconds))
+    if let index = zones.firstIndex(where: { $0.id == selectedZoneId }) {
+      zones[index].track = track
+    }
+    publishWatchSnapshot()
+    Task {
+      try? await client.command([
+        "type": "SEEK",
+        "data": [
+          "zone_id": selectedZoneId,
+          "seconds": Int(seconds.rounded()),
+          "how": "absolute",
+        ],
+      ])
+    }
+  }
+
   func stop() {
     clearPinnedTrack()
     Task {
@@ -332,15 +359,32 @@ final class MockStore {
 
   func adjustVolume(by delta: Double) {
     guard let output = outputs.first(where: { !$0.isFixed }) else { return }
-    setVolume(
-      output,
-      value: PlaybackAdjustment.volume(
-        current: output.volume,
-        minimum: output.min,
-        maximum: output.max,
-        delta: delta
-      )
+    let next = PlaybackAdjustment.volume(
+      current: output.volume,
+      minimum: output.min,
+      maximum: output.max,
+      delta: delta
     )
+    setVolume(output, value: next)
+    flashVolumeHUD(for: output, value: next)
+  }
+
+  func flashVolumeHUD(for output: Output? = nil, value: Double? = nil) {
+    let target = output ?? outputs.first(where: { !$0.isFixed })
+    guard let target else { return }
+    let level = value ?? target.volume
+    volumeHUD = VolumeHUD(
+      value: level,
+      muted: target.muted,
+      minimum: target.min,
+      maximum: target.max
+    )
+    volumeHUDHideTask?.cancel()
+    volumeHUDHideTask = Task {
+      try? await Task.sleep(nanoseconds: 900_000_000)
+      guard !Task.isCancelled else { return }
+      volumeHUD = nil
+    }
   }
 
   func transfer(to zoneId: String) {
@@ -538,20 +582,7 @@ final class MockStore {
   }
 
   func playInRoom(query: String, roomName: String, zoneId: String?) async throws -> String {
-    guard client.isPaired else { throw PlayInRoomError.unpaired }
-    let zones = await waitForZones()
-    let zone: Zone
-    if let zoneId, let match = zones.first(where: { $0.id == zoneId }) {
-      zone = match
-    } else if let match = bestZone(named: roomName, in: zones) {
-      zone = match
-    } else if roomName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              let current = zones.first(where: { $0.id == selectedZoneId }) ?? zones.first
-    {
-      zone = current
-    } else {
-      throw PlayInRoomError.noRoom(roomName.isEmpty ? "that room" : roomName)
-    }
+    let zone = try await zoneForSiri(named: roomName, zoneId: zoneId)
     selectZone(zone.id)
     let result: Result<String, Error> = await withBrowseSession {
       do {
@@ -563,11 +594,117 @@ final class MockStore {
     return "Playing \(try result.get()) in \(zone.name)."
   }
 
+  func siriStop(roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    clearPinnedTrack()
+    try await sendCommand("STOP", zoneId: zone.id)
+    return "Stopped \(zone.name)."
+  }
+
+  func siriPlayPause(roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    let wasPlaying = zone.state == .playing
+    try await sendCommand("PLAY_PAUSE", zoneId: zone.id)
+    return wasPlaying ? "Paused \(zone.name)." : "Playing in \(zone.name)."
+  }
+
+  func siriSkip(roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    clearPinnedTrack()
+    try await sendCommand("NEXT", zoneId: zone.id)
+    return "Skipped in \(zone.name)."
+  }
+
+  func siriPrevious(roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    clearPinnedTrack()
+    try await sendCommand("PREVIOUS", zoneId: zone.id)
+    return "Previous track in \(zone.name)."
+  }
+
+  func siriAdjustVolume(steps: Int, roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    let adjustable = await waitForOutputs(in: zone.id).filter { !$0.isFixed }
+    if adjustable.isEmpty {
+      throw PlayInRoomError.volumeFixed(zone.name)
+    }
+    var lastValue = 0
+    var moved = false
+    for output in adjustable {
+      if output.muted {
+        try await sendMuteToggle(output, zoneId: zone.id)
+      }
+      let step = max(1, (output.max - output.min) / 10)
+      let target = min(output.max, max(output.min, output.volume + Double(steps) * step))
+      if abs(target - output.volume) < 0.5 { continue }
+      moved = true
+      try await applyVolume(output, value: target, zoneId: zone.id)
+      lastValue = Int(target.rounded())
+    }
+    if !moved {
+      return steps > 0
+        ? "\(zone.name) is already at full volume."
+        : "\(zone.name) is already as quiet as it goes."
+    }
+    return "\(zone.name) is at \(lastValue)."
+  }
+
+  func siriSetMute(_ muted: Bool, roomName: String) async throws -> String {
+    let zone = try await zoneForSiri(named: roomName)
+    selectZone(zone.id)
+    let adjustable = await waitForOutputs(in: zone.id).filter { !$0.isFixed }
+    if adjustable.isEmpty {
+      throw PlayInRoomError.volumeFixed(zone.name)
+    }
+    var changed = false
+    for output in adjustable where output.muted != muted {
+      changed = true
+      try await sendMuteToggle(output, zoneId: zone.id)
+    }
+    if muted {
+      return changed ? "Muted \(zone.name)." : "\(zone.name) is already muted."
+    }
+    return changed ? "Unmuted \(zone.name)." : "\(zone.name) is not muted."
+  }
+
   func loadActions(hierarchy: String, itemKey: String) async -> [String] {
     if hierarchy == "playlists" {
       return ["Play From Here", "Play Now", "Queue", "Play Next"]
     }
     return ["Play Now", "Queue", "Play Next"]
+  }
+
+  /// Loads the real Roon action rows for an item (handles nested action_list).
+  func loadItemActions(hierarchy: String, itemKey: String) async -> [BrowseNode] {
+    await withBrowseSession {
+      await self.collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0)
+    }
+  }
+
+  private func collectActions(
+    hierarchy: String,
+    itemKey: String,
+    depth: Int
+  ) async -> [BrowseNode] {
+    guard depth < 3 else { return [] }
+    let page = await performLoadLibrary(
+      hierarchy: hierarchy,
+      itemKey: itemKey,
+      input: nil
+    )
+    let actions = page.items.filter { $0.hint == "action" && $0.itemKey != nil }
+    if !actions.isEmpty { return actions }
+    if let nested = page.items.first(where: { $0.hint == "action_list" }),
+       let nestedKey = nested.itemKey
+    {
+      return await collectActions(hierarchy: hierarchy, itemKey: nestedKey, depth: depth + 1)
+    }
+    return []
   }
 
   func runBrowseAction(
@@ -590,15 +727,52 @@ final class MockStore {
 
   /// Plays a library item, preferring playlist "Play From Here" when present.
   func playLibraryItem(hierarchy: String, itemKey: String, hint: String? = nil) {
-    let preferred: [String]
-    if hierarchy == "playlists" {
-      preferred = ["Play From Here", "Play Playlist", "Play Now", "Play"]
-    } else {
-      preferred = ["Play Now", "Play Album", "Play", "Play Playlist"]
-    }
     Task {
       await withBrowseSession {
-        for title in preferred {
+        // Action rows execute directly.
+        if hint == "action" {
+          try? await self.executeLibraryAction(
+            hierarchy: hierarchy,
+            itemKey: itemKey,
+            actionTitle: "Play",
+            hint: hint
+          )
+          return
+        }
+
+        // Prefer real actions Roon exposes for this item.
+        let actions = await self.collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0)
+        let preferredNames: [String]
+        if hierarchy == "playlists" {
+          preferredNames = ["Play From Here", "Play Playlist", "Play Now", "Play"]
+        } else {
+          preferredNames = ["Play Now", "Play Album", "Play From Here", "Play Playlist", "Play"]
+        }
+        for name in preferredNames {
+          if let action = actions.first(where: {
+            $0.title.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+          }), let key = action.itemKey {
+            _ = try? await self.client.browse([
+              "hierarchy": hierarchy,
+              "item_key": key,
+              "zone_or_output_id": self.selectedZoneId,
+            ])
+            return
+          }
+        }
+        if let firstPlay = actions.first(where: { Self.isPlayAction($0.title) }),
+           let key = firstPlay.itemKey
+        {
+          _ = try? await self.client.browse([
+            "hierarchy": hierarchy,
+            "item_key": key,
+            "zone_or_output_id": self.selectedZoneId,
+          ])
+          return
+        }
+
+        // Last resort: named-action walk / bridge play-item.
+        for title in preferredNames {
           do {
             try await self.executeLibraryAction(
               hierarchy: hierarchy,
@@ -807,6 +981,23 @@ final class MockStore {
     }
   }
 
+  private func zoneForSiri(named roomName: String, zoneId: String? = nil) async throws -> Zone {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let zones = await waitForZones()
+    if let zoneId, let match = zones.first(where: { $0.id == zoneId }) {
+      return match
+    }
+    if let match = bestZone(named: roomName, in: zones) {
+      return match
+    }
+    if roomName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+       let current = zones.first(where: { $0.id == selectedZoneId }) ?? zones.first
+    {
+      return current
+    }
+    throw PlayInRoomError.noRoom(roomName.isEmpty ? "that room" : roomName)
+  }
+
   private func waitForZones() async -> [Zone] {
     if !zones.isEmpty { return zones }
     if client.isPaired {
@@ -818,6 +1009,53 @@ final class MockStore {
       try? await Task.sleep(nanoseconds: 200_000_000)
     }
     return zones
+  }
+
+  private func waitForOutputs(in zoneId: String) async -> [Output] {
+    let deadline = Date().addingTimeInterval(4)
+    while Date() < deadline {
+      let found = outputs.filter { $0.zoneId == zoneId }
+      if !found.isEmpty { return found }
+      try? await Task.sleep(nanoseconds: 200_000_000)
+    }
+    return outputs.filter { $0.zoneId == zoneId }
+  }
+
+  private func sendCommand(_ type: String, zoneId: String, extra: [String: Any] = [:]) async throws {
+    var data: [String: Any] = ["zone_id": zoneId]
+    extra.forEach { data[$0.key] = $0.value }
+    try await client.command(["type": type, "data": data])
+  }
+
+  private func applyVolume(_ output: Output, value: Double, zoneId: String) async throws {
+    if let index = outputs.firstIndex(where: { $0.id == output.id }) {
+      outputs[index].volume = value
+    }
+    publishWatchSnapshot()
+    try await sendCommand(
+      "VOLUME",
+      zoneId: zoneId,
+      extra: [
+        "output_id": output.id,
+        "strategy": "ABSOLUTE",
+        "value": value,
+      ]
+    )
+  }
+
+  private func sendMuteToggle(_ output: Output, zoneId: String) async throws {
+    if let index = outputs.firstIndex(where: { $0.id == output.id }) {
+      outputs[index].muted.toggle()
+    }
+    publishWatchSnapshot()
+    try await sendCommand(
+      "MUTE",
+      zoneId: zoneId,
+      extra: [
+        "output_id": output.id,
+        "type": "TOGGLE",
+      ]
+    )
   }
 
   private func bestZone(named spoken: String, in zones: [Zone]) -> Zone? {
@@ -944,12 +1182,14 @@ final class MockStore {
     case unpaired
     case noRoom(String)
     case notFound(String)
+    case volumeFixed(String)
 
     var errorDescription: String? {
       switch self {
       case .unpaired: "Pair this iPhone with your Roon core first."
       case let .noRoom(name): "I couldn't find a room called \(name)."
       case let .notFound(query): "I couldn't find \(query) in Roon."
+      case let .volumeFixed(name): "Volume is fixed on \(name)."
       }
     }
   }
@@ -1146,6 +1386,7 @@ final class MockStore {
   func publishWatchSnapshot() {
     #if os(iOS)
     PhoneWatchSync.shared.publish()
+    NowPlayingBridge.shared.publish()
     #endif
   }
 
@@ -1375,6 +1616,11 @@ final class MockStore {
     guard let playing else { return nil }
     let album = playing.track.disk?.title ?? playing.track.title
     let remaining = playing.totalQueueRemainingTime ?? playing.track.length ?? ""
+    let duration = TimeCode.durationSeconds(
+      length: playing.track.length,
+      seekPosition: playing.track.seekPosition,
+      seekPercentage: playing.track.seekPercentage
+    )
     return Track(
       id: [playing.track.title, playing.track.artist ?? "", playing.track.imageKey ?? ""].joined(separator: "|"),
       title: playing.track.title,
@@ -1383,7 +1629,8 @@ final class MockStore {
       position: playing.track.seekPosition ?? "0:00",
       remaining: remaining,
       progress: (playing.track.seekPercentage ?? 0) / 100,
-      imageKey: playing.track.imageKey
+      imageKey: playing.track.imageKey,
+      durationSeconds: duration
     )
   }
 
