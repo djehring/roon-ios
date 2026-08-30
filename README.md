@@ -76,3 +76,16 @@ xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \
 
 Files under test are listed explicitly in the target's `sources`, so add new
 ones there when they need coverage.
+
+### Checking layouts without a bridge
+
+With no bridge on the network the app never leaves onboarding, so Debug builds
+accept `-roon-demo-store` to fill the store with stand-in zones, a track, and a
+queue, then skip to the main session:
+
+```bash
+xcrun simctl launch <device> com.djehring.roonremote -roon-demo-store
+```
+
+Nothing in demo content talks to the bridge, so browse pages and artwork stay
+empty. It is for checking shells, spacing, and adaptivity, not content.

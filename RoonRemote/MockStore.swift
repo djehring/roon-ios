@@ -122,6 +122,9 @@ final class MockStore {
     ) { [weak self] _ in
       Task { @MainActor in self?.artwork.evictUnpinned() }
     }
+    #if DEBUG
+    if Self.wantsDemoContent { applyDemoContent() }
+    #endif
   }
 
   var selectedZone: Zone {
