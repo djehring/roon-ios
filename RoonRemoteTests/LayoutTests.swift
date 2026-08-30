@@ -37,4 +37,54 @@ struct LayoutTests {
     #expect(Layout.regularLibraryCardMinimum < Layout.heroArtWidth(.compact))
     #expect(Layout.regularLibraryCardMinimum > 0)
   }
+
+  @Test("Now Playing stacks below the wide-layout threshold")
+  func nowPlayingStacksAtPortraitDetailWidth() {
+    #expect(RegularNowPlayingLayout.mode(for: 740) == .stacked)
+    #expect(
+      RegularNowPlayingLayout.mode(
+        for: RegularNowPlayingLayout.sideBySideMinimumWidth - 1
+      ) == .stacked
+    )
+  }
+
+  @Test("Now Playing moves side by side at the threshold")
+  func nowPlayingMovesSideBySide() {
+    #expect(
+      RegularNowPlayingLayout.mode(
+        for: RegularNowPlayingLayout.sideBySideMinimumWidth
+      ) == .sideBySide
+    )
+    #expect(RegularNowPlayingLayout.mode(for: 1100) == .sideBySide)
+  }
+
+  @Test("stacked artwork respects its cap and horizontal insets")
+  func stackedArtworkWidth() {
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: 740, mode: .stacked) == 440
+    )
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: 400, mode: .stacked) == 336
+    )
+  }
+
+  @Test("side-by-side artwork is proportional until capped")
+  func sideBySideArtworkWidth() {
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: 900, mode: .sideBySide) == 414
+    )
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: 1400, mode: .sideBySide) == 520
+    )
+  }
+
+  @Test("artwork width never goes negative")
+  func artworkWidthNeverGoesNegative() {
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: 20, mode: .stacked) == 0
+    )
+    #expect(
+      RegularNowPlayingLayout.artWidth(containerWidth: -1, mode: .sideBySide) == 0
+    )
+  }
 }

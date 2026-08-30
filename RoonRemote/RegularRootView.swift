@@ -73,9 +73,7 @@ struct RegularRootView: View {
   private var detail: some View {
     switch selection {
     case .nowPlaying:
-      NowPlayingView(presentsSheets: false)
-        .navigationTitle("Now Playing")
-        .navigationBarTitleDisplayMode(.inline)
+      RegularNowPlayingView()
     case .library:
       if let entry = libraryEntry {
         BrowseListView(hierarchy: entry.hierarchy, title: entry.title)
