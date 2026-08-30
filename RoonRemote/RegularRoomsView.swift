@@ -123,6 +123,17 @@ struct RegularRoomsView: View {
       RoundedRectangle(cornerRadius: 18, style: .continuous)
         .stroke(selected ? Palette.accent.opacity(0.65) : Palette.hairline, lineWidth: selected ? 2 : 1)
     }
+    .hoverEffect(.lift)
+    .dropDestination(for: LibraryDragItem.self) { items, _ in
+      guard let item = items.first else { return false }
+      store.selectZone(zone.id)
+      store.playLibraryItem(
+        hierarchy: item.hierarchy,
+        itemKey: item.itemKey,
+        hint: item.hint
+      )
+      return true
+    } isTargeted: { _ in }
   }
 
   @ViewBuilder

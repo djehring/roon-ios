@@ -311,6 +311,19 @@ final class MockStore {
     }
   }
 
+  func adjustVolume(by delta: Double) {
+    guard let output = outputs.first(where: { !$0.isFixed }) else { return }
+    setVolume(
+      output,
+      value: PlaybackAdjustment.volume(
+        current: output.volume,
+        minimum: output.min,
+        maximum: output.max,
+        delta: delta
+      )
+    )
+  }
+
   func transfer(to zoneId: String) {
     Task {
       try? await client.command([
