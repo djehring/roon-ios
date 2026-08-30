@@ -116,6 +116,7 @@ enum AppTab: String, CaseIterable {
   case nowPlaying
   case library
   case search
+  case rooms
   case settings
 }
 
@@ -141,7 +142,20 @@ enum Appearance: String, CaseIterable {
 enum SearchSegment: String, CaseIterable {
   case ai
   case camera
-  case story
+}
+
+enum ZonePanelTab: String, CaseIterable, Identifiable {
+  case switchZone
+  case group
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .switchZone: "Switch zone"
+    case .group: "Group"
+    }
+  }
 }
 
 enum MockCatalog {

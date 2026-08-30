@@ -1,0 +1,225 @@
+import SwiftUI
+
+struct TVVolumePanel: View {
+  @Environment(MockStore.self) private var store
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    ZStack {
+      Palette.background.ignoresSafeArea()
+      VStack(alignment: .leading, spacing: 36) {
+        HStack(alignment: .firstTextBaseline) {
+          Text("Volume")
+            .font(.system(size: 44, weight: .bold))
+          Spacer()
+          Button("Done") { dismiss() }
+            .buttonStyle(.plain)
+            .font(.title3.weight(.medium))
+            .foregroundStyle(Palette.secondary)
+        }
+
+        if store.outputs.isEmpty {
+          Text("No outputs on this zone.")
+            .font(.title2)
+            .foregroundStyle(Palette.secondary)
+          Spacer()
+        } else {
+          ScrollView {
+            LazyVStack(spacing: 28) {
+              ForEach(store.outputs) { output in
+                outputCard(output)
+              }
+            }
+          }
+        }
+      }
+      .padding(56)
+    }
+  }
+
+  @ViewBuilder
+  private func outputCard(_ output: Output) -> some View {
+    VStack(alignment: .leading, spacing: 20) {
+      Text(output.name)
+        .font(.title2.weight(.semibold))
+
+      if output.isFixed {
+        Text("Volume is fixed on this output")
+          .font(.title3)
+          .foregroundStyle(Palette.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, 28)
+      } else {
+        let step = max(1, (output.max - output.min) / 20)
+        HStack(spacing: 36) {
+          Button {
+            store.setVolume(output, value: max(output.min, output.volume - step))
+          } label: {
+            Image(systemName: "speaker.fill")
+              .font(.system(size: 36, weight: .medium))
+              .frame(width: 96, height: 96)
+          }
+          .buttonStyle(.plain)
+
+          VStack(spacing: 12) {
+            Text(output.muted ? "Muted" : "\(Int(output.volume))")
+              .font(.system(size: 64, weight: .bold).monospacedDigit())
+              .foregroundStyle(output.muted ? Palette.tertiary : Palette.primary)
+              .frame(minWidth: 160)
+            volumeBar(output)
+              .frame(width: 280, height: 10)
+          }
+
+          Button {
+            store.setVolume(output, value: min(output.max, output.volume + step))
+          } label: {
+            Image(systemName: "speaker.wave.3.fill")
+              .font(.system(size: 36, weight: .medium))
+              .frame(width: 96, height: 96)
+          }
+          .buttonStyle(.plain)
+
+          Button {
+            store.toggleMute(output)
+          } label: {
+            Image(systemName: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+              .font(.system(size: 32, weight: .medium))
+              .frame(width: 96, height: 96)
+              .background(output.muted ? Palette.accent.opacity(0.25) : Palette.surface)
+              .clipShape(Circle())
+          }
+          .buttonStyle(.plain)
+        }
+        .padding(.vertical, 8)
+      }
+    }
+    .padding(36)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Palette.surface)
+    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 22, style: .continuous)
+        .stroke(Palette.hairline, lineWidth: 2)
+    }
+  }
+
+  private func volumeBar(_ output: Output) -> some View {
+    let span = max(output.max - output.min, 1)
+    let fraction = output.muted ? 0 : (output.volume - output.min) / span
+    return GeometryReader { geo in
+      ZStack(alignment: .leading) {
+        Capsule().fill(Palette.hairline)
+        Capsule()
+          .fill(Palette.accent)
+          .frame(width: max(4, geo.size.width * fraction))
+      }
+    }
+  }
+}
+
+struct TVQueuePanel: View {
+  @Environment(MockStore.self) private var store
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    ZStack {
+      Palette.background.ignoresSafeArea()
+      VStack(alignment: .leading, spacing: 28) {
+        HStack(alignment: .firstTextBaseline) {
+          VStack(alignment: .leading, spacing: 8) {
+            Text("Queue")
+              .font(.system(size: 44, weight: .bold))
+            if !store.queue.isEmpty {
+              Text("\(store.queue.count) tracks  ·  select to play from here")
+                .font(.title3)
+                .foregroundStyle(Palette.secondary)
+            }
+          }
+          Spacer()
+          Button("Done") { dismiss() }
+            .buttonStyle(.plain)
+            .font(.title3.weight(.medium))
+            .foregroundStyle(Palette.secondary)
+        }
+
+        if store.queue.isEmpty {
+          Spacer()
+          VStack(spacing: 16) {
+            Image(systemName: "music.note.list")
+              .font(.system(size: 56, weight: .light))
+              .foregroundStyle(Palette.tertiary)
+            Text("Queue is empty")
+              .font(.title)
+            Text("Add music from Library or Search.")
+              .font(.title3)
+              .foregroundStyle(Palette.secondary)
+          }
+          .frame(maxWidth: .infinity)
+          Spacer()
+        } else {
+          ScrollView {
+            LazyVStack(spacing: 14) {
+              ForEach(Array(store.queue.enumerated()), id: \.element.id) { index, item in
+                queueRow(item, index: index)
+              }
+            }
+            .padding(.bottom, 40)
+          }
+        }
+      }
+      .padding(56)
+    }
+  }
+
+  private func queueRow(_ item: QueueItem, index: Int) -> some View {
+    let isCurrent = store.currentTrack.map {
+      $0.title == item.title && $0.artist == item.artist
+    } ?? false
+    return Button {
+      store.playFromHere(item)
+      dismiss()
+    } label: {
+      HStack(spacing: 24) {
+        Text("\(index + 1)")
+          .font(.title3.monospacedDigit())
+          .foregroundStyle(Palette.tertiary)
+          .frame(width: 44, alignment: .trailing)
+
+        CoverArt(
+          title: item.album,
+          image: store.imageData(for: item.imageKey),
+          corner: 10
+        )
+        .frame(width: 72, height: 72)
+
+        VStack(alignment: .leading, spacing: 6) {
+          Text(item.title)
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(isCurrent ? Palette.accent : Palette.primary)
+            .lineLimit(1)
+          Text("\(item.artist)  ·  \(item.album)")
+            .font(.body)
+            .foregroundStyle(Palette.secondary)
+            .lineLimit(1)
+        }
+
+        Spacer()
+
+        if isCurrent {
+          Image(systemName: "waveform")
+            .font(.title2)
+            .foregroundStyle(Palette.accent)
+        }
+      }
+      .padding(.horizontal, 28)
+      .padding(.vertical, 18)
+      .background(Palette.surface)
+      .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+      .overlay {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+          .stroke(isCurrent ? Palette.accent.opacity(0.55) : Palette.hairline, lineWidth: 2)
+      }
+    }
+    .buttonStyle(.plain)
+  }
+}

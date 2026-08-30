@@ -42,23 +42,12 @@ struct VolumeSheet: View {
     @Bindable var store = store
     NavigationStack {
       List {
-        HStack {
-          Button {
-            store.showVolume = false
-            store.showTransfer = true
-          } label: {
-            Image(systemName: "arrow.left.arrow.right")
-          }
-          if store.outputs.count > 1 || !store.groupableHouseOutputs.isEmpty {
-            Button {
-              store.openGrouping()
-            } label: {
-              Image(systemName: "link")
-            }
-          }
-          Spacer()
+        Button {
+          store.openZonePanel()
+        } label: {
+          Label("Zones & grouping", systemImage: "hifispeaker.2")
+            .foregroundStyle(Palette.accent)
         }
-        .foregroundStyle(Palette.accent)
         .listRowBackground(Palette.surface)
 
         ForEach($store.outputs) { $output in
@@ -96,82 +85,54 @@ struct VolumeSheet: View {
       .navigationBarTitleDisplayMode(.inline)
     }
     .presentationBackground(Palette.background)
-    .sheet(isPresented: $store.showTransfer) {
-      TransferView()
-    }
-    .sheet(isPresented: $store.showGrouping) {
-      GroupingView()
+    .sheet(isPresented: $store.showZonePanel) {
+      ZonePanelSheet()
+        .presentationDetents([.medium, .large])
+        .interactiveDismissDisabled()
     }
   }
 }
 
-struct TransferView: View {
-  @Environment(MockStore.self) private var store
-  @Environment(\.dismiss) private var dismiss
-
-  var body: some View {
-    NavigationStack {
-      List {
-        Section("From") {
-          Text(store.selectedZone.name)
-        }
-        Section("To zone") {
-          ForEach(store.zones.filter { $0.id != store.selectedZoneId }) { zone in
-            Button {
-              store.transfer(to: zone.id)
-              dismiss()
-            } label: {
-              Label(zone.name, systemImage: "hifispeaker.fill")
-                .foregroundStyle(Palette.primary)
-            }
-          }
-        }
-      }
-      .scrollContentBackground(.hidden)
-      .background(Palette.background)
-      .navigationTitle("Transfer")
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Cancel") { dismiss() }
-        }
-      }
-    }
-    .presentationBackground(Palette.background)
-  }
-}
-
-struct GroupingView: View {
+struct ZonePanelSheet: View {
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     @Bindable var store = store
     NavigationStack {
-      List {
-        Section("Currently in group") {
-          ForEach(store.outputs) { output in
-            Toggle(output.name, isOn: bind(output.id))
-              .tint(Palette.accent)
-              .disabled(output.id == store.outputs.first?.id)
+      VStack(spacing: 0) {
+        Picker("Panel", selection: $store.zonePanelTab) {
+          ForEach(ZonePanelTab.allCases) { tab in
+            Text(tab.title).tag(tab)
           }
         }
-        if !store.groupableHouseOutputs.isEmpty {
-          Section("Add to zone") {
-            ForEach(store.groupableHouseOutputs, id: \.outputId) { output in
-              Toggle(output.displayName, isOn: bind(output.outputId))
-                .tint(Palette.accent)
-            }
-          }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+
+        switch store.zonePanelTab {
+        case .switchZone:
+          switchZoneList
+        case .group:
+          groupList
         }
       }
-      .scrollContentBackground(.hidden)
       .background(Palette.background)
-      .navigationTitle("Grouping")
+      .navigationTitle("Zones")
+      .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Save") {
-            store.saveGrouping()
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Close") {
+            store.showZonePanel = false
             dismiss()
+          }
+        }
+        if store.zonePanelTab == .group {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Save") {
+              store.saveGrouping()
+              dismiss()
+            }
           }
         }
       }
@@ -179,7 +140,66 @@ struct GroupingView: View {
     .presentationBackground(Palette.background)
   }
 
-  private func bind(_ id: String) -> Binding<Bool> {
+  private var switchZoneList: some View {
+    List {
+      Section {
+        Text("Transfer playback from \(store.selectedZone.name)")
+          .font(.footnote)
+          .foregroundStyle(Palette.secondary)
+          .listRowBackground(Color.clear)
+      }
+
+      Section("To zone") {
+        ForEach(store.zones.filter { $0.id != store.selectedZoneId }) { zone in
+          Button {
+            store.transfer(to: zone.id)
+            store.showZonePanel = false
+            dismiss()
+          } label: {
+            HStack {
+              VStack(alignment: .leading, spacing: 2) {
+                Text(zone.name)
+                  .foregroundStyle(Palette.primary)
+                Text(zone.track?.title ?? "Nothing playing")
+                  .font(.footnote)
+                  .foregroundStyle(Palette.secondary)
+              }
+              Spacer()
+              Image(systemName: "arrow.right.circle")
+                .foregroundStyle(Palette.accent)
+            }
+          }
+          .listRowBackground(Palette.surface)
+        }
+      }
+    }
+    .scrollContentBackground(.hidden)
+  }
+
+  private var groupList: some View {
+    List {
+      Section("Currently in group") {
+        ForEach(store.outputs) { output in
+          Toggle(output.name, isOn: groupBinding(output.id))
+            .tint(Palette.accent)
+            .disabled(output.id == store.outputs.first?.id)
+            .listRowBackground(Palette.surface)
+        }
+      }
+      if !store.groupableHouseOutputs.isEmpty {
+        Section("Add to zone") {
+          ForEach(store.groupableHouseOutputs, id: \.outputId) { output in
+            Toggle(output.displayName, isOn: groupBinding(output.outputId))
+              .tint(Palette.accent)
+              .listRowBackground(Palette.surface)
+          }
+        }
+      }
+    }
+    .scrollContentBackground(.hidden)
+  }
+
+  private func groupBinding(_ id: String) -> Binding<Bool> {
     Binding(
       get: { store.pendingGroupIds.contains(id) },
       set: { on in
@@ -196,6 +216,24 @@ struct QueueSheet: View {
       QueueList(embedded: false)
         .navigationTitle("Queue")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    .presentationBackground(Palette.background)
+  }
+}
+
+struct StorySheet: View {
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    NavigationStack {
+      TrackStoryView()
+        .navigationTitle("Story")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Done") { dismiss() }
+          }
+        }
     }
     .presentationBackground(Palette.background)
   }

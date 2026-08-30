@@ -61,7 +61,7 @@ struct SettingsView: View {
           }
         }
         Section("Watch") {
-          Text("Controls the same zone as the phone")
+          Text("Same room as the phone. Tap to play, swipe for skip, queue, and rooms. Crown is volume. Long-press for stop, mute, and transfer.")
             .foregroundStyle(Palette.secondary)
         }
         Section("About") {

@@ -33,6 +33,10 @@ struct NowPlayingView: View {
       QueueSheet()
         .presentationDetents([.large])
     }
+    .sheet(isPresented: bind(\.showStory)) {
+      StorySheet()
+        .presentationDetents([.large])
+    }
   }
 
   private var phoneColumn: some View {
@@ -148,37 +152,39 @@ struct NowPlayingView: View {
   private var chips: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 8) {
+        chipButton(label: "Story", symbol: "text.book.closed") {
+          store.showStory = true
+        }
         ForEach(store.toolbar) { action in
-          Button {
+          chipButton(label: action.label, symbol: action.symbol) {
             store.runToolbar(action)
-          } label: {
-            Label(action.label, systemImage: action.symbol)
-              .font(.footnote.weight(.medium))
-              .foregroundStyle(Palette.primary)
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(Palette.surface)
-              .clipShape(Capsule())
-              .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
           }
         }
         ForEach(store.customActions) { action in
-          Button {
+          chipButton(label: action.label, symbol: action.symbol) {
             store.runCustomAction(action)
-          } label: {
-            Label(action.label, systemImage: action.symbol)
-              .font(.footnote.weight(.medium))
-              .foregroundStyle(Palette.primary)
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(Palette.surface)
-              .clipShape(Capsule())
-              .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
           }
         }
       }
     }
     .padding(.top, 8)
+  }
+
+  private func chipButton(
+    label: String,
+    symbol: String,
+    action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      Label(label, systemImage: symbol)
+        .font(.footnote.weight(.medium))
+        .foregroundStyle(Palette.primary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Palette.surface)
+        .clipShape(Capsule())
+        .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
+    }
   }
 
   private var queuePeek: some View {

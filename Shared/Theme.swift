@@ -61,6 +61,19 @@ enum Motion {
   static let sheet = Animation.easeInOut(duration: 0.25)
 }
 
+struct GoldFillButton: ButtonStyle {
+  var minHeight: CGFloat = 50
+
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .font(.system(size: 17, weight: .semibold))
+      .foregroundStyle(Palette.onAccent)
+      .frame(maxWidth: .infinity, minHeight: minHeight)
+      .background(Palette.accent.opacity(configuration.isPressed ? 0.75 : 1))
+      .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+  }
+}
+
 struct CoverArt: View {
   let title: String
   var image: Data? = nil
