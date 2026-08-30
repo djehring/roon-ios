@@ -322,10 +322,14 @@ final class MockStore {
   }
 
   func openZonePanel(tab: ZonePanelTab = .switchZone) {
-    pendingGroupIds = Set(outputs.map(\.id))
-    groupedOutputIds = pendingGroupIds
+    prepareGrouping()
     zonePanelTab = tab
     showZonePanel = true
+  }
+
+  func prepareGrouping() {
+    pendingGroupIds = Set(outputs.map(\.id))
+    groupedOutputIds = pendingGroupIds
   }
 
   var groupableHouseOutputs: [OutputDescription] {

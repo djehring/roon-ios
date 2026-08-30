@@ -9,6 +9,7 @@ import Foundation
 /// Now Playing toolbar shortcuts all still speak in.
 enum SidebarItem: Hashable {
   case nowPlaying
+  case rooms
   case library(LibraryEntry.ID)
   case search(SearchSegment)
   case settings
@@ -16,6 +17,7 @@ enum SidebarItem: Hashable {
   var tab: AppTab {
     switch self {
     case .nowPlaying: .nowPlaying
+    case .rooms: .rooms
     case .library: .library
     case .search: .search
     case .settings: .settings
@@ -41,6 +43,8 @@ extension SidebarItem {
     switch tab {
     case .nowPlaying:
       return .nowPlaying
+    case .rooms:
+      return .rooms
     case .settings:
       return .settings
     case .search:
@@ -50,9 +54,6 @@ extension SidebarItem {
       // it rather than landing on the first category and jumping again.
       guard pendingLibraryHierarchy == nil else { return nil }
       return library.first.map { .library($0.id) }
-    case .rooms:
-      // No sidebar row until the Rooms destination exists.
-      return nil
     }
   }
 
@@ -85,7 +86,10 @@ extension SidebarSection {
       SidebarSection(
         id: "listen",
         title: nil,
-        rows: [SidebarRow(item: .nowPlaying, title: "Now Playing", symbol: "play.square.fill")]
+        rows: [
+          SidebarRow(item: .nowPlaying, title: "Now Playing", symbol: "play.square.fill"),
+          SidebarRow(item: .rooms, title: "Rooms", symbol: "hifispeaker.2.fill"),
+        ]
       ),
       SidebarSection(
         id: "library",

@@ -74,6 +74,8 @@ struct RegularRootView: View {
     switch selection {
     case .nowPlaying:
       RegularNowPlayingView()
+    case .rooms:
+      RegularRoomsView()
     case .library:
       if let entry = libraryEntry {
         BrowseListView(hierarchy: entry.hierarchy, title: entry.title)
