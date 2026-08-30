@@ -27,6 +27,7 @@
 		4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		45403E597B935611457A6527 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */; };
 		47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
+		480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
 		60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34BDEF88D54EB957842C41A5 /* Assets.xcassets */; };
@@ -106,6 +107,7 @@
 		2AE17D25F7DC793302FC135B /* MockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockStore.swift; sourceTree = "<group>"; };
 		2AFB1CDA9C5D44EFAF558CDC /* TVApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVApp.swift; sourceTree = "<group>"; };
 		2C593B07F14E89605669C1AD /* WatchPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchPayload.swift; sourceTree = "<group>"; };
+		2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriPlayIntent.swift; sourceTree = "<group>"; };
 		34BDEF88D54EB957842C41A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RoonRemoteWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4814FEAE30516219F5ED8F68 /* SearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViews.swift; sourceTree = "<group>"; };
@@ -175,6 +177,7 @@
 				D38E999F7921AA6BB8403FC7 /* RootView.swift */,
 				4814FEAE30516219F5ED8F68 /* SearchViews.swift */,
 				AC17B2323BEB8BE438F3955A /* SettingsView.swift */,
+				2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */,
 				BE048B8AFBC186ABF845EBA5 /* API */,
 			);
 			path = RoonRemote;
@@ -462,6 +465,7 @@
 				8D41AF696B6304473C14FE3D /* RootView.swift in Sources */,
 				21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */,
 				BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */,
+				480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */,
 				43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */,
 				14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */,
 			);

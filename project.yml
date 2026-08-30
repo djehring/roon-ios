@@ -39,6 +39,9 @@ targets:
       path: RoonRemote/Info.plist
       properties:
         CFBundleDisplayName: Roon Remote
+        CFBundleSpokenName: Roon
+        INAlternativeAppNames:
+          - INAlternativeAppName: Roon
         UILaunchScreen: {}
         NSLocalNetworkUsageDescription: >-
           Roon Remote finds the bridge on your Wi-Fi so it can

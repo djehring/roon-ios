@@ -76,7 +76,6 @@ struct BrowseListView: View {
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
   @State private var prompt = ""
-  @State private var actionsById: [String: [String]] = [:]
   @State private var jump: String?
 
   private static let titlesWithIndex = [
@@ -123,7 +122,7 @@ struct BrowseListView: View {
         indexBar
       }
     }
-    .task {
+    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")") {
       await reload()
     }
     .safeAreaInset(edge: .bottom) {
@@ -150,28 +149,68 @@ struct BrowseListView: View {
     } else if child.hint == "action_list" {
       rowLabel(child)
         .contextMenu {
-          ForEach(actions(for: child), id: \.self) { action in
+          ForEach(child.actions, id: \.self) { action in
             Button(action) { run(child, title: action) }
           }
         }
-        .task {
-          await loadActions(for: child)
+    } else if child.itemKey != nil, isPlaylistContents {
+      Button {
+        playFromTrack(child)
+      } label: {
+        rowLabel(child)
+      }
+      .contextMenu {
+        Button("Play From Here") { playFromTrack(child) }
+        ForEach(["Play Now", "Queue", "Play Next"], id: \.self) { action in
+          Button(action) { run(child, title: action) }
         }
+        NavigationLink(value: child) {
+          Text("Open")
+        }
+      }
     } else if child.itemKey != nil {
       NavigationLink(value: child) {
         rowLabel(child)
       }
       .contextMenu {
-        ForEach(actions(for: child), id: \.self) { action in
+        ForEach(child.actions, id: \.self) { action in
           Button(action) { run(child, title: action) }
         }
-      }
-      .task {
-        await loadActions(for: child)
       }
     } else {
       rowLabel(child)
     }
+  }
+
+  /// True when browsing the tracks inside a playlist (not the playlist list itself).
+  private var isPlaylistContents: Bool {
+    hierarchy == "playlists" && itemKey != nil
+  }
+
+  private func playFromTrack(_ child: BrowseNode) {
+    guard let key = child.itemKey else { return }
+    if store.isRecordingAction {
+      store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
+      store.finishRecording(actionTitle: "Play From Here", actionIndex: 0)
+      return
+    }
+    store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
+  }
+
+  private func run(_ child: BrowseNode, title: String) {
+    guard let key = child.itemKey else { return }
+    if store.isRecordingAction {
+      store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
+      let index = child.actions.firstIndex(of: title) ?? 0
+      store.finishRecording(actionTitle: title, actionIndex: index)
+      return
+    }
+    store.runBrowseAction(
+      hierarchy: hierarchy,
+      itemKey: key,
+      title: title,
+      hint: child.hint
+    )
   }
 
   private func rowLabel(_ child: BrowseNode) -> some View {
@@ -189,6 +228,12 @@ struct BrowseListView: View {
             .font(.footnote)
             .foregroundStyle(Palette.secondary)
         }
+      }
+      if isPlaylistContents, child.hint != "action", child.hint != "action_list" {
+        Spacer(minLength: 0)
+        Image(systemName: "play.circle.fill")
+          .foregroundStyle(Palette.accent)
+          .font(.title3)
       }
     }
   }
@@ -240,33 +285,12 @@ struct BrowseListView: View {
     .background(Palette.surface)
   }
 
-  private func actions(for child: BrowseNode) -> [String] {
-    actionsById[child.id] ?? child.actions
-  }
-
-  private func loadActions(for child: BrowseNode) async {
-    guard let key = child.itemKey, actionsById[child.id] == nil else { return }
-    let loaded = await store.loadActions(hierarchy: hierarchy, itemKey: key)
-    actionsById[child.id] = loaded
-  }
-
-  private func run(_ child: BrowseNode, title: String) {
-    guard let key = child.itemKey else { return }
-    if store.isRecordingAction {
-      store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
-      let index = actions(for: child).firstIndex(of: title) ?? 0
-      store.finishRecording(actionTitle: title, actionIndex: index)
-      return
-    }
-    store.runBrowseAction(hierarchy: hierarchy, itemKey: key, title: title)
-  }
-
   private func reload() async {
     loading = true
+    defer { loading = false }
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: title)
     }
     page = await store.loadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
-    loading = false
   }
 }

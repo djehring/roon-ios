@@ -37,6 +37,15 @@ open on the phone. Now Playing is full-bleed cover:
 - Digital Crown: volume
 - Long-press: stop, mute, transfer to another room
 
+## Siri
+
+On iPhone, after the app has connected once:
+
+> Hey Siri, play Radio 3 in the Kitchen with Roon
+
+Room names are your Roon zones. "with Roon" (or "with Roon Remote") is how Siri
+picks this app instead of Music. The same action is in Shortcuts as **Play in a room**.
+
 ## Apple TV
 
 Roon on Apple TV is an independent app (same pairing flow as iPhone). Tabs:

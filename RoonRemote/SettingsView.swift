@@ -60,6 +60,10 @@ struct SettingsView: View {
             store.beginRecordingAction()
           }
         }
+        Section("Siri") {
+          Text("Say \"Hey Siri, play Radio 3 in the Kitchen with Roon.\" Room names match your Roon zones. Radio stations come from Live Radio first, then albums.")
+            .foregroundStyle(Palette.secondary)
+        }
         Section("Watch") {
           Text("Same room as the phone. Tap to play, swipe for skip, queue, and rooms. Crown is volume. Long-press for stop, mute, and transfer.")
             .foregroundStyle(Palette.secondary)
