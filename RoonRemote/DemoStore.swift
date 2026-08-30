@@ -73,6 +73,61 @@ extension MockStore {
         imageKey: nil
       ),
     ]
+    aiQuery = "Late-night acoustic jazz"
+    aiResults = [
+      SuggestedTrack(
+        id: "ai-1",
+        title: "Blue in Green",
+        artist: "Miles Davis",
+        album: "Kind of Blue",
+        error: nil,
+        corrected: false
+      ),
+      SuggestedTrack(
+        id: "ai-2",
+        title: "Naima",
+        artist: "John Coltrane",
+        album: "Giant Steps",
+        error: nil,
+        corrected: false
+      ),
+      SuggestedTrack(
+        id: "ai-3",
+        title: "Peace Piece",
+        artist: "Bill Evans",
+        album: "Everybody Digs Bill Evans",
+        error: nil,
+        corrected: true
+      ),
+    ]
+    recognizedAlbums = [
+      BrowseNode(
+        id: "recognized-1",
+        title: "Kind of Blue",
+        subtitle: "Miles Davis",
+        symbol: "opticaldisc",
+        actions: ["Play Now"],
+        isPrompt: false,
+        children: [],
+        itemKey: "kind-of-blue",
+        imageKey: nil,
+        hierarchy: "albums",
+        hint: nil
+      ),
+      BrowseNode(
+        id: "recognized-2",
+        title: "Blue Train",
+        subtitle: "John Coltrane",
+        symbol: "opticaldisc",
+        actions: ["Play Now"],
+        isPrompt: false,
+        children: [],
+        itemKey: "blue-train",
+        imageKey: nil,
+        hierarchy: "albums",
+        hint: nil
+      ),
+    ]
     bridgeVersion = "demo"
     session = .main
   }

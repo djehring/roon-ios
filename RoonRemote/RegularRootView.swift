@@ -82,11 +82,11 @@ struct RegularRootView: View {
           .id(entry.id)
       }
     case .search(.ai):
-      AISearchView()
+      AISearchView(regularWidth: true)
         .background(Palette.background)
         .navigationTitle("AI Search")
     case .search(.camera):
-      CameraSearchView()
+      CameraSearchView(regularWidth: true)
         .background(Palette.background)
         .navigationTitle("Cover Camera")
     case .settings:

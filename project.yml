@@ -74,6 +74,7 @@ targets:
       - path: RoonRemote/Layout.swift
       - path: RoonRemote/LibraryIndex.swift
       - path: RoonRemote/Models.swift
+      - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/Sidebar.swift
     settings:
       base:

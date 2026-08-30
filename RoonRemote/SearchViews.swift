@@ -31,13 +31,45 @@ struct SearchTabView: View {
 }
 
 struct AISearchView: View {
+  var regularWidth = false
+
   @Environment(MockStore.self) private var store
   @State private var recorder = VoiceRecorder()
+  @State private var selectedResultID: SuggestedTrack.ID?
   @FocusState private var queryFocused: Bool
 
   var body: some View {
+    Group {
+      if regularWidth {
+        HStack(spacing: 0) {
+          searchContent
+            .frame(maxWidth: 620)
+          Divider()
+            .background(Palette.hairline)
+          resultDetail
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+      } else {
+        searchContent
+      }
+    }
+    .toolbar {
+      ToolbarItemGroup(placement: .keyboard) {
+        Spacer()
+        Button("Done") { queryFocused = false }
+      }
+    }
+    .onChange(of: store.aiResults.map(\.id)) { _, ids in
+      selectedResultID = SearchSelection.resolved(
+        current: selectedResultID,
+        available: ids
+      )
+    }
+  }
+
+  private var searchContent: some View {
     @Bindable var store = store
-    VStack(spacing: 12) {
+    return VStack(spacing: 12) {
       HStack {
         TextField("What would you like to listen to?", text: $store.aiQuery)
           .textFieldStyle(.plain)
@@ -108,8 +140,23 @@ struct AISearchView: View {
                     .foregroundStyle(.red.opacity(0.8))
                 }
               }
+              Spacer(minLength: 0)
+              if regularWidth, track.id == resolvedResultID {
+                Image(systemName: "checkmark.circle.fill")
+                  .foregroundStyle(Palette.accent)
+              }
             }
-            .listRowBackground(Palette.surface)
+            .contentShape(Rectangle())
+            .onTapGesture {
+              if regularWidth {
+                selectedResultID = track.id
+              }
+            }
+            .listRowBackground(
+              regularWidth && track.id == resolvedResultID
+                ? Palette.accent.opacity(0.12)
+                : Palette.surface
+            )
           }
           .onDelete { store.aiResults.remove(atOffsets: $0) }
           .onMove { store.aiResults.move(fromOffsets: $0, toOffset: $1) }
@@ -118,12 +165,58 @@ struct AISearchView: View {
         .scrollDismissesKeyboard(.interactively)
       }
     }
-    .toolbar {
-      ToolbarItemGroup(placement: .keyboard) {
-        Spacer()
-        Button("Done") { queryFocused = false }
+  }
+
+  @ViewBuilder
+  private var resultDetail: some View {
+    if let track = store.aiResults.first(where: { $0.id == resolvedResultID }) {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+          CoverArt(title: track.album, corner: 18)
+            .frame(maxWidth: 320)
+            .aspectRatio(1, contentMode: .fit)
+            .shadow(color: .black.opacity(0.28), radius: 24, y: 12)
+
+          VStack(alignment: .leading, spacing: 8) {
+            Text(track.title)
+              .font(.largeTitle.bold())
+            Text(track.artist)
+              .font(.title2)
+              .foregroundStyle(Palette.secondary)
+            Text(track.album)
+              .font(.title3)
+              .foregroundStyle(Palette.tertiary)
+          }
+
+          if track.corrected {
+            Label("Album was corrected", systemImage: "sparkles")
+              .foregroundStyle(Palette.accent)
+          }
+          if let error = track.error {
+            Label(error, systemImage: "exclamationmark.circle")
+              .foregroundStyle(.red.opacity(0.85))
+          } else {
+            Label("Included in the play selection", systemImage: "checkmark.circle")
+              .foregroundStyle(Palette.secondary)
+          }
+        }
+        .frame(maxWidth: 440, alignment: .leading)
+        .padding(36)
       }
+    } else {
+      ContentUnavailableView(
+        "Ask for some music",
+        systemImage: "sparkles",
+        description: Text("Describe a mood, artist, era, or anything else you want to hear.")
+      )
     }
+  }
+
+  private var resolvedResultID: SuggestedTrack.ID? {
+    SearchSelection.resolved(
+      current: selectedResultID,
+      available: store.aiResults.map(\.id)
+    )
   }
 
   private func search() {
@@ -144,7 +237,7 @@ struct AISearchView: View {
 
 @MainActor
 @Observable
-private final class VoiceRecorder {
+final class VoiceRecorder {
   var isRecording = false
   private var recorder: AVAudioRecorder?
   private var fileURL: URL {
@@ -180,6 +273,8 @@ private final class VoiceRecorder {
 }
 
 struct CameraSearchView: View {
+  var regularWidth = false
+
   @Environment(MockStore.self) private var store
   @State private var pickerItem: PhotosPickerItem?
   @State private var showSourcePicker = false
@@ -189,107 +284,38 @@ struct CameraSearchView: View {
   @FocusState private var hintFocused: Bool
 
   var body: some View {
-    @Bindable var store = store
-    ScrollView {
-      VStack(spacing: 16) {
-        Button {
-          hintFocused = false
-          showSourcePicker = true
-        } label: {
-          ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-              .fill(Palette.surface)
-              .frame(height: 220)
-            if let pickedImage {
-              CoverArt(title: "cover", image: pickedImage, corner: 12)
-                .padding(24)
-            } else {
-              VStack(spacing: 8) {
-                Image(systemName: "camera.fill")
-                  .font(.largeTitle)
-                  .foregroundStyle(Palette.accent)
-                Text("Take or choose a cover")
-                  .foregroundStyle(Palette.secondary)
-              }
-            }
+    Group {
+      if regularWidth {
+        HStack(spacing: 0) {
+          ScrollView {
+            capturePanel
+              .frame(maxWidth: 520)
+              .padding(32)
           }
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 16)
-
-        TextField("Album description (optional)", text: $store.cameraHint)
-          .padding(12)
-          .background(Palette.surface)
-          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-          .padding(.horizontal, 16)
-          .focused($hintFocused)
-          .submitLabel(.done)
-          .onSubmit { hintFocused = false }
-
-        if let error = store.aiError, store.searchSegment == .camera {
-          Text(error)
-            .font(.footnote)
-            .foregroundStyle(.red.opacity(0.85))
-            .padding(.horizontal, 16)
-        }
-
-        if store.recognizedAlbums.isEmpty {
-          Button("Recognize album") {
-            hintFocused = false
-            store.recognizeAlbum(
-              image: pickedImage,
-              mimeType: pickedImage == nil ? nil : "image/jpeg"
-            )
-          }
-          .buttonStyle(GoldFillButton())
-          .padding(.horizontal, 16)
-          .disabled(pickedImage == nil && store.cameraHint.isEmpty)
-        } else {
-          Button("Search again") {
-            hintFocused = false
-            store.hasPhoto = false
-            store.recognizedAlbums = []
-            pickedImage = nil
-            pickerItem = nil
-          }
-          .foregroundStyle(Palette.accent)
           .frame(maxWidth: .infinity)
-          .padding(.horizontal, 16)
 
-          LazyVStack(spacing: 0) {
-            ForEach(store.recognizedAlbums) { album in
-              Button {
-                hintFocused = false
-                store.playRecognized(album)
-              } label: {
-                HStack {
-                  CoverArt(
-                    title: album.title,
-                    image: store.imageData(for: album.imageKey),
-                    corner: 6
-                  )
-                  .frame(width: 48, height: 48)
-                  VStack(alignment: .leading) {
-                    Text(album.title)
-                      .foregroundStyle(Palette.primary)
-                    Text(album.subtitle ?? "")
-                      .font(.footnote)
-                      .foregroundStyle(Palette.secondary)
-                  }
-                  Spacer()
-                  Image(systemName: "play.circle.fill")
-                    .foregroundStyle(Palette.accent)
-                    .font(.title2)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-              }
-              .buttonStyle(.plain)
+          Divider()
+            .background(Palette.hairline)
+
+          ScrollView {
+            resultsPanel
+              .frame(maxWidth: 520)
+              .padding(32)
+          }
+          .frame(maxWidth: .infinity)
+        }
+      } else {
+        ScrollView {
+          VStack(spacing: 20) {
+            capturePanel
+            if !store.recognizedAlbums.isEmpty {
+              resultsPanel
             }
           }
+          .padding(.horizontal, 16)
+          .padding(.bottom, 24)
         }
       }
-      .padding(.bottom, 24)
     }
     .scrollDismissesKeyboard(.interactively)
     .confirmationDialog("Cover image", isPresented: $showSourcePicker, titleVisibility: .visible) {
@@ -315,6 +341,154 @@ struct CameraSearchView: View {
       }
       .ignoresSafeArea()
     }
+  }
+
+  private var capturePanel: some View {
+    @Bindable var store = store
+    return VStack(spacing: 18) {
+      Button {
+        hintFocused = false
+        showSourcePicker = true
+      } label: {
+        ZStack {
+          RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(Palette.surface)
+          if let pickedImage {
+            CoverArt(title: "cover", image: pickedImage, corner: 14)
+              .padding(28)
+          } else {
+            VStack(spacing: 12) {
+              Image(systemName: "camera.fill")
+                .font(.system(size: regularWidth ? 46 : 34))
+                .foregroundStyle(Palette.accent)
+              Text("Take or choose a cover")
+                .font(regularWidth ? .title3 : .body)
+                .foregroundStyle(Palette.secondary)
+            }
+          }
+        }
+        .aspectRatio(regularWidth ? 1 : nil, contentMode: .fit)
+        .frame(maxWidth: .infinity)
+        .frame(height: regularWidth ? nil : 220)
+      }
+      .buttonStyle(.plain)
+
+      TextField("Album description (optional)", text: $store.cameraHint)
+        .padding(14)
+        .background(Palette.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .focused($hintFocused)
+        .submitLabel(.done)
+        .onSubmit { hintFocused = false }
+
+      if let error = store.aiError, store.searchSegment == .camera {
+        Text(error)
+          .font(.footnote)
+          .foregroundStyle(.red.opacity(0.85))
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+
+      if store.recognizedAlbums.isEmpty {
+        Button("Recognize album") {
+          hintFocused = false
+          store.recognizeAlbum(
+            image: pickedImage,
+            mimeType: pickedImage == nil ? nil : "image/jpeg"
+          )
+        }
+        .buttonStyle(GoldFillButton())
+        .disabled(pickedImage == nil && store.cameraHint.isEmpty)
+      } else {
+        Button("Search again") {
+          resetSearch()
+        }
+        .foregroundStyle(Palette.accent)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var resultsPanel: some View {
+    if store.recognizedAlbums.isEmpty {
+      ContentUnavailableView(
+        "Recognized albums",
+        systemImage: "opticaldisc",
+        description: Text("Matches from your library will appear here.")
+      )
+      .frame(minHeight: 420)
+    } else {
+      LazyVStack(alignment: .leading, spacing: 14) {
+        Text("Recognized albums")
+          .font(.title2.bold())
+          .frame(maxWidth: .infinity, alignment: .leading)
+
+        ForEach(store.recognizedAlbums) { album in
+          Button {
+            hintFocused = false
+            store.playRecognized(album)
+          } label: {
+            if regularWidth {
+              VStack(alignment: .leading, spacing: 12) {
+                CoverArt(
+                  title: album.title,
+                  image: store.imageData(
+                    for: album.imageKey,
+                    pixels: ArtworkCache.gridPixels
+                  ),
+                  corner: 10
+                )
+                .aspectRatio(1, contentMode: .fit)
+
+                HStack(alignment: .top) {
+                  albumText(album)
+                  Spacer(minLength: 8)
+                  Image(systemName: "play.circle.fill")
+                    .foregroundStyle(Palette.accent)
+                    .font(.title2)
+                }
+              }
+            } else {
+              HStack(spacing: 14) {
+                CoverArt(
+                  title: album.title,
+                  image: store.imageData(for: album.imageKey),
+                  corner: 8
+                )
+                .frame(width: 52, height: 52)
+                albumText(album)
+                Spacer()
+                Image(systemName: "play.circle.fill")
+                  .foregroundStyle(Palette.accent)
+                  .font(.title2)
+              }
+            }
+          }
+          .padding(12)
+          .background(Palette.surface)
+          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          .buttonStyle(.plain)
+        }
+      }
+    }
+  }
+
+  private func albumText(_ album: BrowseNode) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text(album.title)
+        .font(.headline)
+        .foregroundStyle(Palette.primary)
+      Text(album.subtitle ?? "")
+        .font(.subheadline)
+        .foregroundStyle(Palette.secondary)
+    }
+  }
+
+  private func resetSearch() {
+    hintFocused = false
+    store.hasPhoto = false
+    store.recognizedAlbums = []
+    pickedImage = nil
+    pickerItem = nil
   }
 
   private func loadPickedImage(_ item: PhotosPickerItem) async {
