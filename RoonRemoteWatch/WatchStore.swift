@@ -2,6 +2,7 @@ import Foundation
 import WatchConnectivity
 import WidgetKit
 import WatchKit
+import Intents
 import os.log
 
 final class WatchSessionRelay: NSObject, WCSessionDelegate {
@@ -76,6 +77,43 @@ final class WatchAppDelegate: NSObject, WKApplicationDelegate {
         task.setTaskCompletedWithSnapshot(false)
       }
     }
+  }
+
+  func handle(_ intent: INIntent, completionHandler: @escaping (INIntentResponse) -> Void) {
+    guard let play = intent as? INPlayMediaIntent else {
+      completionHandler(INPlayMediaIntentResponse(code: .failure, userActivity: nil))
+      return
+    }
+    let phrase = PlayRequest.phrase(
+      mediaName: play.mediaSearch?.mediaName,
+      artist: play.mediaSearch?.artistName,
+      album: play.mediaSearch?.albumName,
+      itemTitle: play.mediaItems?.first?.title
+    )
+    let parsed = PlayRequest.parse(phrase)
+    guard !parsed.what.isEmpty,
+          let data = try? JSONEncoder().encode(
+            WatchCommand.playInRoom(query: parsed.what, room: parsed.room ?? "")
+          )
+    else {
+      completionHandler(INPlayMediaIntentResponse(code: .failure, userActivity: nil))
+      return
+    }
+    let payload = [WatchMessageKey.command: data]
+    let session = WCSession.default
+    if session.activationState != .activated {
+      WatchSessionRelay.shared.activate()
+    }
+    if session.isReachable {
+      session.sendMessage(payload, replyHandler: nil, errorHandler: nil)
+    } else {
+      session.transferUserInfo(payload)
+    }
+    completionHandler(INPlayMediaIntentResponse(code: .success, userActivity: nil))
+  }
+
+  func handleIntent(_ intent: INIntent, completionHandler: @escaping (INIntentResponse) -> Void) {
+    handle(intent, completionHandler: completionHandler)
   }
 }
 
@@ -221,6 +259,11 @@ final class WatchStore {
         volume = resolved.volume
       }
       persist(resolved)
+      if resolved.isPlaying {
+        WatchPlaybackSession.shared.startIfNeeded()
+      } else {
+        WatchPlaybackSession.shared.stopIfNeeded()
+      }
       NSLog("watch snapshot ready=%d title=%@", resolved.sessionReady, resolved.title ?? "nil")
     } catch {
       NSLog("watch decode failed: %@", error.localizedDescription)

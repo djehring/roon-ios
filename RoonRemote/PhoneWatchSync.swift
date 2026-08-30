@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import WatchConnectivity
+import HealthKit
 import os.log
 
 final class PhoneWatchSync: NSObject, WCSessionDelegate {
@@ -9,6 +10,8 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
 
   private weak var store: MockStore?
   private var lastEncoded: Data?
+  private var lastWakeKey: String?
+  private var watchLaunchArmed = true
 
   func activate(store: MockStore) {
     self.store = store
@@ -22,26 +25,96 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   func publish() {
     guard let store else { return }
     let snapshot = Self.snapshot(from: store)
-    guard let data = try? JSONEncoder().encode(snapshot), data != lastEncoded else { return }
+    guard let data = try? JSONEncoder().encode(snapshot) else { return }
     let payload = [WatchMessageKey.snapshot: data]
     let session = WCSession.default
     guard session.activationState == .activated else { return }
 
-    var delivered = false
-    do {
-      try session.updateApplicationContext(payload)
-      delivered = true
-    } catch {
-      Self.log.error("applicationContext failed: \(error.localizedDescription, privacy: .public)")
+    let dataChanged = data != lastEncoded
+    if dataChanged {
+      do {
+        try session.updateApplicationContext(payload)
+        lastEncoded = data
+      } catch {
+        Self.log.error("applicationContext failed: \(error.localizedDescription, privacy: .public)")
+      }
     }
     if session.isReachable {
-      session.sendMessage(payload, replyHandler: nil) { error in
-        Self.log.error("sendMessage failed: \(error.localizedDescription, privacy: .public)")
+      if dataChanged {
+        session.sendMessage(payload, replyHandler: nil) { error in
+          Self.log.error("sendMessage failed: \(error.localizedDescription, privacy: .public)")
+        }
       }
-      delivered = true
+      lastWakeKey = nil
+      watchLaunchArmed = !snapshot.isPlaying
+    } else {
+      _ = wakeWatchIfPlaying(session, snapshot: snapshot, payload: payload)
+      openWatchAppIfPlaying(session, snapshot: snapshot)
     }
-    if delivered {
-      lastEncoded = data
+  }
+
+  /// `transferUserInfo` launches the Watch app in the background when it is not
+  /// already in the foreground. Only fire on play / track changes so volume ticks
+  /// do not queue a pile of transfers.
+  private func wakeWatchIfPlaying(
+    _ session: WCSession,
+    snapshot: WatchSnapshot,
+    payload: [String: Any]
+  ) -> Bool {
+    guard session.isPaired, session.isWatchAppInstalled else { return false }
+    guard snapshot.isPlaying else {
+      lastWakeKey = nil
+      return false
+    }
+    let wakeKey = "\(snapshot.zoneId)|\(snapshot.title ?? "")|\(snapshot.imageKey ?? "")"
+    guard wakeKey != lastWakeKey else { return false }
+    lastWakeKey = wakeKey
+    session.outstandingUserInfoTransfers.forEach { $0.cancel() }
+    session.transferUserInfo(payload)
+    Self.log.info("waking watch for \(snapshot.title ?? "now playing", privacy: .public)")
+    return true
+  }
+
+  /// Same path Pocket Trainer uses: HealthKit `startWatchApp` is the API that
+  /// actually brings the companion on-wrist from the iPhone.
+  private func openWatchAppIfPlaying(_ session: WCSession, snapshot: WatchSnapshot) {
+    guard session.isPaired, session.isWatchAppInstalled else { return }
+    guard snapshot.isPlaying else {
+      watchLaunchArmed = true
+      return
+    }
+    guard watchLaunchArmed else { return }
+    watchLaunchArmed = false
+    Task { @MainActor in
+      let opened = await Self.openWatchApp()
+      if !opened {
+        self.watchLaunchArmed = true
+      }
+    }
+  }
+
+  private static func openWatchApp() async -> Bool {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      log.error("HealthKit unavailable, cannot open Watch app")
+      return false
+    }
+    let store = HKHealthStore()
+    do {
+      try await store.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [])
+      let status = store.authorizationStatus(for: HKObjectType.workoutType())
+      guard status == .sharingAuthorized else {
+        log.error("HealthKit not authorized, cannot open Watch app")
+        return false
+      }
+      let config = HKWorkoutConfiguration()
+      config.activityType = .other
+      config.locationType = .indoor
+      try await store.startWatchApp(toHandle: config)
+      log.info("startWatchApp succeeded")
+      return true
+    } catch {
+      log.error("startWatchApp failed: \(error.localizedDescription, privacy: .public)")
+      return false
     }
   }
 
@@ -121,6 +194,10 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
         }
       case let .transfer(toZoneId):
         store.transfer(to: toZoneId)
+      case let .playInRoom(query, room):
+        Task {
+          _ = try? await store.playInRoom(query: query, roomName: room, zoneId: nil)
+        }
       }
     }
   }

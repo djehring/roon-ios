@@ -137,4 +137,5 @@ enum WatchCommand: Codable, Hashable {
   case selectZone(id: String)
   case playFromHere(id: String)
   case transfer(toZoneId: String)
+  case playInRoom(query: String, room: String)
 }

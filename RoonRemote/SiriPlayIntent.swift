@@ -60,19 +60,31 @@ struct PlayUtteranceQuery: EntityStringQuery {
   }
 }
 
-enum PlayRequest {
-  static func parse(_ raw: String) -> (what: String, room: String?) {
-    let separators = [" in the ", " in ", " on the ", " on "]
-    for separator in separators {
-      if let range = raw.range(of: separator, options: [.backwards, .caseInsensitive]) {
-        let what = raw[..<range.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
-        let room = raw[range.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
-        if !what.isEmpty && !room.isEmpty {
-          return (what, room)
-        }
-      }
-    }
-    return (raw.trimmingCharacters(in: .whitespacesAndNewlines), nil)
+struct RoonRoomEntity: AppEntity {
+  static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Room")
+  static var defaultQuery = RoonRoomQuery()
+
+  var id: String
+
+  var displayRepresentation: DisplayRepresentation {
+    DisplayRepresentation(title: "\(id)")
+  }
+}
+
+struct RoonRoomQuery: EntityStringQuery {
+  func entities(for identifiers: [RoonRoomEntity.ID]) async throws -> [RoonRoomEntity] {
+    identifiers.map { RoonRoomEntity(id: $0) }
+  }
+
+  func entities(matching string: String) async throws -> [RoonRoomEntity] {
+    let rooms = await RoonSiriSupport.roomNames()
+    let matches = rooms.filter { RoonVoiceMatch.score($0, query: string) >= 50 }
+    if matches.isEmpty { return [RoonRoomEntity(id: string)] }
+    return matches.map { RoonRoomEntity(id: $0) }
+  }
+
+  func suggestedEntities() async throws -> [RoonRoomEntity] {
+    await RoonSiriSupport.roomNames().map { RoonRoomEntity(id: $0) }
   }
 }
 
@@ -89,6 +101,85 @@ struct RoonShortcuts: AppShortcutsProvider {
       ],
       shortTitle: "Play in a room",
       systemImageName: "hifispeaker.fill"
+    )
+    AppShortcut(
+      intent: IncreaseVolumeIntent(),
+      phrases: [
+        "Turn it up with \(.applicationName)",
+        "Increase the volume with \(.applicationName)",
+        "Turn it up in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Increase volume",
+      systemImageName: "speaker.plus.fill"
+    )
+    AppShortcut(
+      intent: DecreaseVolumeIntent(),
+      phrases: [
+        "Turn it down with \(.applicationName)",
+        "Decrease the volume with \(.applicationName)",
+        "Turn it down in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Decrease volume",
+      systemImageName: "speaker.minus.fill"
+    )
+    AppShortcut(
+      intent: StopPlaybackIntent(),
+      phrases: [
+        "Stop with \(.applicationName)",
+        "Stop the track with \(.applicationName)",
+        "Stop the music with \(.applicationName)",
+        "Stop in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Stop",
+      systemImageName: "stop.fill"
+    )
+    AppShortcut(
+      intent: PlayPauseIntent(),
+      phrases: [
+        "Pause with \(.applicationName)",
+        "Play or pause with \(.applicationName)",
+        "Pause in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Play or pause",
+      systemImageName: "playpause.fill"
+    )
+    AppShortcut(
+      intent: SkipTrackIntent(),
+      phrases: [
+        "Skip with \(.applicationName)",
+        "Next track with \(.applicationName)",
+        "Skip in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Next track",
+      systemImageName: "forward.fill"
+    )
+    AppShortcut(
+      intent: PreviousTrackIntent(),
+      phrases: [
+        "Previous track with \(.applicationName)",
+        "Go back with \(.applicationName)",
+        "Previous track in \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Previous track",
+      systemImageName: "backward.fill"
+    )
+    AppShortcut(
+      intent: MuteIntent(),
+      phrases: [
+        "Mute with \(.applicationName)",
+        "Mute \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Mute",
+      systemImageName: "speaker.slash.fill"
+    )
+    AppShortcut(
+      intent: UnmuteIntent(),
+      phrases: [
+        "Unmute with \(.applicationName)",
+        "Unmute \(\.$room) with \(.applicationName)",
+      ],
+      shortTitle: "Unmute",
+      systemImageName: "speaker.wave.2.fill"
     )
   }
 }

@@ -28,7 +28,11 @@ Simulator can pair if you type the bridge `host:port` during onboarding.
 ## Apple Watch
 
 Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon
-open on the phone. Now Playing is full-bleed cover:
+open on the phone. When a zone starts playing, the phone opens the Watch app if
+it is closed (HealthKit `startWatchApp`, same as Pocket Trainer). The first time,
+allow Health access on the phone.
+
+Now Playing is full-bleed cover:
 
 - Tap: play / pause
 - Swipe left / right: next / previous
@@ -39,12 +43,20 @@ open on the phone. Now Playing is full-bleed cover:
 
 ## Siri
 
-On iPhone, after the app has connected once:
+In Shortcuts, open **Roon Remote** and turn on Siri for each shortcut you want
+(Play in a room, Increase volume, Decrease volume, Stop, Play or pause, Next
+track, Previous track, Mute, Unmute). After that:
 
-> Hey Siri, play Radio 3 in the Kitchen with Roon
+> Hey Siri, play Radio 3 in the Kitchen with Roon Remote
+> Hey Siri, turn it up with Roon Remote
+> Hey Siri, stop with Roon Remote
+> Hey Siri, skip with Roon Remote
 
-Room names are your Roon zones. "with Roon" (or "with Roon Remote") is how Siri
-picks this app instead of Music. The same action is in Shortcuts as **Play in a room**.
+Add a room for a different zone than the phone, for example "turn it up in the
+Kitchen with Roon Remote". Volume moves about 10% of that output's range.
+
+The phone needs to be unlocked on the same Wi-Fi as the bridge. "with Roon"
+can hit the official Roon app or the Watch instead.
 
 ## Apple TV
 
@@ -79,15 +91,13 @@ ones there when they need coverage.
 
 ### Checking layouts without a bridge
 
-Debug builds provide local fixtures for checking layouts without a bridge. Use
-`-roon-demo-store` to open the main session with stand-in zones, playback,
-Library, and Search content; use `-roon-demo-onboarding` to open the first
-pairing step with the same fixtures available for later steps.
+With no bridge on the network the app never leaves onboarding, so Debug builds
+accept `-roon-demo-store` to fill the store with stand-in zones, a track, and a
+queue, then skip to the main session:
 
 ```bash
 xcrun simctl launch <device> com.djehring.roonremote -roon-demo-store
-xcrun simctl launch <device> com.djehring.roonremote -roon-demo-onboarding
 ```
 
-The fixtures never contact the bridge. They prove shells, spacing, and
-adaptivity rather than network behavior.
+Nothing in demo content talks to the bridge, so browse pages and artwork stay
+empty. It is for checking shells, spacing, and adaptivity, not content.

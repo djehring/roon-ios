@@ -35,6 +35,10 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+    entitlements:
+      path: RoonRemote/RoonRemote.entitlements
+      properties:
+        com.apple.developer.healthkit: true
     info:
       path: RoonRemote/Info.plist
       properties:
@@ -42,6 +46,17 @@ targets:
         CFBundleSpokenName: Roon
         INAlternativeAppNames:
           - INAlternativeAppName: Roon
+        INIntentsSupported:
+          - INPlayMediaIntent
+        INSupportedMediaCategories:
+          - INMediaCategoryRadio
+          - INMediaCategoryMusic
+          - INMediaCategoryGeneral
+        NSUserActivityTypes:
+          - com.djehring.roonremote.playMedia
+        NSSiriUsageDescription: >-
+          Roon Remote uses Siri so you can play, stop, skip, and change
+          volume in a room.
         UILaunchScreen: {}
         NSLocalNetworkUsageDescription: >-
           Roon Remote finds the bridge on your Wi-Fi so it can
@@ -55,6 +70,12 @@ targets:
         NSPhotoLibraryUsageDescription: >-
           Roon Remote reads a cover photo from your library so the
           bridge can match the album.
+        NSHealthShareUsageDescription: >-
+          Roon Remote uses HealthKit so the iPhone can open the Watch
+          app when a room starts playing.
+        NSHealthUpdateUsageDescription: >-
+          Roon Remote uses HealthKit so the iPhone can open the Watch
+          app when a room starts playing.
         NSBonjourServices:
           - _roon-web-stack._tcp
         NSAppTransportSecurity:
@@ -87,6 +108,41 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+  RoonRemoteIntents:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: RoonRemoteIntents
+        excludes:
+          - Info.plist
+      - path: Shared/PlayRequest.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.intents
+        PRODUCT_NAME: RoonRemoteIntents
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: RoonRemoteIntents/Info.plist
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+    entitlements:
+      path: RoonRemoteIntents/RoonRemoteIntents.entitlements
+    info:
+      path: RoonRemoteIntents/Info.plist
+      properties:
+        CFBundleDisplayName: Roon Remote
+        NSExtension:
+          NSExtensionAttributes:
+            IntentsSupported:
+              - INPlayMediaIntent
+            SupportedMediaCategories:
+              - INMediaCategoryRadio
+              - INMediaCategoryMusic
+              - INMediaCategoryGeneral
+          NSExtensionPointIdentifier: com.apple.intents-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).IntentHandler
   RoonRemoteWatch:
     type: application
     platform: watchOS
@@ -111,13 +167,23 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
     entitlements:
       path: RoonRemoteWatch/RoonRemoteWatch.entitlements
+      properties:
+        com.apple.developer.healthkit: true
     info:
       path: RoonRemoteWatch/Info.plist
       properties:
-        CFBundleDisplayName: Roon
+        CFBundleDisplayName: Roon Remote
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.djehring.roonremote
         WKRunsIndependentlyOfCompanionApp: false
+        WKBackgroundModes:
+          - workout-processing
+        NSHealthShareUsageDescription: >-
+          Roon Remote uses HealthKit so the Watch app can stay on-wrist
+          while a room is playing.
+        NSHealthUpdateUsageDescription: >-
+          Roon Remote uses HealthKit so the Watch app can stay on-wrist
+          while a room is playing.
   RoonRemoteWatchWidgets:
     type: app-extension
     platform: watchOS
