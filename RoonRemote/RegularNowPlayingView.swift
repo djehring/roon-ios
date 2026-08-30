@@ -14,11 +14,19 @@ struct RegularNowPlayingView: View {
       let mode = RegularNowPlayingLayout.mode(for: geometry.size)
 
       ZStack(alignment: .top) {
-        backdrop
         content(mode: mode, width: geometry.size.width)
         topControls
           .padding(.horizontal, 24)
           .padding(.top, 12)
+      }
+      .frame(width: geometry.size.width, height: geometry.size.height)
+      // The ambience is a background rather than a stack sibling. A
+      // `scaledToFill` square cover reports its overscaled size, which grew the
+      // stack past the container and displaced everything inside it: right in
+      // portrait, down in landscape. A background is sized by its owner, so it
+      // cannot move the content no matter how the artwork is shaped.
+      .background {
+        backdrop(size: geometry.size)
       }
     }
   }
@@ -254,8 +262,14 @@ struct RegularNowPlayingView: View {
     .buttonStyle(.plain)
   }
 
+  private func backdrop(size: CGSize) -> some View {
+    backdropFill(size: size)
+      .overlay { backdropScrim }
+      .ignoresSafeArea()
+  }
+
   @ViewBuilder
-  private var backdrop: some View {
+  private func backdropFill(size: CGSize) -> some View {
     if let data = store.imageData(
       for: store.currentTrack?.imageKey,
       pixels: ArtworkCache.heroPixels
@@ -263,10 +277,10 @@ struct RegularNowPlayingView: View {
       Image(uiImage: image)
         .resizable()
         .scaledToFill()
+        .frame(width: size.width, height: size.height)
+        .clipped()
         .blur(radius: 70)
         .opacity(0.36)
-        .ignoresSafeArea()
-        .overlay { backdropScrim }
     } else {
       let colors = CoverArt.colors(
         for: store.currentTrack?.album ?? "empty",
@@ -274,8 +288,6 @@ struct RegularNowPlayingView: View {
       )
       LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
         .opacity(0.28)
-        .ignoresSafeArea()
-        .overlay { backdropScrim }
     }
   }
 

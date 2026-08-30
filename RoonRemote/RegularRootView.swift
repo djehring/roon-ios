@@ -32,7 +32,11 @@ struct RegularRootView: View {
           .inspectorColumnWidth(min: 300, ideal: 360, max: 440)
         }
       }
-      .navigationSplitViewStyle(.prominentDetail)
+      // Balanced, not prominentDetail: prominentDetail always floats the sidebar
+      // over the detail, which covered the artwork in landscape. Balanced sits
+      // the columns side by side where there is room and falls back to an
+      // overlay in portrait, which is what each orientation wants.
+      .navigationSplitViewStyle(.balanced)
       .playbackSheets()
       .onAppear {
         adaptColumns(to: geometry.size.width)
