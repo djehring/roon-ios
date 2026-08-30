@@ -68,6 +68,7 @@ struct SidebarTests {
   @Test("every row maps onto the cross-platform tab the store speaks in")
   func tabMapping() {
     #expect(SidebarItem.nowPlaying.tab == .nowPlaying)
+    #expect(SidebarItem.rooms.tab == .rooms)
     #expect(SidebarItem.library("albums").tab == .library)
     #expect(SidebarItem.search(.ai).tab == .search)
     #expect(SidebarItem.search(.camera).tab == .search)
@@ -82,10 +83,12 @@ struct SidebarTests {
     #expect(Set(items).count == library.count)
   }
 
-  @Test("no row claims the Rooms tab yet")
-  func roomsIsNotReachable() {
-    // Rooms arrives with its own destination; this fails when a row is added
-    // without one, which would select a tab the shell cannot render.
-    #expect(!rows.contains { $0.item.tab == .rooms })
+  @Test("Rooms is reachable exactly once")
+  func roomsIsReachable() {
+    let roomRows = rows.filter { $0.item.tab == .rooms }
+
+    #expect(roomRows.count == 1)
+    #expect(roomRows.first?.title == "Rooms")
+    #expect(roomRows.first?.item == .rooms)
   }
 }

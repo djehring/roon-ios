@@ -42,8 +42,13 @@ extension MockStore {
         max: 100,
         muted: false,
         isFixed: false,
-        canGroupWith: []
+        canGroupWith: ["kitchen-main", "study-main"]
       ),
+    ]
+    houseOutputs = [
+      OutputDescription(displayName: "Living Room", zoneId: "living", outputId: "living-main"),
+      OutputDescription(displayName: "Kitchen", zoneId: "kitchen", outputId: "kitchen-main"),
+      OutputDescription(displayName: "Study", zoneId: "study", outputId: "study-main"),
     ]
     queue = [
       QueueItem(

@@ -64,10 +64,10 @@ struct SidebarSelectionTests {
     #expect(selection(for: .library, current: .nowPlaying, pending: "playlists") == nil)
   }
 
-  @Test("Rooms leaves the selection alone until it has a destination")
-  func roomsIsInert() {
-    #expect(selection(for: .rooms, current: .nowPlaying) == nil)
-    #expect(selection(for: .rooms, current: .library("albums")) == nil)
+  @Test("moving to Rooms selects its destination")
+  func roomsIsReachable() {
+    #expect(selection(for: .rooms, current: .nowPlaying) == .rooms)
+    #expect(selection(for: .rooms, current: .library("albums")) == .rooms)
   }
 
   @Test("an empty library cannot be selected into")
