@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
 
   var body: some View {
     ZStack {
@@ -10,7 +11,13 @@ struct RootView: View {
       case .onboarding(_):
         OnboardingFlow()
       case .main:
-        MainTabs()
+        // Size class, not idiom: an iPad in Slide Over or a narrow Stage Manager
+        // window is compact, and belongs in the tab layout.
+        if hSize == .regular {
+          RegularRootView()
+        } else {
+          MainTabs()
+        }
       }
     }
     .tint(Palette.accent)
