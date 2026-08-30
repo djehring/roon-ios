@@ -160,7 +160,9 @@ targets:
       - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/QueueTimeline.swift
       - path: RoonRemote/QueueRouting.swift
+        type: file
       - path: RoonRemote/PlaybackAdjustment.swift
+        type: file
       - path: RoonRemote/API
     settings:
       base:
