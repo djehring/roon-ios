@@ -130,7 +130,11 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     let track = store.currentTrack
     let output = store.outputs.first { !$0.isFixed } ?? store.outputs.first
     let cover: Data?
-    if let key = track?.imageKey, let data = store.coverCache[key] {
+    if let key = track?.imageKey,
+       let data = store.artwork.data(
+         for: ArtworkCache.Key(imageKey: key, pixels: ArtworkCache.thumbnailPixels)
+       )
+    {
       cover = compactJPEG(data)
     } else {
       cover = nil

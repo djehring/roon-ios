@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 @Observable
@@ -49,7 +50,7 @@ final class MockStore {
   var storyBody = ""
   var storyLoading = false
   var storyError: String?
-  var coverCache: [String: Data] = [:]
+  var artwork = ArtworkCache(budget: 32 * 1024 * 1024)
   var browseCache: [String: [BrowseNode]] = [:]
   var recordingPath: [String] = []
   var recordingHierarchy: String?
@@ -67,7 +68,10 @@ final class MockStore {
   private var coverInFlight = 0
   private var coverWaiters: [CheckedContinuation<Void, Never>] = []
   private var coverPauseCount = 0
-  private let coverLimit = 3
+  private var coverRequests: Set<ArtworkCache.Key> = []
+  // A regular-width grid shows several times the artwork of a phone list, so the
+  // throttle that suited one column would leave iPad cells blank far too long.
+  private let coverLimit = 6
 
   init() {
     library = Self.libraryRoots
@@ -111,6 +115,13 @@ final class MockStore {
     #if os(iOS)
     PhoneWatchSync.shared.activate(store: self)
     #endif
+    NotificationCenter.default.addObserver(
+      forName: UIApplication.didReceiveMemoryWarningNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor in self?.artwork.evictUnpinned() }
+    }
   }
 
   var selectedZone: Zone {
@@ -998,20 +1009,52 @@ final class MockStore {
     Task { try? await client.sharedConfig(payload) }
   }
 
-  func imageData(for key: String?) -> Data? {
+  func imageData(for key: String?, pixels: Int = ArtworkCache.thumbnailPixels) -> Data? {
     guard let key else { return nil }
-    if let cached = coverCache[key] { return cached }
-    Task { await fetchCover(key) }
-    return nil
+    let wanted = ArtworkCache.Key(imageKey: key, pixels: pixels)
+    if let cached = artwork.data(for: wanted) { return cached }
+    Task { await fetchCover(wanted) }
+    // Stand in with a smaller copy if we hold one, so hero artwork appears at
+    // once and sharpens when the full-size fetch lands.
+    let thumbnail = ArtworkCache.Key(imageKey: key, pixels: ArtworkCache.thumbnailPixels)
+    return artwork.data(for: thumbnail)
   }
 
-  private func fetchCover(_ key: String) async {
-    guard coverCache[key] == nil else { return }
+  /// Pins and prefetches the playing track's artwork at both the row and hero
+  /// sizes, so a long browse session cannot evict the image Now Playing is
+  /// showing.
+  private func loadCurrentArtwork(_ imageKey: String?) {
+    var keys: Set<ArtworkCache.Key> = []
+    if let imageKey {
+      for pixels in [ArtworkCache.thumbnailPixels, ArtworkCache.heroPixels] {
+        keys.insert(ArtworkCache.Key(imageKey: imageKey, pixels: pixels))
+      }
+    }
+    // Zone events arrive about once a second while playing. Writing the pins
+    // every time would dirty `artwork` on each tick and redraw every view that
+    // reads artwork, so only write when the playing track has actually changed.
+    if artwork.pinnedKeys != keys {
+      artwork.setPinned(keys)
+    }
+    for key in keys {
+      Task { await fetchCover(key) }
+    }
+  }
+
+  private func fetchCover(_ key: ArtworkCache.Key) async {
+    guard !artwork.contains(key), !coverRequests.contains(key) else { return }
+    coverRequests.insert(key)
+    defer { coverRequests.remove(key) }
     await acquireCover()
     defer { releaseCover() }
-    guard coverCache[key] == nil else { return }
-    if let data = try? await client.image(imageKey: key, width: 128, height: 128) {
-      coverCache[key] = data
+    guard !artwork.contains(key) else { return }
+    let data = try? await client.image(
+      imageKey: key.imageKey,
+      width: key.pixels,
+      height: key.pixels
+    )
+    if let data {
+      artwork.insert(data, for: key)
       publishWatchSnapshot()
     }
   }
@@ -1153,9 +1196,7 @@ final class MockStore {
       outputs = payload.outputs.map(Self.output(from:))
       groupedOutputIds = Set(payload.outputs.map(\.outputId))
       pendingGroupIds = groupedOutputIds
-      if let key = track?.imageKey {
-        Task { await fetchCover(key) }
-      }
+      loadCurrentArtwork(track?.imageKey)
     }
     publishWatchSnapshot()
   }
@@ -1254,9 +1295,7 @@ final class MockStore {
       next[index] = zone
       zones = next
     }
-    if let key = track.imageKey {
-      Task { await fetchCover(key) }
-    }
+    loadCurrentArtwork(track.imageKey)
     publishWatchSnapshot()
   }
 

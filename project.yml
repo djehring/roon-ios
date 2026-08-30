@@ -65,6 +65,18 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+  RoonRemoteTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RoonRemoteTests
+      - path: Shared/ArtworkCache.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
+        GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
   RoonRemoteWatch:
     type: application
     platform: watchOS
@@ -168,6 +180,10 @@ schemes:
     run:
       config: Debug
       executable: RoonRemote
+    test:
+      config: Debug
+      targets:
+        - RoonRemoteTests
   RoonRemoteWatch:
     build:
       targets:
