@@ -37,6 +37,15 @@ open on the phone. Now Playing is full-bleed cover:
 - Digital Crown: volume
 - Long-press: stop, mute, transfer to another room
 
+## Siri
+
+On iPhone, after the app has connected once:
+
+> Hey Siri, play Radio 3 in the Kitchen with Roon
+
+Room names are your Roon zones. "with Roon" (or "with Roon Remote") is how Siri
+picks this app instead of Music. The same action is in Shortcuts as **Play in a room**.
+
 ## Apple TV
 
 Roon on Apple TV is an independent app (same pairing flow as iPhone). Tabs:
@@ -54,3 +63,29 @@ Regenerate the Xcode project after editing `project.yml`:
 ```bash
 xcodegen generate
 ```
+
+## Tests
+
+`RoonRemoteTests` is a logic-only bundle (no host app), so it covers the pure
+types rather than views or the store. Run it with the **Roon Remote** scheme:
+
+```bash
+xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+Files under test are listed explicitly in the target's `sources`, so add new
+ones there when they need coverage.
+
+### Checking layouts without a bridge
+
+With no bridge on the network the app never leaves onboarding, so Debug builds
+accept `-roon-demo-store` to fill the store with stand-in zones, a track, and a
+queue, then skip to the main session:
+
+```bash
+xcrun simctl launch <device> com.djehring.roonremote -roon-demo-store
+```
+
+Nothing in demo content talks to the bridge, so browse pages and artwork stay
+empty. It is for checking shells, spacing, and adaptivity, not content.

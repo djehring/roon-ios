@@ -12,6 +12,7 @@ final class RoonAPIClient: @unchecked Sendable {
   }()
 
   private let session: URLSession
+  private let imageSession: URLSession
   private var eventSession: URLSession?
   private var eventDelegate: EventStreamDelegate?
   private var eventTask: URLSessionDataTask?
@@ -33,8 +34,16 @@ final class RoonAPIClient: @unchecked Sendable {
     self.port = port
     let config = URLSessionConfiguration.default
     config.timeoutIntervalForRequest = 20
-    config.waitsForConnectivity = true
+    config.timeoutIntervalForResource = 60
+    config.waitsForConnectivity = false
+    config.httpMaximumConnectionsPerHost = 4
     session = URLSession(configuration: config)
+    let images = URLSessionConfiguration.default
+    images.timeoutIntervalForRequest = 12
+    images.timeoutIntervalForResource = 20
+    images.waitsForConnectivity = false
+    images.httpMaximumConnectionsPerHost = 2
+    imageSession = URLSession(configuration: images)
     if let savedHost = KeychainStore.get(Self.hostAccount),
        let savedPort = KeychainStore.get(Self.portAccount).flatMap(Int.init)
     {
@@ -179,7 +188,7 @@ final class RoonAPIClient: @unchecked Sendable {
       URLQueryItem(name: "height", value: String(height)),
     ]
     guard let url = components.url else { throw RoonAPIError.invalidURL }
-    let (data, response) = try await session.data(from: url)
+    let (data, response) = try await imageSession.data(from: url)
     try throwIfNeeded(response, data: data)
     return data
   }
@@ -286,6 +295,19 @@ final class RoonAPIClient: @unchecked Sendable {
     )
     let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data, ok: [204, 200])
+  }
+
+  func searchAlbums(zoneId: String, query: String) async throws -> [LibraryAlbumItem] {
+    let clientId = try requireClient()
+    let request = try jsonRequest(
+      path: "/api/\(clientId)/library/search-albums",
+      method: "POST",
+      object: ["zoneId": zoneId, "query": query]
+    )
+    let (data, response) = try await data(for: request)
+    try throwIfNeeded(response, data: data)
+    struct Wrapper: Decodable { var items: [LibraryAlbumItem] }
+    return try decoder.decode(Wrapper.self, from: data).items
   }
 
   func sharedConfig(_ actions: [[String: Any]]) async throws {
@@ -509,6 +531,9 @@ final class RoonAPIClient: @unchecked Sendable {
     guard let url = try urlComponents(path).url else { throw RoonAPIError.invalidURL }
     var request = URLRequest(url: url)
     request.httpMethod = method
+    if path.hasSuffix("/browse") {
+      request.timeoutInterval = 15
+    }
     return request
   }
 

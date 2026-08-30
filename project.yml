@@ -39,6 +39,9 @@ targets:
       path: RoonRemote/Info.plist
       properties:
         CFBundleDisplayName: Roon Remote
+        CFBundleSpokenName: Roon
+        INAlternativeAppNames:
+          - INAlternativeAppName: Roon
         UILaunchScreen: {}
         NSLocalNetworkUsageDescription: >-
           Roon Remote finds the bridge on your Wi-Fi so it can
@@ -62,6 +65,21 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+  RoonRemoteTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RoonRemoteTests
+      - path: Shared/ArtworkCache.swift
+      - path: RoonRemote/Layout.swift
+      - path: RoonRemote/Models.swift
+      - path: RoonRemote/Sidebar.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
+        GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
   RoonRemoteWatch:
     type: application
     platform: watchOS
@@ -132,6 +150,7 @@ targets:
           - WatchPayload.swift
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
+      - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/API
     settings:
       base:
@@ -165,6 +184,10 @@ schemes:
     run:
       config: Debug
       executable: RoonRemote
+    test:
+      config: Debug
+      targets:
+        - RoonRemoteTests
   RoonRemoteWatch:
     build:
       targets:

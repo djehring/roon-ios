@@ -51,6 +51,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AE7F5FE4643313E65EF06C4A"
+               BuildableName = "RoonRemoteTests.xctest"
+               BlueprintName = "RoonRemoteTests"
+               ReferencedContainer = "container:RoonRemote.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

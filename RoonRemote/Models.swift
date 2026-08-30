@@ -144,6 +144,37 @@ enum SearchSegment: String, CaseIterable {
   case camera
 }
 
+enum RoonVoiceMatch {
+  static func normalize(_ value: String) -> String {
+    value
+      .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+      .replacingOccurrences(of: "[^a-z0-9 ]+", with: " ", options: .regularExpression)
+      .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+  }
+
+  static func room(_ name: String, spoken: String) -> Bool {
+    score(name, query: spoken) >= 50
+  }
+
+  static func score(_ title: String, query: String) -> Int {
+    let titleText = normalize(title)
+    let queryText = normalize(query)
+    if titleText.isEmpty || queryText.isEmpty { return 0 }
+    if titleText == queryText { return 100 }
+    if titleText.hasPrefix(queryText) || queryText.hasPrefix(titleText) { return 90 }
+    if titleText.contains(queryText) { return 80 }
+    let ignored: Set<String> = ["the", "bbc", "a", "fm", "uk"]
+    let queryTokens = Set(
+      queryText.split(separator: " ").map(String.init).filter { !ignored.contains($0) }
+    )
+    let titleTokens = Set(titleText.split(separator: " ").map(String.init))
+    if !queryTokens.isEmpty && queryTokens.isSubset(of: titleTokens) { return 70 }
+    return 0
+  }
+}
+
 enum ZonePanelTab: String, CaseIterable, Identifiable {
   case switchZone
   case group

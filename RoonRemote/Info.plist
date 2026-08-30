@@ -18,8 +18,17 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
+	<key>CFBundleSpokenName</key>
+	<string>Roon</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Roon</string>
+		</dict>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -29,10 +38,10 @@
 	<array>
 		<string>_roon-web-stack._tcp</string>
 	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Roon Remote finds the bridge on your Wi-Fi so it can control the rooms in your house.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Roon Remote photographs album covers so the bridge can match them in your library.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Roon Remote finds the bridge on your Wi-Fi so it can control the rooms in your house.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Roon Remote records a short clip so the bridge can turn speech into an AI search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -11,7 +11,10 @@ struct TVNowPlayingView: View {
       HStack(alignment: .center, spacing: 64) {
         CoverArt(
           title: store.currentTrack?.album ?? "empty",
-          image: store.imageData(for: store.currentTrack?.imageKey),
+          image: store.imageData(
+            for: store.currentTrack?.imageKey,
+            pixels: ArtworkCache.heroPixels
+          ),
           corner: 18
         )
         .frame(width: 420, height: 420)
@@ -138,9 +141,10 @@ struct TVNowPlayingView: View {
 
   @ViewBuilder
   private var artBackdrop: some View {
-    if let data = store.imageData(for: store.currentTrack?.imageKey),
-       let ui = UIImage(data: data)
-    {
+    if let data = store.imageData(
+      for: store.currentTrack?.imageKey,
+      pixels: ArtworkCache.heroPixels
+    ), let ui = UIImage(data: data) {
       Image(uiImage: ui)
         .resizable()
         .scaledToFill()

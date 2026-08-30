@@ -59,7 +59,6 @@ struct TVBrowsePageView: View {
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
   @State private var prompt = ""
-  @State private var actionsById: [String: [String]] = [:]
 
   var body: some View {
     Group {
@@ -90,7 +89,7 @@ struct TVBrowsePageView: View {
       }
     }
     .navigationTitle(page.title.isEmpty ? title : page.title)
-    .task { await reload() }
+    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")") { await reload() }
   }
 
   @ViewBuilder
@@ -127,14 +126,13 @@ struct TVBrowsePageView: View {
       }
       .buttonStyle(.plain)
       .contextMenu {
-        ForEach(actions(for: child), id: \.self) { action in
+        ForEach(child.actions, id: \.self) { action in
           Button(action) { run(child, title: action) }
         }
       }
-      .task { await loadActions(for: child) }
     } else {
       Button {
-        if let first = actions(for: child).first {
+        if let first = child.actions.first {
           run(child, title: first)
         }
       } label: {
@@ -142,11 +140,10 @@ struct TVBrowsePageView: View {
       }
       .buttonStyle(.plain)
       .contextMenu {
-        ForEach(actions(for: child), id: \.self) { action in
+        ForEach(child.actions, id: \.self) { action in
           Button(action) { run(child, title: action) }
         }
       }
-      .task { await loadActions(for: child) }
     }
   }
 
@@ -170,23 +167,19 @@ struct TVBrowsePageView: View {
     }
   }
 
-  private func actions(for child: BrowseNode) -> [String] {
-    actionsById[child.id] ?? child.actions
-  }
-
-  private func loadActions(for child: BrowseNode) async {
-    guard let key = child.itemKey, actionsById[child.id] == nil else { return }
-    actionsById[child.id] = await store.loadActions(hierarchy: hierarchy, itemKey: key)
-  }
-
   private func run(_ child: BrowseNode, title: String) {
     guard let key = child.itemKey else { return }
-    store.runBrowseAction(hierarchy: hierarchy, itemKey: key, title: title)
+    store.runBrowseAction(
+      hierarchy: hierarchy,
+      itemKey: key,
+      title: title,
+      hint: child.hint
+    )
   }
 
   private func reload() async {
     loading = true
+    defer { loading = false }
     page = await store.loadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
-    loading = false
   }
 }

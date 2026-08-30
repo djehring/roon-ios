@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct RoonRemoteApp: App {
-  @State private var store = MockStore()
+  @State private var store = MockStore.shared
   @Environment(\.scenePhase) private var scenePhase
 
   var body: some Scene {
