@@ -15,24 +15,30 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>WKApplication</key>
-	<true/>
-	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.djehring.roonremote</string>
-	<key>WKRunsIndependentlyOfCompanionApp</key>
-	<false/>
-	<key>WKBackgroundModes</key>
-	<array>
-		<string>workout-processing</string>
-	</array>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Roon Remote uses HealthKit so the Watch app can stay on-wrist while a room is playing.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Roon Remote uses HealthKit so the Watch app can stay on-wrist while a room is playing.</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>IntentsSupported</key>
+			<array>
+				<string>INPlayMediaIntent</string>
+			</array>
+			<key>SupportedMediaCategories</key>
+			<array>
+				<string>INMediaCategoryRadio</string>
+				<string>INMediaCategoryMusic</string>
+				<string>INMediaCategoryGeneral</string>
+			</array>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.intents-service</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).IntentHandler</string>
+	</dict>
 </dict>
 </plist>

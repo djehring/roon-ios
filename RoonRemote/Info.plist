@@ -29,6 +29,22 @@
 			<string>Roon</string>
 		</dict>
 	</array>
+	<key>INIntentsSupported</key>
+	<array>
+		<string>INPlayMediaIntent</string>
+	</array>
+	<key>INSupportedMediaCategories</key>
+	<array>
+		<string>INMediaCategoryRadio</string>
+		<string>INMediaCategoryMusic</string>
+		<string>INMediaCategoryGeneral</string>
+	</array>
+	<key>NSSiriUsageDescription</key>
+	<string>Roon Remote uses Siri so you can play, stop, skip, and change volume in a room.</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.djehring.roonremote.playMedia</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -46,6 +62,10 @@
 	<string>Roon Remote records a short clip so the bridge can turn speech into an AI search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Roon Remote reads a cover photo from your library so the bridge can match the album.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Roon Remote uses HealthKit so the iPhone can open the Watch app when a room starts playing.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Roon Remote uses HealthKit so the iPhone can open the Watch app when a room starts playing.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
