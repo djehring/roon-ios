@@ -13,6 +13,10 @@ final class RoonAPIClient: @unchecked Sendable {
 
   private let session: URLSession
   private let imageSession: URLSession
+  /// OpenAI-backed endpoints upload a photo or audio clip and then wait on model
+  /// inference. The general session's 20s request / 60s resource budget cut those
+  /// off mid-flight and surfaced as "The request timed out".
+  private let aiSession: URLSession
   private var eventSession: URLSession?
   private var eventDelegate: EventStreamDelegate?
   private var eventTask: URLSessionDataTask?
@@ -44,6 +48,12 @@ final class RoonAPIClient: @unchecked Sendable {
     images.waitsForConnectivity = false
     images.httpMaximumConnectionsPerHost = 2
     imageSession = URLSession(configuration: images)
+    let ai = URLSessionConfiguration.default
+    ai.timeoutIntervalForRequest = 120
+    ai.timeoutIntervalForResource = 240
+    ai.waitsForConnectivity = false
+    ai.httpMaximumConnectionsPerHost = 2
+    aiSession = URLSession(configuration: ai)
     if let savedHost = KeychainStore.get(Self.hostAccount),
        let savedPort = KeychainStore.get(Self.portAccount).flatMap(Int.init)
     {
@@ -198,7 +208,7 @@ final class RoonAPIClient: @unchecked Sendable {
     var request = try rawRequest(path: "/api/\(clientId)/aisearch", method: "POST")
     request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
     request.httpBody = Data(query.utf8)
-    let (data, response) = try await data(for: request)
+    let (data, response) = try await data(for: request, using: aiSession)
     try throwIfOpenAI(response, data: data)
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }
@@ -233,7 +243,7 @@ final class RoonAPIClient: @unchecked Sendable {
     body.append(audio)
     body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
     request.httpBody = body
-    let (data, response) = try await data(for: request)
+    let (data, response) = try await data(for: request, using: aiSession)
     try throwIfOpenAI(response, data: data)
     struct TextBody: Decodable { var text: String }
     return try decoder.decode(TextBody.self, from: data).text
@@ -246,7 +256,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: ["artist": artist, "track": track]
     )
-    let (data, response) = try await data(for: request)
+    let (data, response) = try await data(for: request, using: aiSession)
     try throwIfOpenAI(response, data: data)
     struct Wrapper: Decodable { var story: TrackStoryPayload }
     if let wrapped = try? decoder.decode(Wrapper.self, from: data) {
@@ -277,7 +287,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: payload
     )
-    let (data, response) = try await data(for: request)
+    let (data, response) = try await data(for: request, using: aiSession)
     try throwIfOpenAI(response, data: data)
     return try decoder.decode(RecognizeAlbumResponse.self, from: data)
   }
@@ -476,7 +486,11 @@ final class RoonAPIClient: @unchecked Sendable {
     return clientId
   }
 
-  private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+  private func data(
+    for request: URLRequest,
+    using override: URLSession? = nil
+  ) async throws -> (Data, URLResponse) {
+    let session = override ?? self.session
     let first = try await session.data(for: request)
     let path = request.url?.path ?? ""
     if (try? http(first.1))?.statusCode != 403 {

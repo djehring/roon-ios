@@ -389,15 +389,36 @@ struct CameraSearchView: View {
       }
 
       if store.recognizedAlbums.isEmpty {
-        Button("Recognize album") {
+        Button {
           hintFocused = false
           store.recognizeAlbum(
             image: pickedImage,
             mimeType: pickedImage == nil ? nil : "image/jpeg"
           )
+        } label: {
+          if store.recognizeLoading {
+            HStack(spacing: 10) {
+              ProgressView()
+                .progressViewStyle(.circular)
+                .tint(Palette.onAccent)
+              Text("Recognising…")
+            }
+          } else {
+            Text("Recognize album")
+          }
         }
         .buttonStyle(GoldFillButton())
-        .disabled(pickedImage == nil && store.cameraHint.isEmpty)
+        .disabled(
+          store.recognizeLoading || (pickedImage == nil && store.cameraHint.isEmpty)
+        )
+
+        if store.recognizeLoading {
+          Text("Reading the cover and searching your library. This can take a moment.")
+            .font(.footnote)
+            .foregroundStyle(Palette.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+        }
       } else {
         Button("Search again") {
           resetSearch()
@@ -409,7 +430,15 @@ struct CameraSearchView: View {
 
   @ViewBuilder
   private var resultsPanel: some View {
-    if store.recognizedAlbums.isEmpty {
+    if store.recognizeLoading {
+      VStack(spacing: 14) {
+        ProgressView()
+          .tint(Palette.accent)
+        Text("Recognising the cover…")
+          .foregroundStyle(Palette.secondary)
+      }
+      .frame(maxWidth: .infinity, minHeight: 420)
+    } else if store.recognizedAlbums.isEmpty {
       ContentUnavailableView(
         "Recognized albums",
         systemImage: "opticaldisc",

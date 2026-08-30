@@ -29,6 +29,7 @@ final class MockStore {
   var cameraHint = ""
   var hasPhoto = false
   var recognizedAlbums: [BrowseNode] = []
+  var recognizeLoading = false
   var toolbar: [ToolbarAction]
   var customActions: [CustomAction] = []
   var groupedOutputIds: Set<String> = []
@@ -440,7 +441,11 @@ final class MockStore {
   }
 
   func recognizeAlbum(image: Data?, mimeType: String?) {
+    guard !recognizeLoading else { return }
+    recognizeLoading = true
+    aiError = nil
     Task {
+      defer { recognizeLoading = false }
       do {
         let result = try await client.recognizeAlbum(
           zoneId: selectedZoneId,
@@ -466,6 +471,8 @@ final class MockStore {
         }
       } catch RoonAPIError.missingOpenAI {
         aiError = "OpenAI is not configured on the bridge."
+      } catch let error as URLError where error.code == .timedOut {
+        aiError = "Recognising the cover took too long. Try again, or add a description to narrow it down."
       } catch {
         aiError = error.localizedDescription
       }
