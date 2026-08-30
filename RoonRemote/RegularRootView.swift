@@ -37,7 +37,7 @@ struct RegularRootView: View {
     }
     .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
       guard let hierarchy else { return }
-      selectLibrary(hierarchy: hierarchy)
+      selection = .libraryRow(forHierarchy: hierarchy, in: store.library)
       store.libraryLaunchHierarchy = nil
     }
   }
@@ -105,34 +105,15 @@ struct RegularRootView: View {
       ?? LibraryEntry(id: id, title: id, symbol: "music.note", hierarchy: id)
   }
 
-  private var firstLibraryItem: SidebarItem? {
-    store.library.first.map { .library($0.id) }
-  }
-
   private func syncSelection(to tab: AppTab) {
-    guard selection?.tab != tab else { return }
-    switch tab {
-    case .nowPlaying:
-      selection = .nowPlaying
-    case .library:
-      // A pending hierarchy names the row to open, so let that handler pick it
-      // rather than landing on the first category and jumping again.
-      if store.libraryLaunchHierarchy == nil, let first = firstLibraryItem {
-        selection = first
-      }
-    case .search:
-      selection = .search(store.searchSegment)
-    case .settings:
-      selection = .settings
-    case .rooms:
-      // No sidebar row until the Rooms destination exists.
-      break
-    }
-  }
-
-  private func selectLibrary(hierarchy: String) {
-    let entry = store.library.first { $0.hierarchy == hierarchy }
-    selection = .library(entry?.id ?? hierarchy)
+    guard let next = SidebarItem.selection(
+      for: tab,
+      current: selection,
+      library: store.library,
+      searchSegment: store.searchSegment,
+      pendingLibraryHierarchy: store.libraryLaunchHierarchy
+    ) else { return }
+    selection = next
   }
 
   private var miniPlayer: some View {

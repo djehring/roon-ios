@@ -23,6 +23,47 @@ enum SidebarItem: Hashable {
   }
 }
 
+extension SidebarItem {
+  /// What the sidebar should select when the store's tab changes underneath it,
+  /// or `nil` to leave the current selection alone.
+  ///
+  /// The store's tab is the coarser of the two: Siri, the Now Playing toolbar
+  /// shortcuts, and action recording all move it, and several sidebar rows share
+  /// a tab, so a tab alone often does not name a row.
+  static func selection(
+    for tab: AppTab,
+    current: SidebarItem?,
+    library: [LibraryEntry],
+    searchSegment: SearchSegment,
+    pendingLibraryHierarchy: String?
+  ) -> SidebarItem? {
+    guard current?.tab != tab else { return nil }
+    switch tab {
+    case .nowPlaying:
+      return .nowPlaying
+    case .settings:
+      return .settings
+    case .search:
+      return .search(searchSegment)
+    case .library:
+      // A pending hierarchy names the row to open, so defer to whoever handles
+      // it rather than landing on the first category and jumping again.
+      guard pendingLibraryHierarchy == nil else { return nil }
+      return library.first.map { .library($0.id) }
+    case .rooms:
+      // No sidebar row until the Rooms destination exists.
+      return nil
+    }
+  }
+
+  /// The row for a hierarchy named by a toolbar shortcut or a recorded action.
+  /// An unknown hierarchy falls back to itself: it has no sidebar row, but still
+  /// resolves to something browsable.
+  static func libraryRow(forHierarchy hierarchy: String, in library: [LibraryEntry]) -> SidebarItem {
+    .library(library.first { $0.hierarchy == hierarchy }?.id ?? hierarchy)
+  }
+}
+
 struct SidebarRow: Identifiable, Hashable {
   let item: SidebarItem
   let title: String
