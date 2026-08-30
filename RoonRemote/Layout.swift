@@ -30,3 +30,23 @@ enum Layout {
     return [GridItem(.adaptive(minimum: regularLibraryCardMinimum), spacing: gridSpacing)]
   }
 }
+
+enum RegularNowPlayingLayout: Equatable {
+  case stacked
+  case sideBySide
+
+  static let sideBySideMinimumWidth: CGFloat = 860
+
+  static func mode(for width: CGFloat) -> Self {
+    width >= sideBySideMinimumWidth ? .sideBySide : .stacked
+  }
+
+  static func artWidth(containerWidth: CGFloat, mode: Self) -> CGFloat {
+    switch mode {
+    case .stacked:
+      max(0, min(440, containerWidth - 64))
+    case .sideBySide:
+      max(0, min(520, containerWidth * 0.46))
+    }
+  }
+}
