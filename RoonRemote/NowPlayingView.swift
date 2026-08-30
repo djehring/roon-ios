@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NowPlayingView: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
 
   var body: some View {
     GeometryReader { geo in
@@ -94,11 +95,14 @@ struct NowPlayingView: View {
   private var art: some View {
     CoverArt(
       title: store.currentTrack?.album ?? "empty",
-      image: store.imageData(for: store.currentTrack?.imageKey),
+      image: store.imageData(
+        for: store.currentTrack?.imageKey,
+        pixels: ArtworkCache.heroPixels
+      ),
       corner: 12
     )
     .aspectRatio(1, contentMode: .fit)
-    .frame(maxWidth: 340)
+    .frame(maxWidth: Layout.heroArtWidth(hSize))
     .animation(Motion.sheet, value: store.currentTrack?.id)
   }
 

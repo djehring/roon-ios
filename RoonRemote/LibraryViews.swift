@@ -2,15 +2,15 @@ import SwiftUI
 
 struct LibraryRootView: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
   @State private var launch: LibraryEntry?
 
   var body: some View {
     NavigationStack {
       ScrollView {
         LazyVGrid(
-          columns: [GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)],
-          spacing: 12
+          columns: Layout.libraryColumns(hSize),
+          spacing: Layout.gridSpacing
         ) {
           ForEach(store.library) { entry in
             NavigationLink(value: entry) {

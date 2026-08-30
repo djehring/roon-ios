@@ -71,6 +71,7 @@ targets:
     sources:
       - path: RoonRemoteTests
       - path: Shared/ArtworkCache.swift
+      - path: RoonRemote/Layout.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
