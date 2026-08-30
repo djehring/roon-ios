@@ -7,7 +7,6 @@ struct TVNowPlayingView: View {
   var body: some View {
     @Bindable var store = store
     ZStack {
-      artBackdrop
       HStack(alignment: .center, spacing: 64) {
         CoverArt(
           title: store.currentTrack?.album ?? "empty",
@@ -108,6 +107,10 @@ struct TVNowPlayingView: View {
       }
       .padding(64)
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    // Same reason as the iPad: an unclipped `scaledToFill` cover reports its
+    // overscaled size, so as a stack sibling it would push this layout around.
+    .background { artBackdrop }
     .sheet(isPresented: $store.showVolume) {
       TVVolumePanel()
     }
@@ -145,20 +148,23 @@ struct TVNowPlayingView: View {
       for: store.currentTrack?.imageKey,
       pixels: ArtworkCache.heroPixels
     ), let ui = UIImage(data: data) {
-      Image(uiImage: ui)
-        .resizable()
-        .scaledToFill()
-        .blur(radius: 60)
-        .opacity(0.35)
-        .ignoresSafeArea()
-        .overlay {
-          LinearGradient(
-            colors: [Palette.background.opacity(0.55), Palette.background],
-            startPoint: .top,
-            endPoint: .bottom
-          )
-          .ignoresSafeArea()
-        }
+      GeometryReader { geometry in
+        Image(uiImage: ui)
+          .resizable()
+          .scaledToFill()
+          .frame(width: geometry.size.width, height: geometry.size.height)
+          .clipped()
+          .blur(radius: 60)
+          .opacity(0.35)
+          .overlay {
+            LinearGradient(
+              colors: [Palette.background.opacity(0.55), Palette.background],
+              startPoint: .top,
+              endPoint: .bottom
+            )
+          }
+      }
+      .ignoresSafeArea()
     } else {
       Palette.background.ignoresSafeArea()
     }

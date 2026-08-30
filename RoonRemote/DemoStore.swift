@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 #if DEBUG
 extension MockStore {
@@ -27,7 +28,7 @@ extension MockStore {
       position: "3:12",
       remaining: "5:48",
       progress: 0.35,
-      imageKey: nil
+      imageKey: "demo-cover"
     )
     let pausedTrack = Track(
       id: "demo-paused",
@@ -150,6 +151,7 @@ extension MockStore {
         hint: nil
       ),
     ]
+    seedDemoArtwork(for: "demo-cover")
     bridgeVersion = "demo"
     storyTitle = "Modal jazz finds its shape"
     storyBody = """
@@ -174,6 +176,42 @@ extension MockStore {
     permission reshaped the next decade of jazz.
     """
     session = .main
+  }
+
+  /// Puts a real square image in the artwork cache.
+  ///
+  /// Without this the fixtures leave every `imageKey` nil, so anything that only
+  /// misbehaves once actual artwork exists — a `scaledToFill` backdrop, say —
+  /// renders its placeholder branch and looks correct in the simulator while
+  /// being broken against a bridge.
+  private func seedDemoArtwork(for imageKey: String) {
+    for pixels in [ArtworkCache.thumbnailPixels, ArtworkCache.gridPixels, ArtworkCache.heroPixels] {
+      guard let data = Self.demoCover(pixels: pixels) else { continue }
+      artwork.insert(data, for: ArtworkCache.Key(imageKey: imageKey, pixels: pixels))
+    }
+  }
+
+  private static func demoCover(pixels: Int) -> Data? {
+    let size = CGSize(width: pixels, height: pixels)
+    let image = UIGraphicsImageRenderer(size: size).image { context in
+      let space = CGColorSpaceCreateDeviceRGB()
+      let colors = [
+        UIColor(red: 0.18, green: 0.26, blue: 0.38, alpha: 1).cgColor,
+        UIColor(red: 0.68, green: 0.47, blue: 0.30, alpha: 1).cgColor,
+      ]
+      guard let gradient = CGGradient(
+        colorsSpace: space,
+        colors: colors as CFArray,
+        locations: [0, 1]
+      ) else { return }
+      context.cgContext.drawLinearGradient(
+        gradient,
+        start: .zero,
+        end: CGPoint(x: size.width, y: size.height),
+        options: []
+      )
+    }
+    return image.jpegData(compressionQuality: 0.9)
   }
 
   func demoBrowsePage(
