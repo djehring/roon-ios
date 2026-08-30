@@ -123,7 +123,12 @@ final class MockStore {
       Task { @MainActor in self?.artwork.evictUnpinned() }
     }
     #if DEBUG
-    if Self.wantsDemoContent { applyDemoContent() }
+    if Self.wantsDemoContent || Self.wantsDemoOnboarding {
+      applyDemoContent()
+      if Self.wantsDemoOnboarding {
+        session = .onboarding(.localNetwork)
+      }
+    }
     #endif
   }
 

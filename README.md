@@ -79,13 +79,15 @@ ones there when they need coverage.
 
 ### Checking layouts without a bridge
 
-With no bridge on the network the app never leaves onboarding, so Debug builds
-accept `-roon-demo-store` to fill the store with stand-in zones, a track, and a
-queue, then skip to the main session:
+Debug builds provide local fixtures for checking layouts without a bridge. Use
+`-roon-demo-store` to open the main session with stand-in zones, playback,
+Library, and Search content; use `-roon-demo-onboarding` to open the first
+pairing step with the same fixtures available for later steps.
 
 ```bash
 xcrun simctl launch <device> com.djehring.roonremote -roon-demo-store
+xcrun simctl launch <device> com.djehring.roonremote -roon-demo-onboarding
 ```
 
-Nothing in demo content talks to the bridge, so browse pages and artwork stay
-empty. It is for checking shells, spacing, and adaptivity, not content.
+The fixtures never contact the bridge. They prove shells, spacing, and
+adaptivity rather than network behavior.

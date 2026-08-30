@@ -2,8 +2,42 @@ import SwiftUI
 
 struct OnboardingFlow: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
 
   var body: some View {
+    ZStack {
+      Palette.background.ignoresSafeArea()
+      if hSize == .regular {
+        LinearGradient(
+          colors: [Palette.accent.opacity(0.16), Palette.background.opacity(0)],
+          startPoint: .topLeading,
+          endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+      }
+
+      flow
+        .padding(hSize == .regular ? 48 : 28)
+        .frame(
+          maxWidth: Layout.onboardingContentWidth(hSize) ?? .infinity,
+          maxHeight: hSize == .regular ? 760 : .infinity
+        )
+        .background {
+          if hSize == .regular {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+              .fill(Palette.surface.opacity(0.88))
+              .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                  .stroke(Palette.hairline, lineWidth: 1)
+              }
+              .shadow(color: .black.opacity(0.24), radius: 40, y: 18)
+          }
+        }
+    }
+  }
+
+  @ViewBuilder
+  private var flow: some View {
     Group {
       switch store.session {
       case .onboarding(.localNetwork):
@@ -20,9 +54,7 @@ struct OnboardingFlow: View {
         EmptyView()
       }
     }
-    .padding(28)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Palette.background)
   }
 }
 
@@ -30,16 +62,17 @@ private struct OnboardingChrome<Content: View>: View {
   let title: String
   let subtitle: String
   @ViewBuilder var content: Content
+  @Environment(\.horizontalSizeClass) private var hSize
 
   var body: some View {
     VStack(spacing: 28) {
       Spacer(minLength: 24)
       Image(systemName: "hifispeaker.2.fill")
-        .font(.system(size: 44, weight: .light))
+        .font(.system(size: hSize == .regular ? 56 : 44, weight: .light))
         .foregroundStyle(Palette.accent)
       VStack(spacing: 10) {
         Text(title)
-          .font(.system(size: 28, weight: .semibold))
+          .font(.system(size: Layout.onboardingTitleSize(hSize), weight: .semibold))
           .multilineTextAlignment(.center)
         Text(subtitle)
           .font(.system(size: 16))
@@ -133,6 +166,7 @@ struct FindingBridgeStep: View {
 
 struct PinStep: View {
   @Environment(MockStore.self) private var store
+  @Environment(\.horizontalSizeClass) private var hSize
   private let keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"]
 
   var body: some View {
@@ -146,7 +180,10 @@ struct PinStep: View {
           ForEach(0..<6, id: \.self) { index in
             Capsule()
               .fill(Palette.surface)
-              .frame(width: 36, height: 48)
+              .frame(
+                width: hSize == .regular ? 44 : 36,
+                height: Layout.onboardingControlHeight(hSize)
+              )
               .overlay {
                 Text(digit(at: index))
                   .font(.system(size: 22, weight: .medium, design: .rounded))
@@ -178,7 +215,10 @@ struct PinStep: View {
               Text(key)
                 .font(.system(size: 22, weight: .medium))
                 .foregroundStyle(Palette.primary)
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .frame(
+                  maxWidth: .infinity,
+                  minHeight: Layout.onboardingControlHeight(hSize)
+                )
                 .background(key.isEmpty ? Color.clear : Palette.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
