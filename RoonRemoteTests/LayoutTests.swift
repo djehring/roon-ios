@@ -40,22 +40,53 @@ struct LayoutTests {
 
   @Test("Now Playing stacks below the wide-layout threshold")
   func nowPlayingStacksAtPortraitDetailWidth() {
-    #expect(RegularNowPlayingLayout.mode(for: 740) == .stacked)
+    #expect(RegularNowPlayingLayout.mode(for: CGSize(width: 740, height: 1000)) == .stacked)
     #expect(
       RegularNowPlayingLayout.mode(
-        for: RegularNowPlayingLayout.sideBySideMinimumWidth - 1
+        for: CGSize(
+          width: RegularNowPlayingLayout.sideBySideMinimumWidth - 1,
+          height: 700
+        )
       ) == .stacked
     )
   }
 
-  @Test("Now Playing moves side by side at the threshold")
+  @Test("Now Playing moves side by side only in a wide landscape")
   func nowPlayingMovesSideBySide() {
     #expect(
       RegularNowPlayingLayout.mode(
-        for: RegularNowPlayingLayout.sideBySideMinimumWidth
+        for: CGSize(
+          width: RegularNowPlayingLayout.sideBySideMinimumWidth,
+          height: 700
+        )
       ) == .sideBySide
     )
-    #expect(RegularNowPlayingLayout.mode(for: 1100) == .sideBySide)
+    #expect(
+      RegularNowPlayingLayout.mode(for: CGSize(width: 1100, height: 800)) == .sideBySide
+    )
+  }
+
+  @Test("a full-width portrait stays stacked even after hiding the sidebar")
+  func fullWidthPortraitStaysStacked() {
+    #expect(
+      RegularNowPlayingLayout.mode(for: CGSize(width: 1024, height: 1366)) == .stacked
+    )
+  }
+
+  @Test("the shell keeps its sidebar only when there is room for both columns")
+  func persistentSidebarBreakpoint() {
+    #expect(!RegularShellLayout.prefersPersistentSidebar(containerWidth: 1024))
+    #expect(
+      !RegularShellLayout.prefersPersistentSidebar(
+        containerWidth: RegularShellLayout.persistentSidebarMinimumWidth - 1
+      )
+    )
+    #expect(
+      RegularShellLayout.prefersPersistentSidebar(
+        containerWidth: RegularShellLayout.persistentSidebarMinimumWidth
+      )
+    )
+    #expect(RegularShellLayout.prefersPersistentSidebar(containerWidth: 1366))
   }
 
   @Test("stacked artwork respects its cap and horizontal insets")
