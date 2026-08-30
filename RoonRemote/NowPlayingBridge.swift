@@ -1,9 +1,8 @@
-import AVFoundation
 import MediaPlayer
 import UIKit
 
-/// Publishes the selected zone as the iPhone Now Playing app so watchOS can
-/// auto-launch the companion when Roon is playing.
+/// Publishes lock-screen / Control Center Now Playing for the selected zone.
+/// Watch auto-launch uses the Live Activity, not a fake local audio session.
 @MainActor
 final class NowPlayingBridge {
   static let shared = NowPlayingBridge()
@@ -33,7 +32,6 @@ final class NowPlayingBridge {
   }
 
   private func apply(track: Track, playing: Bool, store: MockStore) {
-    activatePlaybackSession()
     var info: [String: Any] = [
       MPMediaItemPropertyTitle: track.title,
       MPMediaItemPropertyArtist: track.artist,
@@ -73,18 +71,6 @@ final class NowPlayingBridge {
     let center = MPNowPlayingInfoCenter.default()
     center.nowPlayingInfo = nil
     center.playbackState = .stopped
-    HardwareVolumeBridge.shared.restoreAmbientIfPossible()
-  }
-
-  private func activatePlaybackSession() {
-    let session = AVAudioSession.sharedInstance()
-    guard session.category != .playAndRecord else { return }
-    do {
-      try session.setCategory(.playback, mode: .default)
-      try session.setActive(true)
-    } catch {
-      // Now Playing is best-effort; Watch Connectivity still wakes the companion.
-    }
   }
 
   private func registerCommandsIfNeeded() {

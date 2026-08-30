@@ -1387,6 +1387,7 @@ final class MockStore {
     #if os(iOS)
     PhoneWatchSync.shared.publish()
     NowPlayingBridge.shared.publish()
+    LiveActivityBridge.shared.publish()
     #endif
   }
 

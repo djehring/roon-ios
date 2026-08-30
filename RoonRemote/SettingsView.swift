@@ -76,7 +76,7 @@ struct SettingsList: View {
       }
       if WCSession.isSupported() {
         Section("Watch") {
-          Text("Same room as the phone. Tap to play, swipe for skip, queue, and rooms. Crown is volume. Long-press for stop, mute, and transfer. When a room starts playing, the phone opens the Watch app if it is closed. The first time, iOS asks for Health access. That is the same API Pocket Trainer uses.")
+          Text("Same room as the phone. Tap to play, swipe for skip, queue, and rooms. Crown is volume. Long-press for stop, mute, and transfer. When a room is playing, a Live Activity shows on the Watch Smart Stack. Tap it to open the Watch app.")
             .foregroundStyle(Palette.secondary)
         }
       }

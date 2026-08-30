@@ -62,10 +62,8 @@
 	<string>Roon Remote records a short clip so the bridge can turn speech into an AI search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Roon Remote reads a cover photo from your library so the bridge can match the album.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Roon Remote uses HealthKit so the iPhone can open the Watch app when a room starts playing.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Roon Remote uses HealthKit so the iPhone can open the Watch app when a room starts playing.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

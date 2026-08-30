@@ -28,9 +28,8 @@ Simulator can pair if you type the bridge `host:port` during onboarding.
 ## Apple Watch
 
 Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon
-open on the phone. When a zone starts playing, the phone opens the Watch app if
-it is closed (HealthKit `startWatchApp`, same as Pocket Trainer). The first time,
-allow Health access on the phone.
+open on the phone. When a zone is playing, a Live Activity appears on the Watch
+Smart Stack. Tap it to open the Watch app.
 
 Now Playing is full-bleed cover:
 
