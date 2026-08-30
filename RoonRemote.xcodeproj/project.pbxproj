@@ -50,6 +50,7 @@
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		8514E9B729B06628FEE83258 /* LibraryDragItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */; };
+		89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B895799574E60D21626345F2 /* RoonRemoteApp.swift */; };
 		8D41AF696B6304473C14FE3D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38E999F7921AA6BB8403FC7 /* RootView.swift */; };
 		9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
@@ -528,6 +529,7 @@
 				47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */,
 				4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */,
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
+				89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */,
 				03882B4209A659F450A93828 /* RoonAPIClient.swift in Sources */,
 				C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */,
 				FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */,

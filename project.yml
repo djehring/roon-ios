@@ -155,6 +155,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
       - path: RoonRemote/DemoStore.swift
+      - path: RoonRemote/PlaybackAdjustment.swift
       - path: RoonRemote/API
     settings:
       base:
