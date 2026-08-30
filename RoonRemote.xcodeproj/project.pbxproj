@@ -41,6 +41,7 @@
 		4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		50220EBCA240F22C39952FFF /* LibraryIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80506818538B2F6597E20D61 /* LibraryIndexTests.swift */; };
 		505425BC9AF914974F327171 /* QueueRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */; };
+		53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */; };
 		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
@@ -52,6 +53,7 @@
 		755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
+		7AC09ED290AD85F22720EB1C /* ProgressScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		8514E9B729B06628FEE83258 /* LibraryDragItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */; };
@@ -197,6 +199,7 @@
 		B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelection.swift; sourceTree = "<group>"; };
 		B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRoomsView.swift; sourceTree = "<group>"; };
 		B895799574E60D21626345F2 /* RoonRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonRemoteApp.swift; sourceTree = "<group>"; };
+		C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareVolumeBridge.swift; sourceTree = "<group>"; };
 		C82F953539BF55800236CA9A /* RoonRemoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoonRemoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkCacheTests.swift; sourceTree = "<group>"; };
 		D38E999F7921AA6BB8403FC7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -208,6 +211,7 @@
 		EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRouting.swift; sourceTree = "<group>"; };
 		F19655EC02847FD92A59DBE6 /* RoonRemoteTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RoonRemoteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueTimelineTests.swift; sourceTree = "<group>"; };
+		F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressScrubber.swift; sourceTree = "<group>"; };
 		F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSelectionTests.swift; sourceTree = "<group>"; };
 		F4CD925CA7A704A07C1A93F4 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -240,6 +244,7 @@
 			children = (
 				2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */,
 				A8301FD882C4D88D26DBC910 /* DemoStore.swift */,
+				C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */,
 				23BEADFB2D74AE470C4AE825 /* Layout.swift */,
 				18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */,
 				580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */,
@@ -251,6 +256,7 @@
 				99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */,
 				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
 				25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */,
+				F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */,
 				EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */,
 				98EC1B18319F044EE6619B3D /* QueueTimeline.swift */,
 				2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */,
@@ -619,6 +625,7 @@
 				4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */,
 				2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */,
 				32D769EDFCBB7360155F202E /* DemoStore.swift in Sources */,
+				53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */,
 				9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */,
 				1350ACEB4796A64EA9D7F437 /* Layout.swift in Sources */,
 				755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */,
@@ -631,6 +638,7 @@
 				061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */,
 				E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */,
 				ADA7C268DF266772B7C2F2CC /* PlaybackAdjustment.swift in Sources */,
+				7AC09ED290AD85F22720EB1C /* ProgressScrubber.swift in Sources */,
 				54C29928665633135687FD19 /* QueueRouting.swift in Sources */,
 				76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */,
 				1D51A3E3481F5F363FD8DC04 /* RegularBrowseView.swift in Sources */,

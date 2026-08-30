@@ -37,3 +37,30 @@ struct PlaybackAdjustmentTests {
     )
   }
 }
+
+@Suite("Time code parsing")
+struct TimeCodeTests {
+  @Test("parses mm:ss")
+  func parsesMinutesSeconds() {
+    #expect(TimeCode.seconds(from: "1:18") == 78)
+    #expect(TimeCode.seconds(from: "4:39") == 279)
+  }
+
+  @Test("parses h:mm:ss")
+  func parsesHours() {
+    #expect(TimeCode.seconds(from: "1:02:03") == 3723)
+  }
+
+  @Test("formats seconds")
+  func formats() {
+    #expect(TimeCode.string(from: 78) == "1:18")
+    #expect(TimeCode.string(from: 3723) == "1:02:03")
+  }
+
+  @Test("derives duration from percentage when length is missing")
+  func durationFromPercentage() {
+    #expect(
+      TimeCode.durationSeconds(length: nil, seekPosition: "1:18", seekPercentage: 50) == 156
+    )
+  }
+}

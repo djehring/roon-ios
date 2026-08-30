@@ -6,6 +6,10 @@ struct RootView: View {
 
   var body: some View {
     ZStack {
+      HardwareVolumeHUDSuppressor()
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
       Palette.background.ignoresSafeArea()
       switch store.session {
       case .onboarding(_):
@@ -19,9 +23,16 @@ struct RootView: View {
           MainTabs()
         }
       }
+
+      if let hud = store.volumeHUD {
+        VolumeHUDOverlay(hud: hud)
+          .transition(.opacity.combined(with: .scale(scale: 0.92)))
+          .allowsHitTesting(false)
+      }
     }
     .tint(Palette.accent)
     .animation(Motion.sheet, value: store.sessionLabel)
+    .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
   }
 }
 

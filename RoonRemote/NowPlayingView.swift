@@ -121,23 +121,8 @@ struct NowPlayingView: View {
   @ViewBuilder
   private var progress: some View {
     if let track = store.currentTrack {
-      VStack(spacing: 6) {
-        GeometryReader { geo in
-          ZStack(alignment: .leading) {
-            Capsule().fill(Palette.hairline)
-            Capsule()
-              .fill(Palette.accent)
-              .frame(width: geo.size.width * track.progress)
-          }
-        }
-        .frame(height: 3)
-        HStack {
-          Text(track.position)
-          Spacer()
-          Text(track.remaining)
-        }
-        .font(.caption)
-        .foregroundStyle(Palette.tertiary)
+      ProgressScrubber(track: track) { progress in
+        store.seek(toProgress: progress)
       }
       .padding(.top, 10)
     }

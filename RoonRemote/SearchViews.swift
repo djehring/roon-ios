@@ -248,13 +248,15 @@ final class VoiceRecorder {
     if isRecording {
       recorder?.stop()
       isRecording = false
-      try AVAudioSession.sharedInstance().setActive(false)
+      try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+      HardwareVolumeBridge.shared.setActive(true)
       return try Data(contentsOf: fileURL)
     }
     let granted = await AVAudioApplication.requestRecordPermission()
     guard granted else {
       throw RoonAPIError.httpStatus(403, "Microphone permission is off.")
     }
+    HardwareVolumeBridge.shared.setActive(false)
     let session = AVAudioSession.sharedInstance()
     try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
     try session.setActive(true)
