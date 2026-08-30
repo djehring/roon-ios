@@ -23,6 +23,9 @@ targets:
       - target: RoonRemoteWatch
         embed: true
         codeSign: true
+      - target: RoonRemoteWidgets
+        embed: true
+        codeSign: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote
@@ -37,8 +40,6 @@ targets:
         CODE_SIGN_STYLE: Automatic
     entitlements:
       path: RoonRemote/RoonRemote.entitlements
-      properties:
-        com.apple.developer.healthkit: true
     info:
       path: RoonRemote/Info.plist
       properties:
@@ -70,12 +71,7 @@ targets:
         NSPhotoLibraryUsageDescription: >-
           Roon Remote reads a cover photo from your library so the
           bridge can match the album.
-        NSHealthShareUsageDescription: >-
-          Roon Remote uses HealthKit so the iPhone can open the Watch
-          app when a room starts playing.
-        NSHealthUpdateUsageDescription: >-
-          Roon Remote uses HealthKit so the iPhone can open the Watch
-          app when a room starts playing.
+        NSSupportsLiveActivities: true
         NSBonjourServices:
           - _roon-web-stack._tcp
         NSAppTransportSecurity:
@@ -86,6 +82,35 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+  RoonRemoteWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: RoonRemoteWidgets
+        excludes:
+          - Info.plist
+      - path: Shared/RoonNowPlayingAttributes.swift
+      - path: Shared/Theme.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.widgets
+        PRODUCT_NAME: RoonRemoteWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: RoonRemoteWidgets/Info.plist
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+    entitlements:
+      path: RoonRemoteWidgets/RoonRemoteWidgets.entitlements
+    info:
+      path: RoonRemoteWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Roon Remote
+        NSSupportsLiveActivities: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
   RoonRemoteTests:
     type: bundle.unit-test
     platform: iOS
@@ -167,8 +192,6 @@ targets:
         TARGETED_DEVICE_FAMILY: "4"
     entitlements:
       path: RoonRemoteWatch/RoonRemoteWatch.entitlements
-      properties:
-        com.apple.developer.healthkit: true
     info:
       path: RoonRemoteWatch/Info.plist
       properties:
@@ -176,14 +199,8 @@ targets:
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.djehring.roonremote
         WKRunsIndependentlyOfCompanionApp: false
-        WKBackgroundModes:
-          - workout-processing
-        NSHealthShareUsageDescription: >-
-          Roon Remote uses HealthKit so the Watch app can stay on-wrist
-          while a room is playing.
-        NSHealthUpdateUsageDescription: >-
-          Roon Remote uses HealthKit so the Watch app can stay on-wrist
-          while a room is playing.
+        WKSupportsLiveActivityLaunchAttributeTypes:
+          - RoonNowPlayingAttributes
   RoonRemoteWatchWidgets:
     type: app-extension
     platform: watchOS

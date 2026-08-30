@@ -15,20 +15,17 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>WKApplication</key>
+	<key>NSSupportsLiveActivities</key>
 	<true/>
-	<key>WKCompanionAppBundleIdentifier</key>
-	<string>com.djehring.roonremote</string>
-	<key>WKRunsIndependentlyOfCompanionApp</key>
-	<false/>
-	<key>WKSupportsLiveActivityLaunchAttributeTypes</key>
-	<array>
-		<string>RoonNowPlayingAttributes</string>
-	</array>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
 </dict>
 </plist>

@@ -96,14 +96,9 @@ final class HardwareVolumeBridge {
     writeSystemVolume(baseline)
   }
 
-  func restoreAmbientIfPossible() {
-    activateSessionIfNeeded(forceAmbient: true)
-  }
-
-  private func activateSessionIfNeeded(forceAmbient: Bool = false) {
+  private func activateSessionIfNeeded() {
     let session = AVAudioSession.sharedInstance()
     guard session.category != .playAndRecord else { return }
-    if session.category == .playback, !forceAmbient { return }
     do {
       try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
       try session.setActive(true)

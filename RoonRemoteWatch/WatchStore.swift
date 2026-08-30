@@ -259,11 +259,6 @@ final class WatchStore {
         volume = resolved.volume
       }
       persist(resolved)
-      if resolved.isPlaying {
-        WatchPlaybackSession.shared.startIfNeeded()
-      } else {
-        WatchPlaybackSession.shared.stopIfNeeded()
-      }
       NSLog("watch snapshot ready=%d title=%@", resolved.sessionReady, resolved.title ?? "nil")
     } catch {
       NSLog("watch decode failed: %@", error.localizedDescription)

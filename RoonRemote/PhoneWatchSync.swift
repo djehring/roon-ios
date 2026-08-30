@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import WatchConnectivity
-import HealthKit
 import os.log
 
 final class PhoneWatchSync: NSObject, WCSessionDelegate {
@@ -11,7 +10,6 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   private weak var store: MockStore?
   private var lastEncoded: Data?
   private var lastWakeKey: String?
-  private var watchLaunchArmed = true
 
   func activate(store: MockStore) {
     self.store = store
@@ -46,10 +44,8 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
         }
       }
       lastWakeKey = nil
-      watchLaunchArmed = !snapshot.isPlaying
     } else {
       _ = wakeWatchIfPlaying(session, snapshot: snapshot, payload: payload)
-      openWatchAppIfPlaying(session, snapshot: snapshot)
     }
   }
 
@@ -73,49 +69,6 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     session.transferUserInfo(payload)
     Self.log.info("waking watch for \(snapshot.title ?? "now playing", privacy: .public)")
     return true
-  }
-
-  /// Same path Pocket Trainer uses: HealthKit `startWatchApp` is the API that
-  /// actually brings the companion on-wrist from the iPhone.
-  private func openWatchAppIfPlaying(_ session: WCSession, snapshot: WatchSnapshot) {
-    guard session.isPaired, session.isWatchAppInstalled else { return }
-    guard snapshot.isPlaying else {
-      watchLaunchArmed = true
-      return
-    }
-    guard watchLaunchArmed else { return }
-    watchLaunchArmed = false
-    Task { @MainActor in
-      let opened = await Self.openWatchApp()
-      if !opened {
-        self.watchLaunchArmed = true
-      }
-    }
-  }
-
-  private static func openWatchApp() async -> Bool {
-    guard HKHealthStore.isHealthDataAvailable() else {
-      log.error("HealthKit unavailable, cannot open Watch app")
-      return false
-    }
-    let store = HKHealthStore()
-    do {
-      try await store.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [])
-      let status = store.authorizationStatus(for: HKObjectType.workoutType())
-      guard status == .sharingAuthorized else {
-        log.error("HealthKit not authorized, cannot open Watch app")
-        return false
-      }
-      let config = HKWorkoutConfiguration()
-      config.activityType = .other
-      config.locationType = .indoor
-      try await store.startWatchApp(toHandle: config)
-      log.info("startWatchApp succeeded")
-      return true
-    } catch {
-      log.error("startWatchApp failed: \(error.localizedDescription, privacy: .public)")
-      return false
-    }
   }
 
   func session(
