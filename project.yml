@@ -72,6 +72,7 @@ targets:
       - path: RoonRemoteTests
       - path: Shared/ArtworkCache.swift
       - path: RoonRemote/Layout.swift
+      - path: RoonRemote/LibraryIndex.swift
       - path: RoonRemote/Models.swift
       - path: RoonRemote/Sidebar.swift
     settings:

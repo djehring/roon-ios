@@ -181,4 +181,11 @@ struct ArtworkCacheTests {
     #expect(ArtworkCache.heroPixels >= 340 * 3)
     #expect(ArtworkCache.heroPixels > ArtworkCache.thumbnailPixels)
   }
+
+  @Test("grid artwork sits between thumbnails and heroes")
+  func gridPixelsAreAppropriatelySized() {
+    #expect(ArtworkCache.gridPixels >= 220 * 2)
+    #expect(ArtworkCache.gridPixels > ArtworkCache.thumbnailPixels)
+    #expect(ArtworkCache.gridPixels < ArtworkCache.heroPixels)
+  }
 }
