@@ -139,8 +139,9 @@ struct RegularBrowseView: View {
     }
   }
 
+  @ViewBuilder
   private func coverLabel(_ child: BrowseNode, playIndicator: Bool = false) -> some View {
-    VStack(alignment: .leading, spacing: 10) {
+    let content = VStack(alignment: .leading, spacing: 10) {
       CoverArt(
         title: child.title,
         image: store.imageData(
@@ -175,6 +176,20 @@ struct RegularBrowseView: View {
       }
     }
     .contentShape(Rectangle())
+    .hoverEffect(.lift)
+
+    if let itemKey = child.itemKey {
+      content.draggable(
+        LibraryDragItem(
+          hierarchy: child.hierarchy ?? hierarchy,
+          itemKey: itemKey,
+          title: child.title,
+          hint: child.hint
+        )
+      )
+    } else {
+      content
+    }
   }
 
   private func promptCell(_ child: BrowseNode) -> some View {

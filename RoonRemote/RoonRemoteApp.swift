@@ -16,5 +16,8 @@ struct RoonRemoteApp: App {
           }
         }
     }
+    .commands {
+      RoonCommands(store: store)
+    }
   }
 }
