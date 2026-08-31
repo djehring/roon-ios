@@ -84,53 +84,34 @@ private struct TVFindingBridgeStep: View {
       title: "Looking for your bridge",
       subtitle: "Pick a discovered host, or enter host:port with the remote keyboard."
     ) {
-      VStack(spacing: 24) {
+      VStack(spacing: 28) {
         if store.isDiscovering {
           ProgressView()
             .tint(Palette.accent)
             .controlSize(.large)
         }
         if let error = store.discoveryError {
-          Text(error)
-            .font(.title3)
-            .foregroundStyle(.red.opacity(0.85))
-            .multilineTextAlignment(.center)
+          TVOnboardingError(error)
         }
         ForEach(store.discoveredBridges) { bridge in
           Button {
             store.selectBridge(bridge)
           } label: {
-            HStack {
-              VStack(alignment: .leading, spacing: 4) {
-                Text(bridge.name)
-                  .font(.title2.weight(.semibold))
-                Text("\(bridge.host):\(bridge.port)")
-                  .font(.body)
-                  .foregroundStyle(Palette.secondary)
-              }
-              Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundStyle(Palette.tertiary)
-            }
-            .padding(24)
-            .background(Palette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            TVBridgeRowLabel(bridge: bridge)
           }
-          .buttonStyle(.plain)
+          .tvUnplated()
         }
         TextField("192.168.0.14:3000", text: $store.manualHost)
           .font(.title3)
-          .padding(20)
-          .background(Palette.surface)
-          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         TVPrimaryButton(title: "Use this address") {
           store.useManualHost()
         }
-        Button("Search again") {
+        Button {
           Task { await store.discoverBridges() }
+        } label: {
+          TVSettingsLikeLabel(title: "Search again")
         }
-        .buttonStyle(.bordered)
-        .tint(Palette.accent)
+        .tvUnplated()
       }
     }
   }
@@ -167,26 +148,29 @@ private struct TVPinStep: View {
           }
         }
         if let failure = store.pairFailure {
-          Text(failure)
-            .font(.title3)
-            .foregroundStyle(.red.opacity(0.85))
-            .multilineTextAlignment(.center)
+          TVOnboardingError(failure)
+            .padding(.bottom, 8)
         }
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
-          ForEach(keys, id: \.self) { key in
-            Button { tap(key) } label: {
-              Text(key)
-                .font(.system(size: 28, weight: .medium))
-                .frame(maxWidth: .infinity, minHeight: 64)
-                .background(key.isEmpty ? Color.clear : Palette.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        VStack(spacing: 28) {
+          ForEach(0..<4, id: \.self) { row in
+            HStack(spacing: 28) {
+              ForEach(0..<3, id: \.self) { col in
+                let key = keys[row * 3 + col]
+                if key.isEmpty {
+                  Color.clear
+                    .frame(width: TVPinKeyLabel.size.width, height: TVPinKeyLabel.size.height)
+                } else {
+                  Button { tap(key) } label: {
+                    TVPinKeyLabel(key: key)
+                  }
+                  .tvUnplated()
+                }
+              }
             }
-            .buttonStyle(.plain)
-            .disabled(key.isEmpty)
           }
         }
-        .frame(maxWidth: 420)
       }
+      .frame(maxWidth: .infinity)
     }
   }
 
@@ -234,10 +218,7 @@ private struct TVWaitingForCoreStep: View {
           .font(.title3.weight(.semibold))
           .foregroundStyle(Palette.tertiary)
         if let error = store.discoveryError {
-          Text(error)
-            .font(.title3)
-            .foregroundStyle(.red.opacity(0.85))
-            .multilineTextAlignment(.center)
+          TVOnboardingError(error)
         }
       }
     }
@@ -248,48 +229,133 @@ private struct TVChooseZoneStep: View {
   @Environment(MockStore.self) private var store
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      Text("Choose a room")
-        .font(.system(size: 42, weight: .semibold))
-      Text("This is the zone the TV will control.")
-        .font(.title2)
-        .foregroundStyle(Palette.secondary)
-      if store.zones.isEmpty {
-        ProgressView()
-          .tint(Palette.accent)
-          .frame(maxWidth: .infinity)
-          .padding(.top, 40)
-      } else {
-        ForEach(store.zones) { zone in
-          Button {
-            store.selectZone(zone.id)
-            store.finishOnboarding()
-          } label: {
-            HStack(spacing: 20) {
-              Image(systemName: "hifispeaker.fill")
-                .font(.title)
-                .foregroundStyle(Palette.accent)
-              VStack(alignment: .leading, spacing: 4) {
-                Text(zone.name)
-                  .font(.title2.weight(.semibold))
-                Text(zone.track?.title ?? "Nothing playing")
-                  .font(.body)
-                  .foregroundStyle(Palette.secondary)
-              }
-              Spacer()
-              Image(systemName: "chevron.right")
-                .foregroundStyle(Palette.tertiary)
+    // A tall VStack is centered in the remaining height, so the title and the
+    // last rooms both clip once the house has more than a handful of zones.
+    ScrollView {
+      VStack(alignment: .leading, spacing: 24) {
+        Text("Choose a room")
+          .font(.system(size: 42, weight: .semibold))
+        Text("This is the zone the TV will control.")
+          .font(.title2)
+          .foregroundStyle(Palette.secondary)
+        if store.zones.isEmpty {
+          ProgressView()
+            .tint(Palette.accent)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 40)
+        } else {
+          ForEach(store.zones) { zone in
+            Button {
+              store.selectZone(zone.id)
+              store.finishOnboarding()
+            } label: {
+              TVChooseZoneRowLabel(zone: zone)
             }
-            .padding(28)
-            .background(Palette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .tvUnplated()
           }
-          .buttonStyle(.plain)
         }
       }
-      Spacer()
+      .padding(64)
+      .frame(maxWidth: 900, alignment: .leading)
     }
-    .padding(64)
-    .frame(maxWidth: 900)
+  }
+}
+
+private struct TVPinKeyLabel: View {
+  static let size = CGSize(width: 112, height: 70)
+
+  let key: String
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    Text(key)
+      .font(.system(size: 28, weight: .medium))
+      .frame(width: Self.size.width, height: Self.size.height)
+      .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+      .background(isFocused ? Color.white : Palette.surface)
+      .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+  }
+}
+
+private struct TVChooseZoneRowLabel: View {
+  let zone: Zone
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    HStack(spacing: 20) {
+      Image(systemName: "hifispeaker.fill")
+        .font(.title)
+        .foregroundStyle(isFocused ? Palette.onAccent : Palette.accent)
+      VStack(alignment: .leading, spacing: 4) {
+        Text(zone.name)
+          .font(.title2.weight(.semibold))
+          .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+        Text(zone.track?.title ?? "Nothing playing")
+          .font(.body)
+          .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.65) : Palette.secondary)
+      }
+      Spacer()
+      Image(systemName: "chevron.right")
+        .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.45) : Palette.tertiary)
+    }
+    .padding(28)
+    .background(isFocused ? Color.white : Palette.surface)
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+}
+
+private struct TVBridgeRowLabel: View {
+  let bridge: DiscoveredBridge
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    HStack {
+      VStack(alignment: .leading, spacing: 4) {
+        Text(bridge.name)
+          .font(.title2.weight(.semibold))
+          .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+        Text("\(bridge.host):\(bridge.port)")
+          .font(.body)
+          .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.65) : Palette.secondary)
+      }
+      Spacer()
+      Image(systemName: "chevron.right")
+        .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.45) : Palette.tertiary)
+    }
+    .padding(24)
+    .background(isFocused ? Color.white : Palette.surface)
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+}
+
+private struct TVSettingsLikeLabel: View {
+  let title: String
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    Text(title)
+      .font(.title3.weight(.medium))
+      .frame(maxWidth: .infinity, minHeight: 56)
+      .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+      .background(isFocused ? Color.white : Palette.surface)
+      .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+}
+
+private struct TVOnboardingError: View {
+  let message: String
+
+  init(_ message: String) {
+    self.message = message
+  }
+
+  var body: some View {
+    Text(message)
+      .font(.title3)
+      .foregroundStyle(.red.opacity(0.85))
+      .multilineTextAlignment(.center)
+      .lineLimit(3)
+      .fixedSize(horizontal: false, vertical: true)
+      .frame(maxWidth: .infinity)
   }
 }

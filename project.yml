@@ -250,6 +250,8 @@ targets:
         type: file
       - path: RoonRemote/PlaybackAdjustment.swift
         type: file
+      - path: RoonRemote/LibraryIndex.swift
+        type: file
       - path: RoonRemote/API
     settings:
       base:

@@ -40,7 +40,7 @@ struct TVRoomsView: View {
       .padding(.top, 48)
 
       ScrollView {
-        LazyVStack(spacing: 16) {
+        LazyVStack(spacing: 36) {
           if store.zones.isEmpty {
             ProgressView()
               .tint(Palette.accent)
@@ -60,7 +60,7 @@ struct TVRoomsView: View {
 
   private func roomRow(_ zone: Zone) -> some View {
     let selected = zone.id == store.selectedZoneId
-    return VStack(alignment: .leading, spacing: 16) {
+    return VStack(alignment: .leading, spacing: 32) {
       Button {
         if !selected {
           if store.currentTrack != nil {
@@ -70,34 +70,9 @@ struct TVRoomsView: View {
           }
         }
       } label: {
-        HStack(spacing: 20) {
-          Image(systemName: "hifispeaker.fill")
-            .font(.title)
-            .foregroundStyle(selected ? Palette.accent : Palette.secondary)
-            .frame(width: 44)
-          VStack(alignment: .leading, spacing: 6) {
-            Text(zone.name)
-              .font(.title2.weight(.semibold))
-            Text(statusText(for: zone))
-              .font(.body)
-              .foregroundStyle(Palette.secondary)
-          }
-          Spacer()
-          if selected {
-            Image(systemName: "checkmark.circle.fill")
-              .font(.title)
-              .foregroundStyle(Palette.accent)
-          }
-        }
-        .padding(28)
-        .background(Palette.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay {
-          RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .stroke(selected ? Palette.accent.opacity(0.55) : Palette.hairline, lineWidth: 2)
-        }
+        TVRoomRowLabel(zone: zone, selected: selected, status: statusText(for: zone))
       }
-      .buttonStyle(.plain)
+      .tvUnplated()
 
       if selected, let output = store.outputs.first(where: { !$0.isFixed }) {
         volumeSlider(output)
@@ -107,43 +82,29 @@ struct TVRoomsView: View {
 
   private func volumeSlider(_ output: Output) -> some View {
     let step = max(1, (output.max - output.min) / 20)
-    return HStack(spacing: 24) {
-      Button {
+    return HStack(spacing: 28) {
+      TVIconButton(symbol: "speaker.fill", size: 68, fontSize: 22) {
         store.setVolume(output, value: max(output.min, output.volume - step))
-      } label: {
-        Image(systemName: "speaker.fill")
-          .font(.title2)
-          .frame(width: 64, height: 64)
       }
-      .buttonStyle(.plain)
 
       Text("\(Int(output.volume))")
         .font(.title.weight(.semibold).monospacedDigit())
         .frame(minWidth: 80)
 
-      Button {
+      TVIconButton(symbol: "speaker.wave.3.fill", size: 68, fontSize: 22) {
         store.setVolume(output, value: min(output.max, output.volume + step))
-      } label: {
-        Image(systemName: "speaker.wave.3.fill")
-          .font(.title2)
-          .frame(width: 64, height: 64)
       }
-      .buttonStyle(.plain)
 
       Button {
         store.toggleMute(output)
       } label: {
-        Text(output.muted ? "Unmute" : "Mute")
-          .font(.title3.weight(.medium))
-          .padding(.horizontal, 20)
-          .padding(.vertical, 14)
-          .background(Palette.surface)
-          .clipShape(Capsule())
+        TVMuteChipLabel(title: output.muted ? "Unmute" : "Mute")
       }
-      .buttonStyle(.plain)
+      .tvUnplated()
     }
     .padding(.horizontal, 28)
-    .padding(.vertical, 16)
+    .padding(.vertical, 20)
+    .frame(maxWidth: .infinity, alignment: .leading)
     .background(Palette.surface.opacity(0.7))
     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
   }
@@ -161,5 +122,62 @@ struct TVRoomsView: View {
       return "\(zone.state == .playing ? "Playing" : "Idle") · \(track.title)"
     }
     return "Idle"
+  }
+}
+
+private struct TVRoomRowLabel: View {
+  let zone: Zone
+  let selected: Bool
+  let status: String
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    HStack(spacing: 20) {
+      Image(systemName: "hifispeaker.fill")
+        .font(.title)
+        .foregroundStyle(iconColor)
+        .frame(width: 44)
+      VStack(alignment: .leading, spacing: 6) {
+        Text(zone.name)
+          .font(.title2.weight(.semibold))
+          .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+        Text(status)
+          .font(.body)
+          .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.65) : Palette.secondary)
+      }
+      Spacer()
+      if selected {
+        Image(systemName: "checkmark.circle.fill")
+          .font(.title)
+          .foregroundStyle(isFocused ? Palette.onAccent : Palette.accent)
+      }
+    }
+    .padding(28)
+    .background(isFocused ? Color.white : Palette.surface)
+    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 18, style: .continuous)
+        .stroke(selected && !isFocused ? Palette.accent.opacity(0.55) : .clear, lineWidth: 2)
+    }
+  }
+
+  private var iconColor: Color {
+    if isFocused { return Palette.onAccent }
+    return selected ? Palette.accent : Palette.secondary
+  }
+}
+
+private struct TVMuteChipLabel: View {
+  let title: String
+  @Environment(\.isFocused) private var isFocused
+
+  var body: some View {
+    Text(title)
+      .font(.title3.weight(.medium))
+      .foregroundStyle(isFocused ? Palette.onAccent : Palette.primary)
+      .padding(.horizontal, 22)
+      .padding(.vertical, 14)
+      .background(isFocused ? Color.white : Palette.surface)
+      .clipShape(Capsule())
   }
 }

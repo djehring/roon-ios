@@ -12,10 +12,8 @@ struct TVVolumePanel: View {
           Text("Volume")
             .font(.system(size: 44, weight: .bold))
           Spacer()
-          Button("Done") { dismiss() }
-            .buttonStyle(.plain)
-            .font(.title3.weight(.medium))
-            .foregroundStyle(Palette.secondary)
+          Button { dismiss() } label: { TVSheetDoneLabel() }
+            .tvUnplated()
         }
 
         if store.outputs.isEmpty {
@@ -51,44 +49,34 @@ struct TVVolumePanel: View {
           .padding(.vertical, 28)
       } else {
         let step = max(1, (output.max - output.min) / 20)
-        HStack(spacing: 36) {
-          Button {
-            store.setVolume(output, value: max(output.min, output.volume - step))
-          } label: {
-            Image(systemName: "speaker.fill")
-              .font(.system(size: 36, weight: .medium))
-              .frame(width: 96, height: 96)
-          }
-          .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: 28) {
+          HStack(spacing: 36) {
+            TVIconButton(symbol: "speaker.fill", size: 88, fontSize: 32) {
+              store.setVolume(output, value: max(output.min, output.volume - step))
+            }
 
-          VStack(spacing: 12) {
-            Text(output.muted ? "Muted" : "\(Int(output.volume))")
-              .font(.system(size: 64, weight: .bold).monospacedDigit())
-              .foregroundStyle(output.muted ? Palette.tertiary : Palette.primary)
-              .frame(minWidth: 160)
-            volumeBar(output)
-              .frame(width: 280, height: 10)
+            VStack(spacing: 12) {
+              Text(output.muted ? "Muted" : "\(Int(output.volume))")
+                .font(.system(size: 56, weight: .bold).monospacedDigit())
+                .foregroundStyle(output.muted ? Palette.tertiary : Palette.primary)
+              volumeBar(output)
+                .frame(height: 10)
+            }
+            .frame(maxWidth: .infinity)
+
+            TVIconButton(symbol: "speaker.wave.3.fill", size: 88, fontSize: 32) {
+              store.setVolume(output, value: min(output.max, output.volume + step))
+            }
           }
 
-          Button {
-            store.setVolume(output, value: min(output.max, output.volume + step))
-          } label: {
-            Image(systemName: "speaker.wave.3.fill")
-              .font(.system(size: 36, weight: .medium))
-              .frame(width: 96, height: 96)
-          }
-          .buttonStyle(.plain)
-
-          Button {
+          TVIconButton(
+            symbol: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill",
+            size: 72,
+            fontSize: 26,
+            filled: output.muted
+          ) {
             store.toggleMute(output)
-          } label: {
-            Image(systemName: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-              .font(.system(size: 32, weight: .medium))
-              .frame(width: 96, height: 96)
-              .background(output.muted ? Palette.accent.opacity(0.25) : Palette.surface)
-              .clipShape(Circle())
           }
-          .buttonStyle(.plain)
         }
         .padding(.vertical, 8)
       }
@@ -136,10 +124,8 @@ struct TVQueuePanel: View {
             }
           }
           Spacer()
-          Button("Done") { dismiss() }
-            .buttonStyle(.plain)
-            .font(.title3.weight(.medium))
-            .foregroundStyle(Palette.secondary)
+          Button { dismiss() } label: { TVSheetDoneLabel() }
+            .tvUnplated()
         }
 
         if store.upcomingQueue.isEmpty {
@@ -158,7 +144,7 @@ struct TVQueuePanel: View {
           Spacer()
         } else {
           ScrollView {
-            LazyVStack(spacing: 14) {
+            LazyVStack(spacing: 20) {
               ForEach(Array(store.upcomingQueue.enumerated()), id: \.element.id) { index, item in
                 queueRow(item, index: index)
               }
@@ -179,47 +165,79 @@ struct TVQueuePanel: View {
       store.playFromHere(item)
       dismiss()
     } label: {
-      HStack(spacing: 24) {
-        Text("\(index + 1)")
-          .font(.title3.monospacedDigit())
-          .foregroundStyle(Palette.tertiary)
-          .frame(width: 44, alignment: .trailing)
+      TVQueueRowLabel(
+        item: item,
+        index: index,
+        isCurrent: isCurrent,
+        image: store.imageData(for: item.imageKey)
+      )
+    }
+    .tvUnplated()
+  }
+}
 
-        CoverArt(
-          title: item.album,
-          image: store.imageData(for: item.imageKey),
-          corner: 10
-        )
-        .frame(width: 72, height: 72)
+private struct TVSheetDoneLabel: View {
+  @Environment(\.isFocused) private var isFocused
 
-        VStack(alignment: .leading, spacing: 6) {
-          Text(item.title)
-            .font(.title2.weight(.semibold))
-            .foregroundStyle(isCurrent ? Palette.accent : Palette.primary)
-            .lineLimit(1)
-          Text("\(item.artist)  ·  \(item.album)")
-            .font(.body)
-            .foregroundStyle(Palette.secondary)
-            .lineLimit(1)
-        }
+  var body: some View {
+    Text("Done")
+      .font(.title3.weight(.medium))
+      .foregroundStyle(isFocused ? Palette.onAccent : Palette.secondary)
+      .padding(.horizontal, 22)
+      .padding(.vertical, 12)
+      .background(isFocused ? Color.white : Palette.surface)
+      .clipShape(Capsule())
+  }
+}
 
-        Spacer()
+private struct TVQueueRowLabel: View {
+  let item: QueueItem
+  let index: Int
+  let isCurrent: Bool
+  var image: Data?
+  @Environment(\.isFocused) private var isFocused
 
-        if isCurrent {
-          Image(systemName: "waveform")
-            .font(.title2)
-            .foregroundStyle(Palette.accent)
-        }
+  var body: some View {
+    HStack(spacing: 24) {
+      Text("\(index + 1)")
+        .font(.title3.monospacedDigit())
+        .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.55) : Palette.tertiary)
+        .frame(width: 44, alignment: .trailing)
+
+      CoverArt(
+        title: item.album,
+        image: image,
+        corner: 10
+      )
+      .frame(width: 72, height: 72)
+
+      VStack(alignment: .leading, spacing: 6) {
+        Text(item.title)
+          .font(.title2.weight(.semibold))
+          .foregroundStyle(titleColor)
+          .lineLimit(1)
+        Text("\(item.artist)  ·  \(item.album)")
+          .font(.body)
+          .foregroundStyle(isFocused ? Palette.onAccent.opacity(0.65) : Palette.secondary)
+          .lineLimit(1)
       }
-      .padding(.horizontal, 28)
-      .padding(.vertical, 18)
-      .background(Palette.surface)
-      .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-      .overlay {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-          .stroke(isCurrent ? Palette.accent.opacity(0.55) : Palette.hairline, lineWidth: 2)
+
+      Spacer()
+
+      if isCurrent {
+        Image(systemName: "waveform")
+          .font(.title2)
+          .foregroundStyle(isFocused ? Palette.onAccent : Palette.accent)
       }
     }
-    .buttonStyle(.plain)
+    .padding(.horizontal, 28)
+    .padding(.vertical, 18)
+    .background(isFocused ? Color.white : Palette.surface)
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+
+  private var titleColor: Color {
+    if isFocused { return Palette.onAccent }
+    return isCurrent ? Palette.accent : Palette.primary
   }
 }
