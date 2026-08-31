@@ -52,11 +52,12 @@ struct LibraryRootView: View {
           openChild: entry.openChild
         )
       }
-      .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
-        guard let hierarchy else { return }
-        launch = store.library.first { $0.hierarchy == hierarchy }
-          ?? LibraryEntry(id: hierarchy, title: hierarchy, symbol: "music.note", hierarchy: hierarchy)
-        store.libraryLaunchHierarchy = nil
+      // onAppear as well as onChange: TabView may create this tab after
+      // runToolbar already wrote libraryLaunchHierarchy, so onChange alone
+      // never sees a transition and Playlists would land on the Library grid.
+      .onAppear { consumeLaunchHierarchy() }
+      .onChange(of: store.libraryLaunchHierarchy) { _, _ in
+        consumeLaunchHierarchy()
       }
       .toolbar {
         if store.isRecordingAction {
@@ -73,6 +74,12 @@ struct LibraryRootView: View {
       }
     }
   }
+
+  private func consumeLaunchHierarchy() {
+    guard let hierarchy = store.libraryLaunchHierarchy else { return }
+    launch = LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library)
+    store.libraryLaunchHierarchy = nil
+  }
 }
 
 struct BrowseListView: View {
@@ -87,6 +94,7 @@ struct BrowseListView: View {
   @State private var loading = true
   @State private var prompt = ""
   @State private var jump: Character?
+  @State private var submitted: BrowseSearch?
   @State private var actionPicker: ActionPicker?
 
   private static let titlesWithIndex = [
@@ -133,6 +141,14 @@ struct BrowseListView: View {
           hierarchy: child.hierarchy ?? hierarchy,
           itemKey: child.itemKey,
           title: child.title
+        )
+      }
+      .navigationDestination(item: $submitted) { query in
+        BrowseListView(
+          hierarchy: query.hierarchy,
+          itemKey: query.itemKey,
+          title: query.title,
+          input: query.input
         )
       }
       if showsIndex {
@@ -302,19 +318,22 @@ struct BrowseListView: View {
     HStack {
       TextField(child.title, text: $prompt)
         .textInputAutocapitalization(.never)
-      NavigationLink {
-        BrowseListView(
-          hierarchy: hierarchy,
-          itemKey: child.itemKey,
-          title: child.title,
-          input: prompt
-        )
-      } label: {
-        Text(child.actions.first ?? "Search")
-          .foregroundStyle(Palette.accent)
+        .submitLabel(.search)
+        .onSubmit { submitSearch(child) }
+      Button(child.actions.first ?? "Search") {
+        submitSearch(child)
       }
-      .disabled(prompt.isEmpty)
+      .foregroundStyle(Palette.accent)
+      .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
+  }
+
+  private func submitSearch(_ child: BrowseNode) {
+    submitted = BrowseSearch.submitted(
+      hierarchy: hierarchy,
+      child: child,
+      prompt: prompt
+    )
   }
 
   private var indexBar: some View {

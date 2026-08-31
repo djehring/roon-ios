@@ -61,7 +61,7 @@ extension SidebarItem {
   /// An unknown hierarchy falls back to itself: it has no sidebar row, but still
   /// resolves to something browsable.
   static func libraryRow(forHierarchy hierarchy: String, in library: [LibraryEntry]) -> SidebarItem {
-    .library(library.first { $0.hierarchy == hierarchy }?.id ?? hierarchy)
+    .library(LibraryEntry.forLaunchHierarchy(hierarchy, in: library).id)
   }
 }
 

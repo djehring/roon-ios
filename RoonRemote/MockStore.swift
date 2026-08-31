@@ -473,12 +473,13 @@ final class MockStore {
     }
   }
 
-  func playAIResults() {
-    let tracks = aiResults.filter { $0.error == nil }.map {
+  func playAIResults(_ tracks: [SuggestedTrack]? = nil) {
+    let payload = (tracks ?? aiResults).filter { $0.error == nil }.map {
       ["artist": $0.artist, "album": $0.album, "track": $0.title]
     }
+    guard !payload.isEmpty else { return }
     Task {
-      _ = try? await client.playTracks(zoneId: selectedZoneId, tracks: tracks)
+      _ = try? await client.playTracks(zoneId: selectedZoneId, tracks: payload)
     }
   }
 
@@ -1222,8 +1223,10 @@ final class MockStore {
   }
 
   func runToolbar(_ action: ToolbarAction) {
-    selectedTab = .library
+    // Hierarchy first so a Library tab that is already mounted can observe the
+    // change before selectedTab switches away from Now Playing.
     libraryLaunchHierarchy = action.hierarchy
+    selectedTab = .library
   }
 
   func beginRecordingAction() {

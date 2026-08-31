@@ -21,6 +21,15 @@ struct RegularRootView: View {
       } detail: {
         NavigationStack(path: $path) {
           detail
+            .navigationDestination(for: BrowseSearch.self) { query in
+              RegularBrowseView(
+                hierarchy: query.hierarchy,
+                itemKey: query.itemKey,
+                title: query.title,
+                input: query.input,
+                path: $path
+              )
+            }
             .toolbar { sidebarReveal }
             // Opaque so scrolling content clips behind the bar instead of
             // riding up through the title and the status bar. Now Playing is
@@ -69,7 +78,7 @@ struct RegularRootView: View {
       }
       .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
         guard let hierarchy else { return }
-        selection = .libraryRow(forHierarchy: hierarchy, in: store.library)
+        selection = .library(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library).id)
         store.libraryLaunchHierarchy = nil
       }
     }
@@ -79,13 +88,14 @@ struct RegularRootView: View {
   /// with the sidebar hidden there is nothing to leave Playlists — or any other
   /// category — with.
   ///
-  /// Every destination, Now Playing included, so the control keeps one position
-  /// rather than jumping between the bar and a floating button. Reveal only: a
-  /// shown sidebar carries the split view's own toggle, so a second control
-  /// beside it would be redundant.
+  /// Only the root. A leading item in this slot replaces the back button, so
+  /// showing it on a drilled-in page (a playlist, an album) leaves no way back
+  /// to the list. Now Playing and every other root still get the same control
+  /// in the same place. Reveal only: a shown sidebar carries the split view's
+  /// own toggle, so a second control beside it would be redundant.
   @ToolbarContentBuilder
   private var sidebarReveal: some ToolbarContent {
-    if columnVisibility == .detailOnly {
+    if columnVisibility == .detailOnly, path.isEmpty {
       ToolbarItem(placement: .topBarLeading) {
         Button {
           withAnimation(Motion.sheet) {
@@ -154,7 +164,8 @@ struct RegularRootView: View {
         RegularBrowseView(
           hierarchy: entry.hierarchy,
           title: entry.title,
-          openChild: entry.openChild
+          openChild: entry.openChild,
+          path: $path
         )
         .id(entry.id)
       }

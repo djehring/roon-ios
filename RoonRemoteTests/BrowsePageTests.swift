@@ -56,3 +56,50 @@ struct BrowsePageTests {
     #expect(page.itemKey(forChildTitled: "Library") == nil)
   }
 }
+
+@Suite("Browse search")
+struct BrowseSearchTests {
+  private var prompt: BrowseNode {
+    BrowseNode(
+      id: "search",
+      title: "Search",
+      subtitle: nil,
+      symbol: "magnifyingglass",
+      actions: ["Search"],
+      isPrompt: true,
+      children: [],
+      itemKey: "k-search",
+      imageKey: nil,
+      hierarchy: "albums",
+      hint: nil
+    )
+  }
+
+  @Test("a typed query becomes a search that the stack can push")
+  func submittedQuery() {
+    let query = BrowseSearch.submitted(
+      hierarchy: "albums",
+      child: prompt,
+      prompt: "  miles  "
+    )
+
+    #expect(query?.hierarchy == "albums")
+    #expect(query?.itemKey == "k-search")
+    #expect(query?.title == "Search")
+    #expect(query?.input == "miles")
+  }
+
+  @Test("whitespace alone is not a search")
+  func blankPrompt() {
+    #expect(BrowseSearch.submitted(hierarchy: "albums", child: prompt, prompt: "   ") == nil)
+    #expect(BrowseSearch.submitted(hierarchy: "albums", child: prompt, prompt: "") == nil)
+  }
+
+  @Test("the same query twice is still two stack entries")
+  func uniqueEachSubmit() {
+    let first = BrowseSearch.submitted(hierarchy: "albums", child: prompt, prompt: "miles")
+    let second = BrowseSearch.submitted(hierarchy: "albums", child: prompt, prompt: "miles")
+
+    #expect(first != second)
+  }
+}

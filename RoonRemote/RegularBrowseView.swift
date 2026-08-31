@@ -7,6 +7,7 @@ struct RegularBrowseView: View {
   var title: String
   var input: String?
   var openChild: String?
+  @Binding var path: NavigationPath
 
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
@@ -68,7 +69,8 @@ struct RegularBrowseView: View {
       RegularBrowseView(
         hierarchy: child.hierarchy ?? hierarchy,
         itemKey: child.itemKey,
-        title: child.title
+        title: child.title,
+        path: $path
       )
     }
     .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")") {
@@ -201,19 +203,15 @@ struct RegularBrowseView: View {
         .textFieldStyle(.roundedBorder)
         .textInputAutocapitalization(.never)
         .submitLabel(.search)
-      NavigationLink {
-        RegularBrowseView(
-          hierarchy: hierarchy,
-          itemKey: child.itemKey,
-          title: child.title,
-          input: prompt
-        )
+        .onSubmit { submitSearch(child) }
+      Button {
+        submitSearch(child)
       } label: {
         Text(child.actions.first ?? "Search")
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(GoldFillButton(minHeight: 42))
-      .disabled(prompt.isEmpty)
+      .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
     .padding(18)
     .background(Palette.surface)
@@ -226,6 +224,15 @@ struct RegularBrowseView: View {
 
   private var isPlaylistContents: Bool {
     hierarchy == "playlists" && itemKey != nil
+  }
+
+  private func submitSearch(_ child: BrowseNode) {
+    guard let query = BrowseSearch.submitted(
+      hierarchy: hierarchy,
+      child: child,
+      prompt: prompt
+    ) else { return }
+    path.append(query)
   }
 
   private func playFromTrack(_ child: BrowseNode) {

@@ -65,6 +65,33 @@ struct BrowsePage: Hashable {
   }
 }
 
+/// A library search submission. It is a stack value so iPad's path-based
+/// NavigationStack can push the results page the same way it pushes an album.
+/// A fresh token each time, so searching the same string twice still pushes.
+struct BrowseSearch: Hashable, Identifiable {
+  let token = UUID()
+  var id: UUID { token }
+  var hierarchy: String
+  var itemKey: String?
+  var title: String
+  var input: String
+
+  static func submitted(
+    hierarchy: String,
+    child: BrowseNode,
+    prompt: String
+  ) -> BrowseSearch? {
+    let input = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !input.isEmpty else { return nil }
+    return BrowseSearch(
+      hierarchy: hierarchy,
+      itemKey: child.itemKey,
+      title: child.title,
+      input: input
+    )
+  }
+}
+
 struct BrowseNode: Identifiable, Hashable {
   let id: String
   var title: String
@@ -103,6 +130,16 @@ struct LibraryEntry: Identifiable, Hashable {
       hierarchy: hierarchy,
       hint: nil
     )
+  }
+
+  /// Entry for a Now Playing toolbar shortcut or recorded action.
+  ///
+  /// Prefer id so "browse" opens Browse rather than Library (both use the
+  /// browse hierarchy). An unknown name still opens something browsable.
+  static func forLaunchHierarchy(_ hierarchy: String, in library: [LibraryEntry]) -> LibraryEntry {
+    library.first { $0.id == hierarchy }
+      ?? library.first { $0.hierarchy == hierarchy }
+      ?? LibraryEntry(id: hierarchy, title: hierarchy, symbol: "music.note", hierarchy: hierarchy)
   }
 }
 
