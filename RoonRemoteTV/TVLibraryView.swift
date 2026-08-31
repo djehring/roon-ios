@@ -29,7 +29,8 @@ struct TVLibraryView: View {
           if let selected {
             TVBrowsePageView(
               hierarchy: selected.hierarchy,
-              title: selected.title
+              title: selected.title,
+              openChild: selected.openChild
             )
             .id(selected.id)
           } else {
@@ -55,6 +56,7 @@ struct TVBrowsePageView: View {
   var itemKey: String?
   var title: String
   var input: String?
+  var openChild: String?
 
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
@@ -180,6 +182,11 @@ struct TVBrowsePageView: View {
   private func reload() async {
     loading = true
     defer { loading = false }
-    page = await store.loadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
+    page = await store.loadLibrary(
+      hierarchy: hierarchy,
+      itemKey: itemKey,
+      input: input,
+      childTitled: openChild
+    )
   }
 }

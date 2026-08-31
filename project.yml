@@ -58,7 +58,11 @@ targets:
         NSSiriUsageDescription: >-
           Roon Remote uses Siri so you can play, stop, skip, and change
           volume in a room.
-        UILaunchScreen: {}
+        # Matches Palette.background in both appearances. Left empty, the launch
+        # screen is systemBackground, which flashes pure white before the app's
+        # own background paints.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         NSLocalNetworkUsageDescription: >-
           Roon Remote finds the bridge on your Wi-Fi so it can
           control the rooms in your house.

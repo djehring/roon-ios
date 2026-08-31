@@ -9,7 +9,7 @@ import SwiftUI
 struct RegularRootView: View {
   @Environment(MockStore.self) private var store
   // Optional because that is the shape a sidebar `List(selection:)` binds to.
-  @State private var selection: SidebarItem? = .nowPlaying
+  @State private var selection: SidebarItem? = .library("browse")
   @State private var path = NavigationPath()
   @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
@@ -21,6 +21,16 @@ struct RegularRootView: View {
       } detail: {
         NavigationStack(path: $path) {
           detail
+            .toolbar { sidebarReveal }
+            // Opaque so scrolling content clips behind the bar instead of
+            // riding up through the title and the status bar. Now Playing is
+            // the exception: it draws full-bleed under the bar on purpose, and
+            // a background there prints a band across the top of the artwork.
+            .toolbarBackground(
+              selection == .nowPlaying ? .automatic : .visible,
+              for: .navigationBar
+            )
+            .toolbarBackground(Palette.background, for: .navigationBar)
         }
         // Applied to the detail column so the queue reflows it rather than
         // covering it. Presented from Now Playing's header button it would sit
@@ -61,6 +71,33 @@ struct RegularRootView: View {
         guard let hierarchy else { return }
         selection = .libraryRow(forHierarchy: hierarchy, in: store.library)
         store.libraryLaunchHierarchy = nil
+      }
+    }
+  }
+
+  /// A destination that is the root of the detail stack has no back button, so
+  /// with the sidebar hidden there is nothing to leave Playlists — or any other
+  /// category — with.
+  ///
+  /// Every destination, Now Playing included, so the control keeps one position
+  /// rather than jumping between the bar and a floating button. Reveal only: a
+  /// shown sidebar carries the split view's own toggle, so a second control
+  /// beside it would be redundant.
+  @ToolbarContentBuilder
+  private var sidebarReveal: some ToolbarContent {
+    if columnVisibility == .detailOnly {
+      ToolbarItem(placement: .topBarLeading) {
+        Button {
+          withAnimation(Motion.sheet) {
+            columnVisibility = .all
+          }
+        } label: {
+          Image(systemName: "sidebar.left")
+        }
+        // Against the app-wide accent tint, which the split view's own sidebar
+        // control does not take, so an accented one would not match it.
+        .tint(Palette.primary)
+        .accessibilityLabel("Show Sidebar")
       }
     }
   }
@@ -109,13 +146,17 @@ struct RegularRootView: View {
   private var detail: some View {
     switch selection {
     case .nowPlaying:
-      RegularNowPlayingView(columnVisibility: $columnVisibility)
+      RegularNowPlayingView()
     case .rooms:
       RegularRoomsView()
     case .library:
       if let entry = libraryEntry {
-        RegularBrowseView(hierarchy: entry.hierarchy, title: entry.title)
-          .id(entry.id)
+        RegularBrowseView(
+          hierarchy: entry.hierarchy,
+          title: entry.title,
+          openChild: entry.openChild
+        )
+        .id(entry.id)
       }
     case .search(.ai):
       AISearchView(regularWidth: true)
