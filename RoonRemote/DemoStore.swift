@@ -221,11 +221,40 @@ extension MockStore {
     return image.jpegData(compressionQuality: 0.9)
   }
 
+  /// Roon's browse root is a menu rather than content, and Library is one of
+  /// its rows. Modelling that here is what lets the Library sidebar entry's
+  /// step through the root be exercised without a bridge.
+  private static let browseRootRows = [
+    "Library", "Playlists", "My Live Radio", "Genres", "TIDAL", "Qobuz", "Settings",
+  ]
+
   func demoBrowsePage(
     hierarchy: String,
     itemKey: String?,
-    input: String?
+    input: String?,
+    childTitled: String? = nil
   ) -> BrowsePage {
+    if hierarchy == "browse", itemKey == nil, childTitled == nil {
+      return BrowsePage(
+        title: "Browse",
+        items: Self.browseRootRows.enumerated().map { index, name in
+          BrowseNode(
+            id: "demo-browse-root-\(index)",
+            title: name,
+            subtitle: nil,
+            symbol: "folder",
+            actions: [],
+            isPrompt: false,
+            children: [],
+            itemKey: "browse-root-\(index)",
+            imageKey: nil,
+            hierarchy: hierarchy,
+            hint: nil
+          )
+        }
+      )
+    }
+
     if let itemKey {
       let tracks = [
         ("So What", "Miles Davis"),
@@ -270,11 +299,14 @@ extension MockStore {
       ("Waltz for Debby", "Bill Evans Trio"),
       ("1958 Miles", "Miles Davis"),
     ]
+    let scrambled = names.reversed().map { $0 }
     let filtered = input.map { query in
-      names.filter { $0.0.localizedCaseInsensitiveContains(query) }
-    } ?? names
+      scrambled.filter { $0.0.localizedCaseInsensitiveContains(query) }
+    } ?? scrambled
     return BrowsePage(
-      title: library.first { $0.hierarchy == hierarchy }?.title ?? hierarchy.capitalized,
+      title: childTitled
+        ?? library.first { $0.hierarchy == hierarchy }?.title
+        ?? hierarchy.capitalized,
       items: filtered.enumerated().map { index, album in
         BrowseNode(
           id: "demo-\(hierarchy)-\(index)",

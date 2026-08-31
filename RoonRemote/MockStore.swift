@@ -570,14 +570,41 @@ final class MockStore {
     }
   }
 
-  func loadLibrary(hierarchy: String, itemKey: String? = nil, input: String? = nil) async -> BrowsePage {
+  /// `childTitled` opens that row of the hierarchy's root rather than the root
+  /// itself. Both loads share one browse session: an item key is only valid
+  /// against the position it was read from, and loading the root pops the
+  /// session back to the top.
+  func loadLibrary(
+    hierarchy: String,
+    itemKey: String? = nil,
+    input: String? = nil,
+    childTitled: String? = nil
+  ) async -> BrowsePage {
     #if DEBUG
     if Self.wantsDemoContent {
-      return demoBrowsePage(hierarchy: hierarchy, itemKey: itemKey, input: input)
+      return LibraryIndex.alphabetizedPlaylists(
+        demoBrowsePage(
+          hierarchy: hierarchy,
+          itemKey: itemKey,
+          input: input,
+          childTitled: childTitled
+        ),
+        hierarchy: hierarchy,
+        itemKey: itemKey
+      )
     }
     #endif
     return await withBrowseSession {
-      await self.performLoadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
+      let page = await self.performLoadLibrary(
+        hierarchy: hierarchy,
+        itemKey: itemKey,
+        input: input
+      )
+      guard let childTitled, let key = page.itemKey(forChildTitled: childTitled) else {
+        return LibraryIndex.alphabetizedPlaylists(page, hierarchy: hierarchy, itemKey: itemKey)
+      }
+      let child = await self.performLoadLibrary(hierarchy: hierarchy, itemKey: key, input: nil)
+      return LibraryIndex.alphabetizedPlaylists(child, hierarchy: hierarchy, itemKey: key)
     }
   }
 
@@ -1695,7 +1722,13 @@ final class MockStore {
 
   private static let libraryRoots: [LibraryEntry] = [
     .init(id: "browse", title: "Browse", symbol: "safari", hierarchy: "browse"),
-    .init(id: "library", title: "Library", symbol: "books.vertical", hierarchy: "browse"),
+    .init(
+      id: "library",
+      title: "Library",
+      symbol: "books.vertical",
+      hierarchy: "browse",
+      openChild: "Library"
+    ),
     .init(id: "albums", title: "Albums", symbol: "opticaldisc", hierarchy: "albums"),
     .init(id: "artists", title: "Artists", symbol: "person.2", hierarchy: "artists"),
     .init(id: "composers", title: "Composers", symbol: "music.note", hierarchy: "composers"),

@@ -6,6 +6,7 @@ struct RegularBrowseView: View {
   var itemKey: String?
   var title: String
   var input: String?
+  var openChild: String?
 
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
@@ -70,7 +71,7 @@ struct RegularBrowseView: View {
         title: child.title
       )
     }
-    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")") {
+    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")") {
       await reload()
     }
     .safeAreaInset(edge: .bottom) {
@@ -295,6 +296,11 @@ struct RegularBrowseView: View {
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: title)
     }
-    page = await store.loadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
+    page = await store.loadLibrary(
+      hierarchy: hierarchy,
+      itemKey: itemKey,
+      input: input,
+      childTitled: openChild
+    )
   }
 }

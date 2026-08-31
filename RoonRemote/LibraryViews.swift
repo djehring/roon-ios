@@ -39,10 +39,18 @@ struct LibraryRootView: View {
       .background(Palette.background)
       .navigationTitle("Library")
       .navigationDestination(for: LibraryEntry.self) { entry in
-        BrowseListView(hierarchy: entry.hierarchy, title: entry.title)
+        BrowseListView(
+          hierarchy: entry.hierarchy,
+          title: entry.title,
+          openChild: entry.openChild
+        )
       }
       .navigationDestination(item: $launch) { entry in
-        BrowseListView(hierarchy: entry.hierarchy, title: entry.title)
+        BrowseListView(
+          hierarchy: entry.hierarchy,
+          title: entry.title,
+          openChild: entry.openChild
+        )
       }
       .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
         guard let hierarchy else { return }
@@ -73,6 +81,7 @@ struct BrowseListView: View {
   var itemKey: String?
   var title: String
   var input: String?
+  var openChild: String?
 
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
@@ -342,6 +351,11 @@ struct BrowseListView: View {
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: title)
     }
-    page = await store.loadLibrary(hierarchy: hierarchy, itemKey: itemKey, input: input)
+    page = await store.loadLibrary(
+      hierarchy: hierarchy,
+      itemKey: itemKey,
+      input: input,
+      childTitled: openChild
+    )
   }
 }

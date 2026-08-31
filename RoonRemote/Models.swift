@@ -54,6 +54,15 @@ struct Output: Identifiable, Hashable {
 struct BrowsePage: Hashable {
   var title: String
   var items: [BrowseNode]
+
+  /// The key for the row named `title`, for a sidebar entry that has to step
+  /// one level into a hierarchy to reach what it is named after.
+  ///
+  /// Matching on the title is the only option: Roon mints item keys per browse
+  /// session, so there is nothing stable to hardcode.
+  func itemKey(forChildTitled title: String) -> String? {
+    items.first { $0.title == title }?.itemKey
+  }
 }
 
 struct BrowseNode: Identifiable, Hashable {
@@ -75,6 +84,10 @@ struct LibraryEntry: Identifiable, Hashable {
   var title: String
   var symbol: String
   var hierarchy: String
+  /// Row inside the hierarchy's root to open instead of the root itself. Roon
+  /// has no "library" hierarchy — Library is a row in the browse root — so the
+  /// entry named after it has to walk one level in.
+  var openChild: String?
 
   var root: BrowseNode {
     BrowseNode(

@@ -6,7 +6,6 @@ import UIKit
 /// one another. Both arrangements sit over artwork-derived ambience and keep
 /// the queue in an inspector rather than permanently surrendering detail width.
 struct RegularNowPlayingView: View {
-  @Binding var columnVisibility: NavigationSplitViewVisibility
   @Environment(MockStore.self) private var store
 
   var body: some View {
@@ -59,12 +58,6 @@ struct RegularNowPlayingView: View {
 
   private var topControls: some View {
     HStack(spacing: 12) {
-      roundHeaderButton(label: "Toggle Sidebar", symbol: "sidebar.left") {
-        withAnimation(Motion.sheet) {
-          columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
-        }
-      }
-
       Button {
         store.showZonePicker = true
       } label: {
