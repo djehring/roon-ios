@@ -8,8 +8,15 @@ import Testing
 struct SidebarSelectionTests {
   private let library: [LibraryEntry] = [
     .init(id: "browse", title: "Browse", symbol: "safari", hierarchy: "browse"),
-    .init(id: "library", title: "Library", symbol: "books.vertical", hierarchy: "browse"),
+    .init(
+      id: "library",
+      title: "Library",
+      symbol: "books.vertical",
+      hierarchy: "browse",
+      openChild: "Library"
+    ),
     .init(id: "albums", title: "Albums", symbol: "opticaldisc", hierarchy: "albums"),
+    .init(id: "playlists", title: "Playlists", symbol: "music.note.list", hierarchy: "playlists"),
     .init(id: "radios", title: "Radios", symbol: "radio", hierarchy: "internet_radio"),
   ]
 
@@ -97,10 +104,19 @@ struct SidebarSelectionTests {
     )
   }
 
-  @Test("a hierarchy shared by two rows resolves to the first")
-  func sharedHierarchyPicksTheFirstRow() {
-    // Browse and Library are separate rows over the same "browse" hierarchy.
+  @Test("a hierarchy shared by two rows prefers the id match")
+  func sharedHierarchyPicksTheIdMatch() {
+    // Browse and Library share hierarchy "browse"; launching "browse" must not
+    // open Library just because it appears later in the list.
     #expect(SidebarItem.libraryRow(forHierarchy: "browse", in: library) == .library("browse"))
+  }
+
+  @Test("the Playlists toolbar shortcut opens the playlists entry")
+  func playlistsToolbarShortcut() {
+    let entry = LibraryEntry.forLaunchHierarchy("playlists", in: library)
+    #expect(entry.id == "playlists")
+    #expect(entry.hierarchy == "playlists")
+    #expect(entry.openChild == nil)
   }
 
   @Test("a hierarchy with no row falls back to itself")

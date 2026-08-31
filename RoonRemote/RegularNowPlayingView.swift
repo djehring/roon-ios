@@ -25,7 +25,7 @@ struct RegularNowPlayingView: View {
       // portrait, down in landscape. A background is sized by its owner, so it
       // cannot move the content no matter how the artwork is shaped.
       .background {
-        backdrop(size: geometry.size)
+        backdrop
       }
     }
   }
@@ -240,10 +240,25 @@ struct RegularNowPlayingView: View {
     .buttonStyle(.plain)
   }
 
-  private func backdrop(size: CGSize) -> some View {
-    backdropFill(size: size)
-      .overlay { backdropScrim }
-      .ignoresSafeArea()
+  private var backdrop: some View {
+    // Measure the ignored-safe-area background, not the content GeometryReader.
+    // That reader is inset by the home indicator, so a cover framed to it left
+    // a strip of blur overflow on the bezel.
+    GeometryReader { geometry in
+      let size = geometry.size
+      let blur: CGFloat = 70
+      Palette.background
+        .overlay { backdropFill(size: size) }
+        // Blur after clip samples transparent pixels and prints a cover-colored
+        // fringe. Pad with the page color so the kernel stays on-screen color,
+        // then crop back.
+        .frame(width: size.width + blur * 2, height: size.height + blur * 2)
+        .blur(radius: blur)
+        .frame(width: size.width, height: size.height)
+        .clipped()
+        .overlay { backdropScrim }
+    }
+    .ignoresSafeArea()
   }
 
   @ViewBuilder
@@ -257,7 +272,6 @@ struct RegularNowPlayingView: View {
         .scaledToFill()
         .frame(width: size.width, height: size.height)
         .clipped()
-        .blur(radius: 70)
         .opacity(0.36)
     } else {
       let colors = CoverArt.colors(
@@ -265,6 +279,7 @@ struct RegularNowPlayingView: View {
         scheme: .dark
       )
       LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+        .frame(width: size.width, height: size.height)
         .opacity(0.28)
     }
   }
@@ -275,6 +290,5 @@ struct RegularNowPlayingView: View {
       startPoint: .top,
       endPoint: .bottom
     )
-    .ignoresSafeArea()
   }
 }
