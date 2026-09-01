@@ -398,7 +398,7 @@ enum RoonAPIError: Error, LocalizedError {
     case .missingLocation: "The bridge did not return a client id."
     case let .decoding(error): "Unexpected data from the bridge (\(error.localizedDescription))."
     case .unpaired: "This phone is not paired."
-    case .missingOpenAI: "OpenAI is not configured on the bridge."
+    case .missingOpenAI: "OpenAI API key is missing. Add yours in Settings."
     }
   }
 }

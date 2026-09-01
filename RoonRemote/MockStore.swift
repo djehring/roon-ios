@@ -72,6 +72,7 @@ final class MockStore {
   var isAwaitingServer = false
   var syncState: RoonSyncState = .starting
   var pairingPinDisplay = ""
+  var openAIApiKey = ""
   var bridgeVersion = ""
   var storyTitle = ""
   var storyBody = ""
@@ -123,6 +124,7 @@ final class MockStore {
       appearance = .system
     }
     selectedZoneId = zoneDefaults.string(forKey: "selectedZoneId") ?? ""
+    openAIApiKey = KeychainStore.get(RoonAPIClient.openAIApiKeyAccount) ?? ""
     if let data = zoneDefaults.data(forKey: "toolbar"),
        let saved = try? JSONDecoder().decode([ToolbarAction].self, from: data)
     {
@@ -531,7 +533,7 @@ final class MockStore {
         }
       } catch RoonAPIError.missingOpenAI {
         guard isCurrentAIQuery(query) else { return }
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in Settings."
       } catch {
         guard isCurrentAIQuery(query) else { return }
         aiError = error.localizedDescription
@@ -609,7 +611,7 @@ final class MockStore {
         aiQuery = try await client.transcribe(audio: audio)
         runAISearch()
       } catch RoonAPIError.missingOpenAI {
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in Settings."
       } catch {
         aiError = error.localizedDescription
       }
@@ -646,7 +648,7 @@ final class MockStore {
           )
         }
       } catch RoonAPIError.missingOpenAI {
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in Settings."
       } catch let error as URLError where error.code == .timedOut {
         aiError = "Recognising the cover took too long. Try again, or add a description to narrow it down."
       } catch {
@@ -683,7 +685,7 @@ final class MockStore {
         storyTitle = story.title
         storyBody = story.content
       } catch RoonAPIError.missingOpenAI {
-        storyError = "OpenAI is not configured on the bridge."
+        storyError = "OpenAI API key is missing. Add yours in Settings."
       } catch {
         storyError = error.localizedDescription
       }
@@ -1423,6 +1425,15 @@ final class MockStore {
 
   func saveAppearance() {
     zoneDefaults.set(appearance.rawValue, forKey: "appearance")
+  }
+
+  func saveOpenAIApiKey() {
+    let trimmed = openAIApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty {
+      KeychainStore.delete(RoonAPIClient.openAIApiKeyAccount)
+      return
+    }
+    KeychainStore.set(trimmed, account: RoonAPIClient.openAIApiKeyAccount)
   }
 
   func refreshPairingPin() {
