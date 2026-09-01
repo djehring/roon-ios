@@ -43,6 +43,7 @@ private enum WatchPane: Hashable {
 struct WatchRootView: View {
   @Bindable var store: WatchStore
   @State private var pane: WatchPane?
+  @State private var showPlaybackActions = false
 
   var body: some View {
     ZStack {
@@ -114,30 +115,18 @@ struct WatchRootView: View {
     .focusable(store.crownEnabled)
     .modifier(CrownVolume(store: store, enabled: store.crownEnabled))
     .onTapGesture { tapPlayPause() }
+    .onLongPressGesture {
+      guard store.canControl else { return }
+      WKInterfaceDevice.current().play(.click)
+      showPlaybackActions = true
+    }
     .gesture(playbackDrag)
-    .contextMenu {
-      if store.canControl {
-        Button {
-          store.stop()
-        } label: {
-          Label("Stop", systemImage: "stop.fill")
-        }
-        Button {
-          store.mute()
-        } label: {
-          Label(
-            store.snapshot.muted ? "Unmute" : "Mute",
-            systemImage: store.snapshot.muted ? "speaker.wave.2.fill" : "speaker.slash.fill"
-          )
-        }
+    .confirmationDialog("Playback", isPresented: $showPlaybackActions, titleVisibility: .hidden) {
+      Button("Stop") { store.stop() }
+      Button(store.snapshot.muted ? "Unmute" : "Mute") { store.mute() }
         .disabled(store.snapshot.volumeOutputId == nil)
-        Button {
-          pane = .transfer
-        } label: {
-          Label("Transfer", systemImage: "arrow.left.arrow.right")
-        }
+      Button("Transfer") { pane = .transfer }
         .disabled(store.snapshot.zones.count < 2)
-      }
     }
   }
 
