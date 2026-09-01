@@ -4,10 +4,10 @@ import UIKit
 struct LibraryRootView: View {
   @Environment(MockStore.self) private var store
   @Environment(\.horizontalSizeClass) private var hSize
-  @State private var launch: LibraryEntry?
+  @State private var path = NavigationPath()
 
   var body: some View {
-    NavigationStack {
+    NavigationStack(path: $path) {
       ScrollView {
         LazyVGrid(
           columns: Layout.libraryColumns(hSize),
@@ -42,14 +42,25 @@ struct LibraryRootView: View {
         BrowseListView(
           hierarchy: entry.hierarchy,
           title: entry.title,
-          openChild: entry.openChild
+          openChild: entry.openChild,
+          path: $path
         )
       }
-      .navigationDestination(item: $launch) { entry in
+      .navigationDestination(for: BrowseNode.self) { child in
         BrowseListView(
-          hierarchy: entry.hierarchy,
-          title: entry.title,
-          openChild: entry.openChild
+          hierarchy: child.hierarchy ?? "browse",
+          itemKey: child.itemKey,
+          title: child.title,
+          path: $path
+        )
+      }
+      .navigationDestination(for: BrowseSearch.self) { query in
+        BrowseListView(
+          hierarchy: query.hierarchy,
+          itemKey: query.itemKey,
+          title: query.title,
+          input: query.input,
+          path: $path
         )
       }
       // onAppear as well as onChange: TabView may create this tab after
@@ -77,7 +88,11 @@ struct LibraryRootView: View {
 
   private func consumeLaunchHierarchy() {
     guard let hierarchy = store.libraryLaunchHierarchy else { return }
-    launch = LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library)
+    // Same stack the grid uses. An item destination rematerializes when the
+    // playlists page finishes loading, which drops the playlist just pushed
+    // and shows the full list again.
+    path = NavigationPath()
+    path.append(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library))
     store.libraryLaunchHierarchy = nil
   }
 }
@@ -89,12 +104,12 @@ struct BrowseListView: View {
   var title: String
   var input: String?
   var openChild: String?
+  @Binding var path: NavigationPath
 
   @State private var page = BrowsePage(title: "", items: [])
   @State private var loading = true
   @State private var prompt = ""
   @State private var jump: Character?
-  @State private var submitted: BrowseSearch?
   @State private var actionPicker: ActionPicker?
 
   private static let titlesWithIndex = [
@@ -136,21 +151,6 @@ struct BrowseListView: View {
       }
       .background(Palette.background)
       .navigationTitle(page.title.isEmpty ? title : page.title)
-      .navigationDestination(for: BrowseNode.self) { child in
-        BrowseListView(
-          hierarchy: child.hierarchy ?? hierarchy,
-          itemKey: child.itemKey,
-          title: child.title
-        )
-      }
-      .navigationDestination(item: $submitted) { query in
-        BrowseListView(
-          hierarchy: query.hierarchy,
-          itemKey: query.itemKey,
-          title: query.title,
-          input: query.input
-        )
-      }
       if showsIndex {
         indexBar
       }
@@ -329,11 +329,12 @@ struct BrowseListView: View {
   }
 
   private func submitSearch(_ child: BrowseNode) {
-    submitted = BrowseSearch.submitted(
+    guard let query = BrowseSearch.submitted(
       hierarchy: hierarchy,
       child: child,
       prompt: prompt
-    )
+    ) else { return }
+    path.append(query)
   }
 
   private var indexBar: some View {

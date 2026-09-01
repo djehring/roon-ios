@@ -65,14 +65,6 @@ struct RegularBrowseView: View {
     }
     .background(Palette.background)
     .navigationTitle(page.title.isEmpty ? title : page.title)
-    .navigationDestination(for: BrowseNode.self) { child in
-      RegularBrowseView(
-        hierarchy: child.hierarchy ?? hierarchy,
-        itemKey: child.itemKey,
-        title: child.title,
-        path: $path
-      )
-    }
     .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")") {
       await reload()
     }

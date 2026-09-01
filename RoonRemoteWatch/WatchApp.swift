@@ -4,20 +4,32 @@ import WatchKit
 @main
 struct RoonRemoteWatchApp: App {
   @WKApplicationDelegateAdaptor(WatchAppDelegate.self) private var appDelegate
-  @State private var store = WatchStore()
+  @State private var store: WatchStore?
   @Environment(\.scenePhase) private var scenePhase
 
   var body: some Scene {
     WindowGroup {
-      WatchRootView(store: store)
-        .task {
-          store.activate()
+      ZStack {
+        if let store {
+          WatchRootView(store: store)
+            .onChange(of: scenePhase) { _, phase in
+              if phase == .active {
+                store.activate()
+              }
+            }
         }
-        .onChange(of: scenePhase) { _, phase in
-          if phase == .active {
-            store.activate()
-          }
+        if store?.showsFindingServer ?? true {
+          FindingServerOverlay()
         }
+      }
+      .task {
+        await Task.yield()
+        if store == nil {
+          let next = WatchStore()
+          next.activate()
+          store = next
+        }
+      }
     }
   }
 }
@@ -33,40 +45,42 @@ struct WatchRootView: View {
   @State private var pane: WatchPane?
 
   var body: some View {
-    NavigationStack {
-      nowPlaying
-        .navigationTitle(store.snapshot.zoneName)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .topBarLeading) {
-            Button {
-              pane = .queue
-            } label: {
-              Image(systemName: "list.bullet")
+    ZStack {
+      NavigationStack {
+        nowPlaying
+          .navigationTitle(store.snapshot.zoneName)
+          .navigationBarTitleDisplayMode(.inline)
+          .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+              Button {
+                pane = .queue
+              } label: {
+                Image(systemName: "list.bullet")
+              }
+              .disabled(!store.canControl)
+              .accessibilityLabel("Queue")
             }
-            .disabled(!store.canControl)
-            .accessibilityLabel("Queue")
-          }
-          ToolbarItem(placement: .topBarTrailing) {
-            Button {
-              pane = .rooms
-            } label: {
-              Image(systemName: "hifispeaker")
+            ToolbarItem(placement: .topBarTrailing) {
+              Button {
+                pane = .rooms
+              } label: {
+                Image(systemName: "hifispeaker")
+              }
+              .disabled(!store.canControl)
+              .accessibilityLabel("Rooms")
             }
-            .disabled(!store.canControl)
-            .accessibilityLabel("Rooms")
           }
-        }
-        .navigationDestination(item: $pane) { pane in
-          switch pane {
-          case .rooms:
-            WatchRoomsView(store: store)
-          case .queue:
-            WatchQueueView(store: store)
-          case .transfer:
-            WatchTransferView(store: store, pane: $pane)
+          .navigationDestination(item: $pane) { pane in
+            switch pane {
+            case .rooms:
+              WatchRoomsView(store: store)
+            case .queue:
+              WatchQueueView(store: store)
+            case .transfer:
+              WatchTransferView(store: store, pane: $pane)
+            }
           }
-        }
+      }
     }
     .onAppear { store.activate() }
   }

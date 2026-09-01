@@ -5,16 +5,29 @@ struct TVRootView: View {
 
   var body: some View {
     ZStack {
+      TVHardwareVolumeInstaller()
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
       Palette.background.ignoresSafeArea()
       switch store.session {
       case .onboarding:
         TVOnboardingFlow()
+          .disabled(store.showsFindingServer)
       case .main:
         TVMainTabs()
+          .disabled(store.showsFindingServer)
+      }
+
+      if let hud = store.volumeHUD {
+        TVVolumeHUDOverlay(hud: hud)
+          .transition(.opacity.combined(with: .scale(scale: 0.92)))
+          .allowsHitTesting(false)
       }
     }
     .tint(Palette.accent)
     .animation(Motion.sheet, value: store.sessionLabel)
+    .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
   }
 }
 

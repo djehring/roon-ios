@@ -14,13 +14,16 @@ struct RootView: View {
       switch store.session {
       case .onboarding(_):
         OnboardingFlow()
+          .disabled(store.showsFindingServer)
       case .main:
         // Size class, not idiom: an iPad in Slide Over or a narrow Stage Manager
         // window is compact, and belongs in the tab layout.
         if hSize == .regular {
           RegularRootView()
+            .disabled(store.showsFindingServer)
         } else {
           MainTabs()
+            .disabled(store.showsFindingServer)
         }
       }
 

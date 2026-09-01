@@ -12,7 +12,7 @@ final class IntentHandler: INExtension, INPlayMediaIntentHandling {
     let phrase = Self.phrase(from: intent)
     let item = INMediaItem(
       identifier: phrase,
-      title: phrase.isEmpty ? "Roon Remote" : phrase,
+      title: phrase.isEmpty ? "House Remote" : phrase,
       type: .radioStation,
       artwork: nil,
       artist: intent.mediaSearch?.artistName

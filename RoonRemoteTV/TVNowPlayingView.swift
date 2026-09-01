@@ -153,12 +153,20 @@ struct TVNowPlayingView: View {
       HStack {
         Text(track.position)
         Spacer()
-        Text(track.remaining)
+        Text(remainingLabel(for: track))
       }
       .font(.callout)
       .foregroundStyle(Palette.tertiary)
     }
     .padding(.top, 4)
+  }
+
+  private func remainingLabel(for track: Track) -> String {
+    TimeCode.remaining(
+      duration: track.durationSeconds,
+      seekPosition: track.position,
+      seekPercentage: track.progress * 100
+    ) ?? track.remaining
   }
 }
 

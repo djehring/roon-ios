@@ -16,7 +16,16 @@ struct PlaybackSheets: ViewModifier {
       }
       .sheet(isPresented: $store.showVolume) {
         VolumeSheet()
-          .presentationDetents([.medium, .large])
+          .presentationDetents([.medium])
+          // A short slider, not a page. Zones & grouping is a separate
+          // sheet so it can be large without dragging volume up with it.
+          .presentationSizing(.form)
+      }
+      .sheet(isPresented: $store.showZonePanel) {
+        ZonePanelSheet()
+          .presentationDetents([.large])
+          .presentationSizing(.page)
+          .interactiveDismissDisabled()
       }
       // Regular width shows the queue as an inspector alongside the detail
       // column, so only compact presents it as a sheet.
@@ -207,59 +216,60 @@ struct VolumeSheet: View {
       .navigationBarTitleDisplayMode(.inline)
     }
     .presentationBackground(Palette.background)
-    .sheet(isPresented: $store.showZonePanel) {
-      ZonePanelSheet()
-        .presentationDetents([.medium, .large])
-        .interactiveDismissDisabled()
-    }
   }
 }
 
 struct ZonePanelSheet: View {
+  var body: some View {
+    NavigationStack {
+      ZonePanelContent()
+    }
+    .presentationBackground(Palette.background)
+  }
+}
+
+struct ZonePanelContent: View {
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
     @Bindable var store = store
-    NavigationStack {
-      VStack(spacing: 0) {
-        Picker("Panel", selection: $store.zonePanelTab) {
-          ForEach(ZonePanelTab.allCases) { tab in
-            Text(tab.title).tag(tab)
-          }
-        }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-
-        switch store.zonePanelTab {
-        case .switchZone:
-          switchZoneList
-        case .group:
-          groupList
+    VStack(spacing: 0) {
+      Picker("Panel", selection: $store.zonePanelTab) {
+        ForEach(ZonePanelTab.allCases) { tab in
+          Text(tab.title).tag(tab)
         }
       }
-      .background(Palette.background)
-      .navigationTitle("Zones")
-      .navigationBarTitleDisplayMode(.inline)
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Close") {
-            store.showZonePanel = false
-            dismiss()
-          }
+      .pickerStyle(.segmented)
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
+
+      switch store.zonePanelTab {
+      case .switchZone:
+        switchZoneList
+      case .group:
+        groupList
+      }
+    }
+    .background(Palette.background)
+    .navigationTitle("Zones")
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Close") {
+          store.showZonePanel = false
+          dismiss()
         }
-        if store.zonePanelTab == .group {
-          ToolbarItem(placement: .confirmationAction) {
-            Button("Save") {
-              store.saveGrouping()
-              dismiss()
-            }
+      }
+      if store.zonePanelTab == .group {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Save") {
+            store.saveGrouping()
+            dismiss()
           }
         }
       }
     }
-    .presentationBackground(Palette.background)
   }
 
   private var switchZoneList: some View {

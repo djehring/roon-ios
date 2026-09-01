@@ -15,7 +15,9 @@
 		09995FA90839CD6F1D1D1702 /* RoonAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */; };
 		0AB4F42477FB66F1C1374948 /* TVLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF18A3204F7E657E19AC108 /* TVLibraryView.swift */; };
 		0D4DF40D729FB8EC9B20ED33 /* TVSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C78ADDBB2A3F66E2B9CCE0 /* TVSettingsView.swift */; };
+		10421A1E01521FB956D88355 /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		1134E0E879601513D081BA55 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
+		11855211DC6F80169433AF5B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C8C34B05F3619543F3FBADB8 /* PrivacyInfo.xcprivacy */; };
 		1228E3D67BCCC0F9A7F810B8 /* LibraryIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */; };
 		1350ACEB4796A64EA9D7F437 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BEADFB2D74AE470C4AE825 /* Layout.swift */; };
 		141C0EF0F8582DE346E1C540 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
@@ -23,16 +25,22 @@
 		14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		15A0209C94904D5DC0E1F71A /* RoonCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E5D62E10B64D53BD824441 /* RoonCommands.swift */; };
 		1BA3B440B03069998D1620C1 /* SearchSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */; };
+		1D4C1B9D6D757FEF47EE7DB9 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		1D51A3E3481F5F363FD8DC04 /* RegularBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */; };
 		1EF21BEA5BE9F8993BCEF636 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		1F9CAD48A41AB0D65F6E59AB /* RoonRemoteWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4814FEAE30516219F5ED8F68 /* SearchViews.swift */; };
+		25E6BF475CB02797CF9EA8B9 /* ZoneTrackSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */; };
+		2959F6DF91D42BDEDB59AE40 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */; };
 		29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
 		2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
 		2D55E443D846F1C5359C9A68 /* DemoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8301FD882C4D88D26DBC910 /* DemoStore.swift */; };
 		2F265711F9C366490043E056 /* SearchSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */; };
+		32737B75707A9F7774D25CBE /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		32D769EDFCBB7360155F202E /* DemoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8301FD882C4D88D26DBC910 /* DemoStore.swift */; };
 		364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
+		3DC723974E3F895EE3B1E58E /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
+		417141281DBED14DEDC9BEE2 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		45403E597B935611457A6527 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */; };
@@ -42,6 +50,7 @@
 		4DDA9AC3B9E5512B205A1467 /* SiriControlIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D95DD7D74E22AF215EA4695 /* SiriControlIntents.swift */; };
 		50220EBCA240F22C39952FFF /* LibraryIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80506818538B2F6597E20D61 /* LibraryIndexTests.swift */; };
 		505425BC9AF914974F327171 /* QueueRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */; };
+		5169A1B5EE68EC06A6131287 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D6D1A4B3345575AB35B24DEB /* LaunchScreen.storyboard */; };
 		53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */; };
 		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		56E793975247D2ED5ED285F0 /* BrowsePageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */; };
@@ -49,29 +58,38 @@
 		59CE871DEB6C07130EF57E2E /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
 		5AEA306D6C5BCC61A744C72D /* LibraryIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */; };
 		5C219942F732AAF89127B85B /* LibraryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AB5E20236375416F21B172 /* LibraryViews.swift */; };
+		5EE69113A6F7B42ADEEB1B35 /* SearchSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */; };
 		5F05823BD86BCFCA73DC4F85 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34BDEF88D54EB957842C41A5 /* Assets.xcassets */; };
+		64182170B3572919AA36CCE6 /* ZoneTrackSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */; };
+		65E63A6B42FCBDD6C66C57FA /* FindingServerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC08FBBEA1F4B47B2D2BC5A0 /* FindingServerTests.swift */; };
 		66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		6B16278C6389EA4D84AE1C00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5803354A53F4E76B9554B232 /* Assets.xcassets */; };
 		6B972485111A016A3F435342 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
+		6C20384D96A52F6036D2F81B /* ZoneTrackSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */; };
 		6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
+		76DB31B8EF594C74123923C1 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		7AC09ED290AD85F22720EB1C /* ProgressScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		7E8F60E7DBE35523826BE4BF /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		8514E9B729B06628FEE83258 /* LibraryDragItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */; };
+		851A49DC0E10625DD5CEFDAF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */; };
 		859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */; };
+		89A6DE0734A6A74BC9767916 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A9EB4011F2593A9D9504F023 /* PrivacyInfo.xcprivacy */; };
 		89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		8B5F8B7E8B183EE369720DB7 /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */; };
 		8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B895799574E60D21626345F2 /* RoonRemoteApp.swift */; };
 		8D41AF696B6304473C14FE3D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38E999F7921AA6BB8403FC7 /* RootView.swift */; };
 		999E76D4D7ECEF3059060247 /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
 		9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
+		A1A6965851B819F4DF2962F0 /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		A1DCC3705F85009C8B41C699 /* PlaybackAdjustmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */; };
 		A4C8EBC9FDC73AC2DDAA79CE /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
+		A60440F3C115E33A752701A8 /* TVHardwareVolumeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC47CCD83FFF21271F44BF89 /* TVHardwareVolumeBridge.swift */; };
 		A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		ADA7C268DF266772B7C2F2CC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		ADAAEB9E3406A514F3E6C127 /* SidebarSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */; };
@@ -81,6 +99,7 @@
 		B38B7FF3838694CFF40A5768 /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		B397D3150764D71B8E7A6C16 /* TVNowPlayingSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C1553E1FA5E8BA2BC9DD8 /* TVNowPlayingSheets.swift */; };
 		B3F1A9FEED87FDC267626CF7 /* RegularRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */; };
+		B42E798326E1348228942D07 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		B58B5E7477E02869E5847E49 /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
 		B73EBC27D6282D064D90FE48 /* RegularNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */; };
 		B80D386BEA1D8073967BF6DE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */; };
@@ -88,10 +107,13 @@
 		BB2C55005E407D06424B7B06 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		BB77AA0406D64D6070E004E6 /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
 		BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */; };
+		BC18A253105F54C86884786A /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC17B2323BEB8BE438F3955A /* SettingsView.swift */; };
 		BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */; };
 		C1FD1582D39E817F5B87C42F /* RegularRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */; };
+		C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		C2EC53A7AF04777341E9B36A /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
+		C3D764182510F527C23A1BD3 /* ZoneTrackSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */; };
 		C59E170BB27ADEAA8413A98C /* WatchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1283D159767D98835D1EB6 /* WatchStore.swift */; };
 		C5EDBF95A1E19AF624A53628 /* TVSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7188ADDF1853116C4EF3C301 /* TVSearchView.swift */; };
 		C73FE7FD75C235B8FC07BB7C /* LiveActivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686B8DC76E73D4C3F2404DAB /* LiveActivityBridge.swift */; };
@@ -99,6 +121,7 @@
 		C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		CB97143509BB7DCB9796C955 /* TVRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */; };
 		CBD14282548AC084A533174D /* LibraryIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */; };
+		CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		D6FF75819BBF7B47B3DF3FC7 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
@@ -107,14 +130,18 @@
 		E28516659718EAD2006B53B4 /* TVNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */; };
 		E68F80420248573C98BAC2B7 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		E7C9DF72A0EB7C8AF9566F6D /* PhoneWatchSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794CD25D854C7A16C017574F /* PhoneWatchSync.swift */; };
+		E9504FB481F049511CE34CAE /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		EABD78CB4E0234C91AB75E80 /* SidebarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */; };
 		EB56D814457DC8B16C90B057 /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
+		EB5921F82C85C33C5D77D348 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		EC1C627651E91A723880B3D1 /* RoonLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */; };
 		EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97C1EA62154B94FECA419F8 /* WatchApp.swift */; };
 		EFE3B78B14B83223A8FA371A /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
 		F03A419E62B302FCDB3E57E4 /* LayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */; };
 		F1CF64E9E17F9947219A9C01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */; };
+		F27E0206D5B12518A8AC552B /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		F3E1BE3506F4AF0D187F9A1C /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
+		F4FD0C74D35B64BB96EC769E /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		F5CF3720E59D06B5C8FAD58D /* PlayMediaHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0AC78E36F1CC66A4BB1E1 /* PlayMediaHandler.swift */; };
 		F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BEADFB2D74AE470C4AE825 /* Layout.swift */; };
@@ -187,6 +214,7 @@
 /* Begin PBXFileReference section */
 		0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonNowPlayingAttributes.swift; sourceTree = "<group>"; };
 		0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
+		11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingLiveIntents.swift; sourceTree = "<group>"; };
 		12F02C3B294AFD9980DEE669 /* TVPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVPrimaryButton.swift; sourceTree = "<group>"; };
 		13C78ADDBB2A3F66E2B9CCE0 /* TVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSettingsView.swift; sourceTree = "<group>"; };
 		18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryDragItem.swift; sourceTree = "<group>"; };
@@ -216,6 +244,7 @@
 		5803354A53F4E76B9554B232 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryIndex.swift; sourceTree = "<group>"; };
 		581604138A659F8F43EAA5B2 /* RoonRemoteWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatch.entitlements; sourceTree = "<group>"; };
+		5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoneTrackSelectionTests.swift; sourceTree = "<group>"; };
 		5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackAdjustmentTests.swift; sourceTree = "<group>"; };
 		5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVNowPlayingView.swift; sourceTree = "<group>"; };
 		6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPresentation.swift; sourceTree = "<group>"; };
@@ -237,27 +266,37 @@
 		9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIClient.swift; sourceTree = "<group>"; };
 		9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIModels.swift; sourceTree = "<group>"; };
 		A111F24DBFE4E98B06B0E140 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryDragItemTests.swift; sourceTree = "<group>"; };
 		A8301FD882C4D88D26DBC910 /* DemoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoStore.swift; sourceTree = "<group>"; };
 		A97C1EA62154B94FECA419F8 /* WatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp.swift; sourceTree = "<group>"; };
+		A9EB4011F2593A9D9504F023 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AC08FBBEA1F4B47B2D2BC5A0 /* FindingServerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingServerTests.swift; sourceTree = "<group>"; };
 		AC17B2323BEB8BE438F3955A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AE762CA4367173308F539C8E /* RoonRemoteTV.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RoonRemoteTV.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingServerOverlay.swift; sourceTree = "<group>"; };
 		B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelection.swift; sourceTree = "<group>"; };
 		B0BAA62968D1EC97C0E44EC1 /* RoonRemoteWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWidgets.entitlements; sourceTree = "<group>"; };
 		B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRoomsView.swift; sourceTree = "<group>"; };
 		B7E0AC78E36F1CC66A4BB1E1 /* PlayMediaHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayMediaHandler.swift; sourceTree = "<group>"; };
 		B895799574E60D21626345F2 /* RoonRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonRemoteApp.swift; sourceTree = "<group>"; };
+		BC47CCD83FFF21271F44BF89 /* TVHardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVHardwareVolumeBridge.swift; sourceTree = "<group>"; };
 		C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonLiveActivity.swift; sourceTree = "<group>"; };
 		C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePageTests.swift; sourceTree = "<group>"; };
 		C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareVolumeBridge.swift; sourceTree = "<group>"; };
 		C82F953539BF55800236CA9A /* RoonRemoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoonRemoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8C34B05F3619543F3FBADB8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkCacheTests.swift; sourceTree = "<group>"; };
 		D38E999F7921AA6BB8403FC7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		D3B4FDE46522B518E4C70DDE /* RoonRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemote.entitlements; sourceTree = "<group>"; };
 		D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonjourDiscovery.swift; sourceTree = "<group>"; };
 		D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularNowPlayingView.swift; sourceTree = "<group>"; };
+		D6D1A4B3345575AB35B24DEB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularRootView.swift; sourceTree = "<group>"; };
+		DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingServerGate.swift; sourceTree = "<group>"; };
+		DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		E3AB5E20236375416F21B172 /* LibraryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViews.swift; sourceTree = "<group>"; };
+		E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoneTrackSelection.swift; sourceTree = "<group>"; };
 		E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelectionTests.swift; sourceTree = "<group>"; };
 		EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRouting.swift; sourceTree = "<group>"; };
 		F19655EC02847FD92A59DBE6 /* RoonRemoteTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RoonRemoteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -277,7 +316,9 @@
 			isa = PBXGroup;
 			children = (
 				F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */,
+				A9EB4011F2593A9D9504F023 /* PrivacyInfo.xcprivacy */,
 				2AFB1CDA9C5D44EFAF558CDC /* TVApp.swift */,
+				BC47CCD83FFF21271F44BF89 /* TVHardwareVolumeBridge.swift */,
 				FDF18A3204F7E657E19AC108 /* TVLibraryView.swift */,
 				528C1553E1FA5E8BA2BC9DD8 /* TVNowPlayingSheets.swift */,
 				5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */,
@@ -306,6 +347,7 @@
 				2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */,
 				A8301FD882C4D88D26DBC910 /* DemoStore.swift */,
 				C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */,
+				D6D1A4B3345575AB35B24DEB /* LaunchScreen.storyboard */,
 				23BEADFB2D74AE470C4AE825 /* Layout.swift */,
 				18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */,
 				580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */,
@@ -320,6 +362,7 @@
 				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
 				25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */,
 				B7E0AC78E36F1CC66A4BB1E1 /* PlayMediaHandler.swift */,
+				C8C34B05F3619543F3FBADB8 /* PrivacyInfo.xcprivacy */,
 				F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */,
 				EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */,
 				98EC1B18319F044EE6619B3D /* QueueTimeline.swift */,
@@ -338,6 +381,7 @@
 				4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */,
 				4D95DD7D74E22AF215EA4695 /* SiriControlIntents.swift */,
 				2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */,
+				E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */,
 				BE048B8AFBC186ABF845EBA5 /* API */,
 			);
 			path = RoonRemote;
@@ -348,6 +392,7 @@
 			children = (
 				D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */,
 				C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */,
+				AC08FBBEA1F4B47B2D2BC5A0 /* FindingServerTests.swift */,
 				396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */,
 				A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */,
 				80506818538B2F6597E20D61 /* LibraryIndexTests.swift */,
@@ -358,6 +403,7 @@
 				E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */,
 				F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */,
 				FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */,
+				5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */,
 			);
 			path = RoonRemoteTests;
 			sourceTree = "<group>";
@@ -366,6 +412,9 @@
 			isa = PBXGroup;
 			children = (
 				FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */,
+				DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */,
+				B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */,
+				11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */,
 				53B537335978A7DE3589DC1C /* PlayRequest.swift */,
 				0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */,
 				A111F24DBFE4E98B06B0E140 /* Theme.swift */,
@@ -392,6 +441,7 @@
 			isa = PBXGroup;
 			children = (
 				34BDEF88D54EB957842C41A5 /* Assets.xcassets */,
+				DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */,
 				827EBF13E8DFB957EFA65453 /* RoonRemoteWatchWidgets.entitlements */,
 				4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */,
 			);
@@ -402,6 +452,7 @@
 			isa = PBXGroup;
 			children = (
 				5803354A53F4E76B9554B232 /* Assets.xcassets */,
+				A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */,
 				581604138A659F8F43EAA5B2 /* RoonRemoteWatch.entitlements */,
 				A97C1EA62154B94FECA419F8 /* WatchApp.swift */,
 				8C1283D159767D98835D1EB6 /* WatchStore.swift */,
@@ -590,27 +641,27 @@
 						ProvisioningStyle = Automatic;
 					};
 					16A4539B600A83796F86FF87 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 					8E96D2D45CC6B6EEF6052C88 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 					989182402A69166E8E230D88 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 					AE7F5FE4643313E65EF06C4A = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 					CCAB2482215906006EA029C4 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 					DEA0488C852F27408F183911 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 37A49A3WRU;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -646,6 +697,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1CF64E9E17F9947219A9C01 /* Assets.xcassets in Resources */,
+				5169A1B5EE68EC06A6131287 /* LaunchScreen.storyboard in Resources */,
+				11855211DC6F80169433AF5B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -654,6 +707,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				60AE18E68F7B440C98FA91B6 /* Assets.xcassets in Resources */,
+				851A49DC0E10625DD5CEFDAF /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -662,6 +716,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B80D386BEA1D8073967BF6DE /* Assets.xcassets in Resources */,
+				89A6DE0734A6A74BC9767916 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -670,6 +725,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B16278C6389EA4D84AE1C00 /* Assets.xcassets in Resources */,
+				2959F6DF91D42BDEDB59AE40 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -692,10 +748,13 @@
 				1134E0E879601513D081BA55 /* ArtworkCache.swift in Sources */,
 				29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */,
 				2D55E443D846F1C5359C9A68 /* DemoStore.swift in Sources */,
+				10421A1E01521FB956D88355 /* FindingServerGate.swift in Sources */,
+				3DC723974E3F895EE3B1E58E /* FindingServerOverlay.swift in Sources */,
 				47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */,
 				5AEA306D6C5BCC61A744C72D /* LibraryIndex.swift in Sources */,
 				4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */,
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
+				32737B75707A9F7774D25CBE /* NowPlayingLiveIntents.swift in Sources */,
 				EFE3B78B14B83223A8FA371A /* PlayRequest.swift in Sources */,
 				89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */,
 				A4C8EBC9FDC73AC2DDAA79CE /* QueueRouting.swift in Sources */,
@@ -703,7 +762,9 @@
 				03882B4209A659F450A93828 /* RoonAPIClient.swift in Sources */,
 				C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */,
 				999E76D4D7ECEF3059060247 /* RoonNowPlayingAttributes.swift in Sources */,
+				5EE69113A6F7B42ADEEB1B35 /* SearchSelection.swift in Sources */,
 				FFFBA5E88C2A88CE37CF6069 /* TVApp.swift in Sources */,
+				A60440F3C115E33A752701A8 /* TVHardwareVolumeBridge.swift in Sources */,
 				0AB4F42477FB66F1C1374948 /* TVLibraryView.swift in Sources */,
 				B397D3150764D71B8E7A6C16 /* TVNowPlayingSheets.swift in Sources */,
 				E28516659718EAD2006B53B4 /* TVNowPlayingView.swift in Sources */,
@@ -714,6 +775,7 @@
 				C5EDBF95A1E19AF624A53628 /* TVSearchView.swift in Sources */,
 				0D4DF40D729FB8EC9B20ED33 /* TVSettingsView.swift in Sources */,
 				141C0EF0F8582DE346E1C540 /* Theme.swift in Sources */,
+				64182170B3572919AA36CCE6 /* ZoneTrackSelection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -724,6 +786,8 @@
 				6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */,
 				BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */,
 				56E793975247D2ED5ED285F0 /* BrowsePageTests.swift in Sources */,
+				BC18A253105F54C86884786A /* FindingServerGate.swift in Sources */,
+				65E63A6B42FCBDD6C66C57FA /* FindingServerTests.swift in Sources */,
 				FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */,
 				F03A419E62B302FCDB3E57E4 /* LayoutTests.swift in Sources */,
 				EB56D814457DC8B16C90B057 /* LibraryDragItem.swift in Sources */,
@@ -739,11 +803,14 @@
 				D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */,
 				364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */,
 				859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */,
+				1D4C1B9D6D757FEF47EE7DB9 /* RoonAPIModels.swift in Sources */,
 				2F265711F9C366490043E056 /* SearchSelection.swift in Sources */,
 				C8F0613C003F396800946B91 /* SearchSelectionTests.swift in Sources */,
 				F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */,
 				ADAAEB9E3406A514F3E6C127 /* SidebarSelectionTests.swift in Sources */,
 				EABD78CB4E0234C91AB75E80 /* SidebarTests.swift in Sources */,
+				C3D764182510F527C23A1BD3 /* ZoneTrackSelection.swift in Sources */,
+				25E6BF475CB02797CF9EA8B9 /* ZoneTrackSelectionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -752,6 +819,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */,
+				E9504FB481F049511CE34CAE /* FindingServerGate.swift in Sources */,
+				CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */,
+				76DB31B8EF594C74123923C1 /* NowPlayingLiveIntents.swift in Sources */,
 				C2EC53A7AF04777341E9B36A /* PlayRequest.swift in Sources */,
 				B58B5E7477E02869E5847E49 /* RoonNowPlayingAttributes.swift in Sources */,
 				66FA0671E0ECDC1F1EEDDE90 /* Theme.swift in Sources */,
@@ -768,6 +838,8 @@
 				4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */,
 				2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */,
 				32D769EDFCBB7360155F202E /* DemoStore.swift in Sources */,
+				A1A6965851B819F4DF2962F0 /* FindingServerGate.swift in Sources */,
+				B42E798326E1348228942D07 /* FindingServerOverlay.swift in Sources */,
 				53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */,
 				9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */,
 				1350ACEB4796A64EA9D7F437 /* Layout.swift in Sources */,
@@ -778,6 +850,7 @@
 				596941B788CE6631746A7E0E /* MockStore.swift in Sources */,
 				002E894085A1205658FC7A5B /* Models.swift in Sources */,
 				FF4A951C2C5315B57FB20162 /* NowPlayingBridge.swift in Sources */,
+				C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */,
 				BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */,
 				45403E597B935611457A6527 /* NowPlayingView.swift in Sources */,
 				061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */,
@@ -807,6 +880,7 @@
 				480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */,
 				43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */,
 				14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */,
+				6C20384D96A52F6036D2F81B /* ZoneTrackSelection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -814,6 +888,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				417141281DBED14DEDC9BEE2 /* NowPlayingLiveIntents.swift in Sources */,
 				EC1C627651E91A723880B3D1 /* RoonLiveActivity.swift in Sources */,
 				7E8F60E7DBE35523826BE4BF /* RoonNowPlayingAttributes.swift in Sources */,
 				6B972485111A016A3F435342 /* Theme.swift in Sources */,
@@ -825,6 +900,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				F3E1BE3506F4AF0D187F9A1C /* ArtworkCache.swift in Sources */,
+				F27E0206D5B12518A8AC552B /* FindingServerGate.swift in Sources */,
+				F4FD0C74D35B64BB96EC769E /* FindingServerOverlay.swift in Sources */,
+				EB5921F82C85C33C5D77D348 /* NowPlayingLiveIntents.swift in Sources */,
 				BB77AA0406D64D6070E004E6 /* PlayRequest.swift in Sources */,
 				B83CFE0BA1E656B9BA119ECA /* RoonNowPlayingAttributes.swift in Sources */,
 				DBCEF94C8DCA24BD22DC4D1D /* RoonWatchWidgets.swift in Sources */,
@@ -858,8 +936,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteIntents/RoonRemoteIntents.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteIntents/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -875,8 +951,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -893,8 +967,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatchWidgets/RoonRemoteWatchWidgets.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatchWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -911,8 +983,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp;
@@ -929,8 +999,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteTV/Info.plist;
@@ -949,8 +1017,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWidgets/RoonRemoteWidgets.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -966,8 +1032,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatchWidgets/RoonRemoteWatchWidgets.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatchWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -1012,9 +1076,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1025,8 +1091,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1071,9 +1138,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1090,8 +1159,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1108,8 +1178,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1128,8 +1196,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteTV/Info.plist;
@@ -1149,10 +1215,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = RoonRemote/RoonRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemote/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1160,7 +1225,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote;
-				PRODUCT_NAME = "Roon Remote";
+				PRODUCT_NAME = "House Remote";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1172,10 +1237,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = RoonRemote/RoonRemote.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemote/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1183,7 +1247,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote;
-				PRODUCT_NAME = "Roon Remote";
+				PRODUCT_NAME = "House Remote";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1195,8 +1259,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp;
@@ -1211,8 +1273,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteIntents/RoonRemoteIntents.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteIntents/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -1228,8 +1288,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWidgets/RoonRemoteWidgets.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";

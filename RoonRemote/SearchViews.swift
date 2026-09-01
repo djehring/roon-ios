@@ -94,6 +94,7 @@ struct AISearchView: View {
         }
         .foregroundStyle(Palette.accent)
         .padding(.trailing, 4)
+        .disabled(!store.canSubmitAISearch)
       }
       .padding(.horizontal, 16)
 
@@ -637,6 +638,7 @@ private struct StoryMarkdown: View {
         case let .paragraph(text):
           Text(Self.inline(text))
             .foregroundStyle(Palette.secondary)
+            .tint(Palette.accent)
             .lineSpacing(5)
         case let .bullet(text):
           HStack(alignment: .top, spacing: 10) {
@@ -644,6 +646,7 @@ private struct StoryMarkdown: View {
               .foregroundStyle(Palette.accent)
             Text(Self.inline(text))
               .foregroundStyle(Palette.secondary)
+              .tint(Palette.accent)
               .lineSpacing(4)
           }
         }
@@ -721,12 +724,16 @@ private struct StoryMarkdown: View {
     let lines = text.split(whereSeparator: \.isNewline)
     guard lines.count == 1 else { return false }
     let line = String(lines[0])
-    return line.hasPrefix("#") || (line.hasPrefix("**") && line.hasSuffix("**") && line.count > 4)
+    if line.hasPrefix("#") { return true }
+    guard line.hasPrefix("**"), line.count > 4 else { return false }
+    return line.hasSuffix("**") || line.hasSuffix(":**")
   }
 
   private static func stripHeadingMarks(_ text: String) -> String {
     var line = text.trimmingCharacters(in: .whitespaces)
     while line.hasPrefix("#") { line.removeFirst() }
+    line = line.trimmingCharacters(in: .whitespaces)
+    if line.hasSuffix(":") { line.removeLast() }
     line = line.trimmingCharacters(in: .whitespaces)
     if line.hasPrefix("**"), line.hasSuffix("**"), line.count > 4 {
       line = String(line.dropFirst(2).dropLast(2))

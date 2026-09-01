@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Roon Remote</string>
+	<string>House Remote</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -17,16 +17,16 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSpokenName</key>
-	<string>Roon</string>
+	<string>House Remote</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>INAlternativeAppNames</key>
 	<array>
 		<dict>
 			<key>INAlternativeAppName</key>
-			<string>Roon</string>
+			<string>House Remote</string>
 		</dict>
 	</array>
 	<key>INIntentsSupported</key>
@@ -39,6 +39,8 @@
 		<string>INMediaCategoryMusic</string>
 		<string>INMediaCategoryGeneral</string>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -49,26 +51,29 @@
 		<string>_roon-web-stack._tcp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Roon Remote photographs album covers so the bridge can match them in your library.</string>
+	<string>House Remote photographs album covers so the bridge can match them in your library.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Roon Remote finds the bridge on your Wi-Fi so it can control the rooms in your house.</string>
+	<string>House Remote finds the bridge on your Wi-Fi so it can control the rooms in your house.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Roon Remote records a short clip so the bridge can turn speech into an AI search.</string>
+	<string>House Remote records a short clip so the bridge can turn speech into an AI search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Roon Remote reads a cover photo from your library so the bridge can match the album.</string>
+	<string>House Remote reads a cover photo from your library so the bridge can match the album.</string>
 	<key>NSSiriUsageDescription</key>
-	<string>Roon Remote uses Siri so you can play, stop, skip, and change volume in a room.</string>
+	<string>House Remote uses Siri so you can play, stop, skip, and change volume in a room.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>com.djehring.roonremote.playMedia</string>
 	</array>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIColorName</key>
-		<string>LaunchBackground</string>
-	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

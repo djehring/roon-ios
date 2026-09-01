@@ -2,6 +2,8 @@ import Intents
 import UIKit
 
 final class AppDelegate: NSObject, UIApplicationDelegate {
+  private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -9,6 +11,23 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     // Don't call INPreferences here: it requires com.apple.developer.siri, and
     // crashing at launch is worse than deferring Siri auth until the user uses it.
     return true
+  }
+
+  func applicationDidEnterBackground(_ application: UIApplication) {
+    if backgroundTask != .invalid {
+      application.endBackgroundTask(backgroundTask)
+    }
+    backgroundTask = application.beginBackgroundTask(withName: "roon-now-playing") {
+      application.endBackgroundTask(self.backgroundTask)
+      self.backgroundTask = .invalid
+    }
+  }
+
+  func applicationWillEnterForeground(_ application: UIApplication) {
+    if backgroundTask != .invalid {
+      application.endBackgroundTask(backgroundTask)
+      backgroundTask = .invalid
+    }
   }
 
   func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
@@ -41,7 +60,7 @@ final class PlayMediaHandler: NSObject, INPlayMediaIntentHandling {
     let phrase = Self.phrase(from: intent)
     let item = INMediaItem(
       identifier: phrase,
-      title: phrase.isEmpty ? "Roon" : phrase,
+      title: phrase.isEmpty ? "House Remote" : phrase,
       type: .radioStation,
       artwork: nil,
       artist: intent.mediaSearch?.artistName

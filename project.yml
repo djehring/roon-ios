@@ -8,8 +8,11 @@ options:
   createIntermediateGroups: true
 settings:
   SWIFT_VERSION: "5.0"
-  MARKETING_VERSION: "0.1.0"
-  CURRENT_PROJECT_VERSION: 1
+  MARKETING_VERSION: "1.0.0"
+  CURRENT_PROJECT_VERSION: 2
+  DEVELOPMENT_TEAM: 37A49A3WRU
+  CODE_SIGN_STYLE: Automatic
+  INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
 targets:
   RoonRemote:
     type: application
@@ -29,24 +32,26 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote
-        PRODUCT_NAME: Roon Remote
+        PRODUCT_NAME: House Remote
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemote/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
     entitlements:
       path: RoonRemote/RoonRemote.entitlements
     info:
       path: RoonRemote/Info.plist
       properties:
-        CFBundleDisplayName: Roon Remote
-        CFBundleSpokenName: Roon
+        CFBundleDisplayName: House Remote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleSpokenName: House Remote
         INAlternativeAppNames:
-          - INAlternativeAppName: Roon
+          - INAlternativeAppName: House Remote
         INIntentsSupported:
           - INPlayMediaIntent
         INSupportedMediaCategories:
@@ -56,30 +61,32 @@ targets:
         NSUserActivityTypes:
           - com.djehring.roonremote.playMedia
         NSSiriUsageDescription: >-
-          Roon Remote uses Siri so you can play, stop, skip, and change
+          House Remote uses Siri so you can play, stop, skip, and change
           volume in a room.
-        # Matches Palette.background in both appearances. Left empty, the launch
-        # screen is systemBackground, which flashes pure white before the app's
-        # own background paints.
-        UILaunchScreen:
-          UIColorName: LaunchBackground
+        # A storyboard, not UILaunchScreen+named color. Appearance-aware
+        # catalog colors resolve to white in the launch process, which is
+        # the blank iPad frame before SwiftUI mounts.
+        UILaunchStoryboardName: LaunchScreen
         NSLocalNetworkUsageDescription: >-
-          Roon Remote finds the bridge on your Wi-Fi so it can
+          House Remote finds the bridge on your Wi-Fi so it can
           control the rooms in your house.
         NSCameraUsageDescription: >-
-          Roon Remote photographs album covers so the bridge can
+          House Remote photographs album covers so the bridge can
           match them in your library.
         NSMicrophoneUsageDescription: >-
-          Roon Remote records a short clip so the bridge can turn
+          House Remote records a short clip so the bridge can turn
           speech into an AI search.
         NSPhotoLibraryUsageDescription: >-
-          Roon Remote reads a cover photo from your library so the
+          House Remote reads a cover photo from your library so the
           bridge can match the album.
         NSSupportsLiveActivities: true
+        UIBackgroundModes:
+          - audio
         NSBonjourServices:
           - _roon-web-stack._tcp
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        UIRequiresFullScreen: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UISupportedInterfaceOrientations~ipad:
@@ -94,6 +101,7 @@ targets:
         excludes:
           - Info.plist
       - path: Shared/RoonNowPlayingAttributes.swift
+      - path: Shared/NowPlayingLiveIntents.swift
       - path: Shared/Theme.swift
     settings:
       base:
@@ -101,8 +109,6 @@ targets:
         PRODUCT_NAME: RoonRemoteWidgets
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemoteWidgets/Info.plist
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1,2"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
@@ -111,7 +117,9 @@ targets:
     info:
       path: RoonRemoteWidgets/Info.plist
       properties:
-        CFBundleDisplayName: Roon Remote
+        CFBundleDisplayName: House Remote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSSupportsLiveActivities: true
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
@@ -121,6 +129,7 @@ targets:
     sources:
       - path: RoonRemoteTests
       - path: Shared/ArtworkCache.swift
+      - path: Shared/FindingServerGate.swift
       - path: RoonRemote/Layout.swift
       - path: RoonRemote/LibraryIndex.swift
       - path: RoonRemote/Models.swift
@@ -128,6 +137,8 @@ targets:
       - path: RoonRemote/PlaybackAdjustment.swift
       - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/QueueTimeline.swift
+      - path: RoonRemote/ZoneTrackSelection.swift
+      - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/Sidebar.swift
@@ -135,8 +146,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
         GENERATE_INFOPLIST_FILE: YES
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
   RoonRemoteIntents:
     type: app-extension
     platform: iOS
@@ -151,8 +160,6 @@ targets:
         PRODUCT_NAME: RoonRemoteIntents
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemoteIntents/Info.plist
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1,2"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
@@ -161,7 +168,7 @@ targets:
     info:
       path: RoonRemoteIntents/Info.plist
       properties:
-        CFBundleDisplayName: Roon Remote
+        CFBundleDisplayName: House Remote
         NSExtension:
           NSExtensionAttributes:
             IntentsSupported:
@@ -190,8 +197,6 @@ targets:
         PRODUCT_NAME: Roon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemoteWatch/Info.plist
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "4"
     entitlements:
@@ -199,7 +204,9 @@ targets:
     info:
       path: RoonRemoteWatch/Info.plist
       properties:
-        CFBundleDisplayName: Roon Remote
+        CFBundleDisplayName: House Remote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.djehring.roonremote
         WKRunsIndependentlyOfCompanionApp: false
@@ -219,8 +226,6 @@ targets:
         PRODUCT_NAME: RoonWatchWidgets
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemoteWatchWidgets/Info.plist
-        DEVELOPMENT_TEAM: ""
-        CODE_SIGN_STYLE: Automatic
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "4"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
@@ -229,7 +234,9 @@ targets:
     info:
       path: RoonRemoteWatchWidgets/Info.plist
       properties:
-        CFBundleDisplayName: Roon
+        CFBundleDisplayName: House Remote
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
   RoonRemoteTV:
@@ -252,6 +259,10 @@ targets:
         type: file
       - path: RoonRemote/LibraryIndex.swift
         type: file
+      - path: RoonRemote/ZoneTrackSelection.swift
+        type: file
+      - path: RoonRemote/SearchSelection.swift
+        type: file
       - path: RoonRemote/API
     settings:
       base:
@@ -263,14 +274,15 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_ON_DEMAND_RESOURCES: NO
-        DEVELOPMENT_TEAM: 37A49A3WRU
-        CODE_SIGN_STYLE: Automatic
     info:
       path: RoonRemoteTV/Info.plist
       properties:
-        CFBundleDisplayName: Roon TV
+        CFBundleDisplayName: House Remote TV
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: >-
-          Roon finds the bridge on your Wi-Fi so it can
+          House Remote TV finds the bridge on your Wi-Fi so it can
           control the rooms in your house.
         NSBonjourServices:
           - _roon-web-stack._tcp
@@ -289,6 +301,8 @@ schemes:
       config: Debug
       targets:
         - RoonRemoteTests
+    archive:
+      config: Release
   RoonRemoteWatch:
     build:
       targets:
@@ -297,6 +311,8 @@ schemes:
     run:
       config: Debug
       executable: RoonRemoteWatch
+    archive:
+      config: Release
   RoonRemoteTV:
     build:
       targets:
@@ -304,3 +320,5 @@ schemes:
     run:
       config: Debug
       executable: RoonRemoteTV
+    archive:
+      config: Release

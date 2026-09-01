@@ -101,4 +101,28 @@ struct QueueTimelineTests {
     #expect(QueueTimeline.upNext(queue: [], current: nil) == nil)
     #expect(QueueTimeline.upcoming(queue: queue, current: nil).count == 3)
   }
+
+  @Test("a leftover playlist is not treated as the AI replacement")
+  func leftoverPlaylistIsNotAdopted() {
+    let expected = [item("a", "New Song"), item("b", "Another")]
+    #expect(
+      QueueTimeline.hasAdoptedReplacement(
+        incoming: queue,
+        expected: expected,
+        current: track("New Song")
+      ) == false
+    )
+  }
+
+  @Test("the replacement queue is adopted once it arrives")
+  func replacementIsAdopted() {
+    let expected = [item("a", "New Song"), item("b", "Another")]
+    #expect(
+      QueueTimeline.hasAdoptedReplacement(
+        incoming: expected,
+        expected: expected,
+        current: track("New Song")
+      )
+    )
+  }
 }

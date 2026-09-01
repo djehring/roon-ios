@@ -37,7 +37,7 @@ private struct TVOnboardingChrome<Content: View>: View {
         .font(.system(size: 64, weight: .light))
         .foregroundStyle(Palette.accent)
       VStack(spacing: 14) {
-        Text("Roon")
+        Text("House Remote")
           .font(.system(size: 42, weight: .bold))
           .foregroundStyle(Palette.accent)
         Text(title)
@@ -64,7 +64,7 @@ private struct TVLocalNetworkStep: View {
   var body: some View {
     TVOnboardingChrome(
       title: "Connect to your Core",
-      subtitle: "Roon uses your local network to find the bridge on Wi-Fi."
+      subtitle: "House Remote uses your local network to find the bridge on Wi-Fi."
     ) {
       TVPrimaryButton(title: "Continue") {
         store.advanceOnboarding()

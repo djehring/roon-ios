@@ -25,10 +25,19 @@ final class MockStore {
   var showSharePreview = false
   var isRecordingAction = false
   var searchSegment: SearchSegment = .ai
-  var aiQuery = ""
+  var aiQuery = "" {
+    didSet {
+      guard aiQuery != oldValue else { return }
+      aiResults = []
+      aiError = nil
+    }
+  }
   var aiResults: [SuggestedTrack] = []
   var aiLoading = false
   var aiError: String?
+  var canSubmitAISearch: Bool {
+    !aiLoading && !aiQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
   var cameraHint = ""
   var hasPhoto = false
   var recognizedAlbums: [BrowseNode] = []
@@ -58,6 +67,9 @@ final class MockStore {
   var manualHost = ""
   var discoveryError: String?
   var isDiscovering = false
+  /// Paired launch starts `.main` before the first state event. The overlay
+  /// stays up until rooms or SYNC arrive, or reconnect gives up.
+  var isAwaitingServer = false
   var syncState: RoonSyncState = .starting
   var pairingPinDisplay = ""
   var bridgeVersion = ""
@@ -79,6 +91,18 @@ final class MockStore {
   private let zoneDefaults = UserDefaults.standard
   private var pinnedTrack: Track?
   private var replacedTrack: Track?
+  /// Zone ticks arrive about once a second. A local pause/play must not be
+  /// overwritten by a tick that still says the previous state.
+  private var holdPlaybackUntil: Date?
+  /// Optimistic skip/play-from-here is the same idea. It must yield once
+  /// the core has had time to catch up, or a change from another client
+  /// stays hidden behind the pin.
+  private var holdPinnedUntil: Date?
+  private var lastEventAt: Date?
+  private var lastLivenessRefreshAt: Date?
+  private var livenessTask: Task<Void, Never>?
+  private var holdQueueUntil: Date?
+  private var heldQueue: [QueueItem]?
   private var browseChain: Task<Void, Never> = Task {}
   private var coverInFlight = 0
   private var coverWaiters: [CheckedContinuation<Void, Never>] = []
@@ -106,6 +130,7 @@ final class MockStore {
     }
     if client.isPaired {
       session = .main
+      isAwaitingServer = true
     } else {
       session = .onboarding(.localNetwork)
     }
@@ -127,6 +152,7 @@ final class MockStore {
     if client.isPaired {
       Task { await self.reconnect() }
     }
+    startEventLiveness()
     #if os(iOS)
     PhoneWatchSync.shared.activate(store: self)
     #endif
@@ -174,6 +200,8 @@ final class MockStore {
     queue = []
     queuesByZone = [:]
     outputs = []
+    isAwaitingServer = false
+    isDiscovering = false
     session = .onboarding(.localNetwork)
     publishWatchSnapshot()
   }
@@ -183,6 +211,7 @@ final class MockStore {
     switch step {
     case .localNetwork:
       session = .onboarding(.findingBridge)
+      isDiscovering = true
       Task { await discoverBridges() }
     case .findingBridge:
       session = .onboarding(.pin)
@@ -241,15 +270,33 @@ final class MockStore {
 
   func finishOnboarding() {
     session = .main
+    isAwaitingServer = false
     publishWatchSnapshot()
+  }
+
+  var showsFindingServer: Bool {
+    FindingServerGate.isVisible(
+      isAwaitingServer: isAwaitingServer,
+      isDiscovering: isDiscovering
+    )
   }
 
   func resumeSync() {
     guard client.isPaired, session == .main else { return }
+    lastLivenessRefreshAt = Date()
     client.refreshEvents()
   }
 
   func togglePlay() {
+    let nextPlaying = !isPlaying
+    isPlaying = nextPlaying
+    holdPlaybackUntil = Date().addingTimeInterval(4)
+    if let index = zones.firstIndex(where: { $0.id == selectedZoneId }) {
+      var next = zones
+      next[index].state = nextPlaying ? .playing : .paused
+      zones = next
+    }
+    publishWatchSnapshot()
     Task {
       try? await client.command([
         "type": "PLAY_PAUSE",
@@ -259,7 +306,11 @@ final class MockStore {
   }
 
   func skip() {
-    clearPinnedTrack()
+    if let next = upNext {
+      showNowPlaying(Self.track(from: next), playing: isPlaying)
+    } else {
+      clearPinnedTrack()
+    }
     Task {
       try? await client.command([
         "type": "NEXT",
@@ -400,7 +451,18 @@ final class MockStore {
   func openZonePanel(tab: ZonePanelTab = .switchZone) {
     prepareGrouping()
     zonePanelTab = tab
-    showZonePanel = true
+    // Volume and the zone panel are sibling sheets on the same
+    // presenter. Dismiss the slider first or the large modal never
+    // appears; yield so SwiftUI can tear the form sheet down.
+    if showVolume {
+      showVolume = false
+      Task { @MainActor in
+        await Task.yield()
+        showZonePanel = true
+      }
+    } else {
+      showZonePanel = true
+    }
   }
 
   func prepareGrouping() {
@@ -448,12 +510,15 @@ final class MockStore {
 
   func runAISearch() {
     let query = aiQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty else { return }
+    guard !query.isEmpty, !aiLoading else { return }
     aiLoading = true
     aiError = nil
+    aiResults = []
     Task {
+      defer { aiLoading = false }
       do {
         let items = try await client.aiSearch(query: query)
+        guard isCurrentAIQuery(query) else { return }
         aiResults = items.map {
           SuggestedTrack(
             id: $0.id,
@@ -465,21 +530,76 @@ final class MockStore {
           )
         }
       } catch RoonAPIError.missingOpenAI {
+        guard isCurrentAIQuery(query) else { return }
         aiError = "OpenAI is not configured on the bridge."
       } catch {
+        guard isCurrentAIQuery(query) else { return }
         aiError = error.localizedDescription
       }
-      aiLoading = false
     }
   }
 
+  private func isCurrentAIQuery(_ query: String) -> Bool {
+    aiQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query
+  }
+
   func playAIResults(_ tracks: [SuggestedTrack]? = nil) {
-    let payload = (tracks ?? aiResults).filter { $0.error == nil }.map {
+    let playable = (tracks ?? aiResults).filter { $0.error == nil }
+    guard !playable.isEmpty else { return }
+    replaceQueue(with: playable)
+    selectedTab = .nowPlaying
+    Task {
+      var unfound = await playAIResultsViaSearch(playable)
+      if unfound.count == playable.count {
+        unfound = await playAIResultsViaBridge(playable)
+      }
+      aiError = AISearchPlayback.applyUnfound(unfound, to: &aiResults)
+      if AISearchPlayback.allFailed(playable: playable, unfound: unfound) {
+        abandonFailedAIPlayback()
+      } else {
+        holdQueueUntil = Date().addingTimeInterval(8)
+      }
+    }
+  }
+
+  /// Title search first. play-tracks walks the album GPT named and misses
+  /// "Mah Na Mah Na" when Roon filed it as "Mahna Mahna".
+  private func playAIResultsViaSearch(_ playable: [SuggestedTrack]) async -> [SuggestedTrackPayload] {
+    var startPlay = true
+    var missing: [SuggestedTrackPayload] = []
+    for track in playable {
+      if await playTrackViaSearch(title: track.title, artist: track.artist, playNow: startPlay) {
+        startPlay = false
+        if let index = aiResults.firstIndex(where: {
+          RoonVoiceMatch.titlesMatch($0.title, track.title)
+            && AISearchPlayback.artistsAlign(track.artist, $0.artist)
+        }) {
+          aiResults[index].error = nil
+        }
+      } else {
+        missing.append(
+          SuggestedTrackPayload(artist: track.artist, album: track.album, track: track.title)
+        )
+      }
+    }
+    return missing
+  }
+
+  private func playAIResultsViaBridge(_ playable: [SuggestedTrack]) async -> [SuggestedTrackPayload] {
+    let payload = playable.map {
       ["artist": $0.artist, "album": $0.album, "track": $0.title]
     }
-    guard !payload.isEmpty else { return }
-    Task {
-      _ = try? await client.playTracks(zoneId: selectedZoneId, tracks: payload)
+    do {
+      return try await client.playTracks(zoneId: selectedZoneId, tracks: payload)
+    } catch {
+      return playable.map {
+        SuggestedTrackPayload(
+          artist: $0.artist,
+          album: $0.album,
+          track: $0.title,
+          error: error.localizedDescription
+        )
+      }
     }
   }
 
@@ -1471,12 +1591,25 @@ final class MockStore {
     do {
       try await client.start()
     } catch {
+      isAwaitingServer = false
       session = .onboarding(.localNetwork)
       publishWatchSnapshot()
     }
   }
 
+  private func markServerFoundIfReady() {
+    guard isAwaitingServer else { return }
+    if !FindingServerGate.stillAwaitingServer(
+      hasRooms: !zones.isEmpty,
+      isSynced: syncState == .sync,
+      reconnectFailed: false
+    ) {
+      isAwaitingServer = false
+    }
+  }
+
   private func applyState(_ state: ApiStatePayload) {
+    noteEvent()
     syncState = state.state
     bridgeVersion = client.version ?? bridgeVersion
     houseOutputs = state.outputs
@@ -1498,18 +1631,28 @@ final class MockStore {
     if state.state == .sync, case .onboarding(.waitingForCore) = session {
       session = .onboarding(.chooseZone)
     }
+    markServerFoundIfReady()
   }
 
   private func applyZone(_ payload: ZoneStatePayload) {
-    let incoming = Self.track(from: payload.nicePlaying)
+    noteEvent()
+    expirePinnedTrackIfNeeded()
+    let incoming = Self.track(from: payload.nowPlaying)
     let playback = PlaybackState(rawValue: payload.state) ?? .stopped
     let previous = zones.first { $0.id == payload.zoneId }
-    let track = chooseTrack(
+    let onSelectedZone = payload.zoneId == selectedZoneId
+    let choice = ZoneTrackSelection.choose(
       incoming: incoming,
       previous: previous?.track,
       playback: playback,
-      zoneId: payload.zoneId
+      pinned: onSelectedZone ? pinnedTrack : nil,
+      replaced: onSelectedZone ? replacedTrack : nil,
+      presence: payload.nowPlaying == .omitted ? .omitted : .available
     )
+    if choice.clearPin {
+      clearPinnedTrack()
+    }
+    let track = choice.track
     let zone = Zone(id: payload.zoneId, name: payload.displayName, track: track, state: playback)
     if let index = zones.firstIndex(where: { $0.id == payload.zoneId }) {
       var next = zones
@@ -1519,50 +1662,65 @@ final class MockStore {
       zones.append(zone)
     }
     if payload.zoneId == selectedZoneId {
-      isPlaying = playback == .playing || playback == .loading
+      let incomingPlaying = playback == .playing || playback == .loading
+      if let hold = holdPlaybackUntil, Date() < hold, incomingPlaying != isPlaying {
+        // Keep the optimistic play/pause until the Core catches up.
+      } else {
+        holdPlaybackUntil = nil
+        isPlaying = incomingPlaying
+      }
       outputs = payload.outputs.map(Self.output(from:))
       groupedOutputIds = Set(payload.outputs.map(\.outputId))
       pendingGroupIds = groupedOutputIds
       loadCurrentArtwork(track?.imageKey)
     }
     publishWatchSnapshot()
-  }
-
-  private func chooseTrack(
-    incoming: Track?,
-    previous: Track?,
-    playback: PlaybackState,
-    zoneId: String
-  ) -> Track? {
-    if zoneId == selectedZoneId, let pinned = pinnedTrack {
-      if let incoming {
-        if Self.sameSong(incoming, pinned) {
-          clearPinnedTrack()
-          return incoming
-        }
-        if let replaced = replacedTrack, Self.sameSong(incoming, replaced) {
-          return pinned
-        }
-        clearPinnedTrack()
-        return incoming
-      }
-      return pinned
-    }
-    if let incoming {
-      return incoming
-    }
-    if playback == .stopped {
-      return nil
-    }
-    return previous
+    markServerFoundIfReady()
   }
 
   private func clearPinnedTrack() {
     pinnedTrack = nil
     replacedTrack = nil
+    holdPinnedUntil = nil
+  }
+
+  private func expirePinnedTrackIfNeeded() {
+    guard let holdPinnedUntil else { return }
+    if Date() >= holdPinnedUntil {
+      clearPinnedTrack()
+    }
+  }
+
+  private func noteEvent() {
+    lastEventAt = Date()
+  }
+
+  private func startEventLiveness() {
+    livenessTask?.cancel()
+    livenessTask = Task { [weak self] in
+      while !Task.isCancelled {
+        try? await Task.sleep(nanoseconds: 4_000_000_000)
+        self?.refreshIfEventsWentQuiet()
+      }
+    }
+  }
+
+  /// A half-open SSE stream keeps the app looking connected while zone
+  /// ticks stop, so a skip from another client never arrives. Only
+  /// reconnect in the foreground: tearing the stream down in the
+  /// background is what froze the lock-screen card.
+  private func refreshIfEventsWentQuiet() {
+    guard session == .main, client.isPaired, isPlaying else { return }
+    guard UIApplication.shared.applicationState == .active else { return }
+    guard let lastEventAt, Date().timeIntervalSince(lastEventAt) >= 10 else { return }
+    if let lastLivenessRefreshAt, Date().timeIntervalSince(lastLivenessRefreshAt) < 10 {
+      return
+    }
+    resumeSync()
   }
 
   private func applyQueue(_ payload: QueueStatePayload) {
+    noteEvent()
     let items = payload.tracks.map {
       QueueItem(
         id: $0.id,
@@ -1576,11 +1734,155 @@ final class MockStore {
       payloadZoneId: payload.zoneId,
       displayedZoneId: selectedZone.id
     ) else { return }
+    if shouldHoldReplacedQueue(incoming: items, zoneId: zoneId) {
+      return
+    }
+    holdQueueUntil = nil
+    heldQueue = nil
     queuesByZone[zoneId] = items
     if zoneId == selectedZone.id {
       queue = items
     }
     publishWatchSnapshot()
+  }
+
+  private func replaceQueue(with tracks: [SuggestedTrack]) {
+    let items = tracks.map {
+      QueueItem(
+        id: $0.id,
+        title: $0.title,
+        artist: $0.artist,
+        album: $0.album,
+        imageKey: nil
+      )
+    }
+    queue = items
+    queuesByZone[selectedZoneId] = items
+    heldQueue = items
+    holdQueueUntil = Date().addingTimeInterval(45)
+    if let first = items.first {
+      showNowPlaying(Self.track(from: first), playing: true)
+    }
+    publishWatchSnapshot()
+  }
+
+  private func shouldHoldReplacedQueue(incoming: [QueueItem], zoneId: String) -> Bool {
+    guard zoneId == selectedZoneId else { return false }
+    guard let holdQueueUntil, Date() < holdQueueUntil, let expected = heldQueue else {
+      return false
+    }
+    return !QueueTimeline.hasAdoptedReplacement(
+      incoming: incoming,
+      expected: expected,
+      current: currentTrack
+    )
+  }
+
+  private func playTrackViaSearch(title: String, artist: String, playNow: Bool) async -> Bool {
+    await withBrowseSession {
+      let queries = [title, "\(title) \(artist)", "\(artist) \(title)"]
+      for query in queries {
+        let page = await self.searchLibrary(query: query)
+        if await self.playSearchHit(title: title, artist: artist, in: page, playNow: playNow) {
+          return true
+        }
+      }
+      return false
+    }
+  }
+
+  private func searchLibrary(query: String) async -> BrowsePage {
+    let page = await performLoadLibrary(hierarchy: "search", itemKey: nil, input: query)
+    if AISearchPlayback.preferredHit(title: query, artist: "", in: page.items) != nil
+      || page.items.contains(where: { Self.isTracksSection($0) })
+    {
+      return page
+    }
+    if let prompt = page.items.first(where: \.isPrompt), let key = prompt.itemKey {
+      return await performLoadLibrary(hierarchy: "search", itemKey: key, input: query)
+    }
+    let root = await performLoadLibrary(hierarchy: "search", itemKey: nil, input: nil)
+    if let prompt = root.items.first(where: \.isPrompt), let key = prompt.itemKey {
+      return await performLoadLibrary(hierarchy: "search", itemKey: key, input: query)
+    }
+    return page
+  }
+
+  private func playSearchHit(
+    title: String,
+    artist: String,
+    in page: BrowsePage,
+    playNow: Bool
+  ) async -> Bool {
+    let action = playNow ? "Play Now" : "Queue"
+    if let item = AISearchPlayback.preferredHit(title: title, artist: artist, in: page.items),
+       let key = item.itemKey
+    {
+      return await playSearchItem(key: key, action: action)
+    }
+    guard let tracks = page.items.first(where: { Self.isTracksSection($0) }),
+          let tracksKey = tracks.itemKey
+    else { return false }
+    let list = await performLoadLibrary(hierarchy: "search", itemKey: tracksKey, input: nil)
+    guard let item = AISearchPlayback.preferredHit(title: title, artist: artist, in: list.items),
+          let key = item.itemKey
+    else { return false }
+    return await playSearchItem(key: key, action: action)
+  }
+
+  private static func isTracksSection(_ item: BrowseNode) -> Bool {
+    item.title.compare("Tracks", options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+  }
+
+  private func playSearchItem(key: String, action: String) async -> Bool {
+    let names = action == "Queue"
+      ? ["Queue", "Add to Queue", "Play Next", "Play Now"]
+      : ["Play Now", "Play", "Play From Here"]
+    let actions = await collectActions(hierarchy: "search", itemKey: key, depth: 0)
+    for name in names {
+      if let found = actions.first(where: {
+        $0.title.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+      }), let actionKey = found.itemKey
+      {
+        do {
+          _ = try await client.browse([
+            "hierarchy": "search",
+            "item_key": actionKey,
+            "zone_or_output_id": selectedZoneId,
+          ])
+          return true
+        } catch {
+          continue
+        }
+      }
+    }
+    if action != "Queue",
+       let firstPlay = actions.first(where: { Self.isPlayAction($0.title) }),
+       let actionKey = firstPlay.itemKey
+    {
+      do {
+        _ = try await client.browse([
+          "hierarchy": "search",
+          "item_key": actionKey,
+          "zone_or_output_id": selectedZoneId,
+        ])
+        return true
+      } catch {}
+    }
+    do {
+      try await client.playItem(zoneId: selectedZoneId, itemKey: key, actionTitle: action)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  private func abandonFailedAIPlayback() {
+    clearPinnedTrack()
+    holdQueueUntil = nil
+    heldQueue = nil
+    selectedTab = .search
+    resumeSync()
   }
 
   private func applyConfig(_ config: SharedConfigPayload) {
@@ -1617,6 +1919,7 @@ final class MockStore {
   private func showNowPlaying(_ track: Track, playing: Bool) {
     replacedTrack = selectedZone.track
     pinnedTrack = track
+    holdPinnedUntil = Date().addingTimeInterval(4)
     isPlaying = playing
     if let index = zones.firstIndex(where: { $0.id == selectedZoneId }) {
       var zone = zones[index]
@@ -1643,15 +1946,21 @@ final class MockStore {
     )
   }
 
-  private static func track(from playing: ZoneNicePlaying?) -> Track? {
-    guard let playing else { return nil }
+  private static func track(from nowPlaying: ZoneNowPlaying) -> Track? {
+    guard case let .present(playing) = nowPlaying else { return nil }
     let album = playing.track.disk?.title ?? playing.track.title
-    let remaining = playing.totalQueueRemainingTime ?? playing.track.length ?? ""
     let duration = TimeCode.durationSeconds(
       length: playing.track.length,
       seekPosition: playing.track.seekPosition,
       seekPercentage: playing.track.seekPercentage
     )
+    // Remaining is this track. The bridge also sends totalQueueRemainingTime;
+    // TV shows Track.remaining as-is, so queue leftover used to land on screen.
+    let remaining = TimeCode.remaining(
+      duration: duration,
+      seekPosition: playing.track.seekPosition,
+      seekPercentage: playing.track.seekPercentage
+    ) ?? playing.track.length ?? ""
     return Track(
       id: [playing.track.title, playing.track.artist ?? "", playing.track.imageKey ?? ""].joined(separator: "|"),
       title: playing.track.title,
@@ -1663,10 +1972,6 @@ final class MockStore {
       imageKey: playing.track.imageKey,
       durationSeconds: duration
     )
-  }
-
-  private static func sameSong(_ a: Track, _ b: Track) -> Bool {
-    a.title == b.title && a.artist == b.artist
   }
 
   private static func output(from payload: ZoneOutput) -> Output {

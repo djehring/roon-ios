@@ -21,6 +21,14 @@ struct RegularRootView: View {
       } detail: {
         NavigationStack(path: $path) {
           detail
+            .navigationDestination(for: BrowseNode.self) { child in
+              RegularBrowseView(
+                hierarchy: child.hierarchy ?? "browse",
+                itemKey: child.itemKey,
+                title: child.title,
+                path: $path
+              )
+            }
             .navigationDestination(for: BrowseSearch.self) { query in
               RegularBrowseView(
                 hierarchy: query.hierarchy,
@@ -138,7 +146,7 @@ struct RegularRootView: View {
     .listStyle(.sidebar)
     .scrollContentBackground(.hidden)
     .background(Palette.background)
-    .navigationTitle("Roon")
+    .navigationTitle("House Remote")
     .safeAreaInset(edge: .bottom, spacing: 0) {
       miniPlayer
     }
@@ -180,7 +188,7 @@ struct RegularRootView: View {
     case .settings:
       SettingsList()
     case .none:
-      ContentUnavailableView("Roon", systemImage: "hifispeaker.2")
+      ContentUnavailableView("House Remote", systemImage: "hifispeaker.2")
         .background(Palette.background)
     }
   }

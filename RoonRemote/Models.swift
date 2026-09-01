@@ -247,6 +247,19 @@ enum RoonVoiceMatch {
     if !queryTokens.isEmpty && queryTokens.isSubset(of: titleTokens) { return 70 }
     return 0
   }
+
+  /// "Mah Na Mah Na" and "Mahna Mahna" are the same song.
+  static func titlesMatch(_ a: String, _ b: String) -> Bool {
+    let left = normalize(a)
+    let right = normalize(b)
+    if left.isEmpty || right.isEmpty { return false }
+    if left == right { return true }
+    return compact(left) == compact(right)
+  }
+
+  static func compact(_ value: String) -> String {
+    normalize(value).replacingOccurrences(of: " ", with: "")
+  }
 }
 
 enum ZonePanelTab: String, CaseIterable, Identifiable {
