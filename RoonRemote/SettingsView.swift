@@ -71,7 +71,7 @@ struct SettingsList: View {
         }
       }
       Section("Siri") {
-        Text("In Shortcuts, open Roon Remote and turn on Siri for each shortcut you want. Then: Hey Siri, play Radio 3 in the Kitchen with Roon Remote. Same idea for turn it up, turn it down, stop, pause, skip, previous, mute, and unmute. Add a room if you want a different zone than the phone. Keep this iPhone unlocked on Wi-Fi.")
+        Text("In Shortcuts, open House Remote and turn on Siri for each shortcut you want. Then: Hey Siri, play Radio 3 in the Kitchen with House Remote. Same idea for turn it up, turn it down, stop, pause, skip, previous, mute, and unmute. Add a room if you want a different zone than the phone. Keep this iPhone unlocked on Wi-Fi.")
           .foregroundStyle(Palette.secondary)
       }
       if WCSession.isSupported() {

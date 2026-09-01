@@ -220,7 +220,7 @@ final class RoonAPIClient: @unchecked Sendable {
       method: "POST",
       object: ["zoneId": zoneId, "tracks": tracks]
     )
-    let (data, response) = try await data(for: request)
+    let (data, response) = try await data(for: request, using: aiSession)
     try throwIfNeeded(response, data: data)
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }

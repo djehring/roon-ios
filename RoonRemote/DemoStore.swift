@@ -183,6 +183,8 @@ extension MockStore {
     permission reshaped the next decade of jazz.
     """
     session = .main
+    isAwaitingServer = false
+    isDiscovering = false
   }
 
   /// Puts a real square image in the artwork cache.

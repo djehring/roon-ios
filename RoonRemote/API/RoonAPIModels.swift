@@ -33,14 +33,39 @@ struct OutputDescription: Decodable, Hashable {
   var outputId: String
 }
 
-struct ZoneNicePlaying: Decodable {
+struct ZoneNicePlaying: Decodable, Equatable {
   var track: PlayingTrack
   var totalQueueRemainingTime: String?
   var nbItemsInQueue: Int?
-  var state: String
+  var state: String?
+
+  private enum CodingKeys: String, CodingKey {
+    case track, totalQueueRemainingTime, nbItemsInQueue, state
+  }
+
+  init(
+    track: PlayingTrack,
+    totalQueueRemainingTime: String? = nil,
+    nbItemsInQueue: Int? = nil,
+    state: String? = nil
+  ) {
+    self.track = track
+    self.totalQueueRemainingTime = totalQueueRemainingTime
+    self.nbItemsInQueue = nbItemsInQueue
+    self.state = state
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    track = try container.decodeIfPresent(PlayingTrack.self, forKey: .track)
+      ?? PlayingTrack(title: "")
+    totalQueueRemainingTime = container.decodeTimeCode(forKey: .totalQueueRemainingTime)
+    nbItemsInQueue = try container.decodeIfPresent(Int.self, forKey: .nbItemsInQueue)
+    state = try container.decodeIfPresent(String.self, forKey: .state)
+  }
 }
 
-struct PlayingTrack: Decodable {
+struct PlayingTrack: Decodable, Equatable {
   var title: String
   var artist: String?
   var length: String?
@@ -53,25 +78,37 @@ struct PlayingTrack: Decodable {
     case title, artist, length, seekPosition, seekPercentage, imageKey, disk
   }
 
+  init(
+    title: String,
+    artist: String? = nil,
+    length: String? = nil,
+    seekPosition: String? = nil,
+    seekPercentage: Double? = nil,
+    imageKey: String? = nil,
+    disk: PlayingDisk? = nil
+  ) {
+    self.title = title
+    self.artist = artist
+    self.length = length
+    self.seekPosition = seekPosition
+    self.seekPercentage = seekPercentage
+    self.imageKey = imageKey
+    self.disk = disk
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    title = try container.decode(String.self, forKey: .title)
+    title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
     artist = try container.decodeIfPresent(String.self, forKey: .artist)
-    length = try container.decodeIfPresent(String.self, forKey: .length)
+    length = container.decodeTimeCode(forKey: .length)
     imageKey = try container.decodeIfPresent(String.self, forKey: .imageKey)
     disk = try container.decodeIfPresent(PlayingDisk.self, forKey: .disk)
     seekPercentage = try container.decodeIfPresent(Double.self, forKey: .seekPercentage)
-    if let value = try? container.decode(String.self, forKey: .seekPosition) {
-      seekPosition = value
-    } else if let value = try? container.decode(Double.self, forKey: .seekPosition) {
-      seekPosition = String(value)
-    } else {
-      seekPosition = nil
-    }
+    seekPosition = container.decodeTimeCode(forKey: .seekPosition)
   }
 }
 
-struct PlayingDisk: Decodable {
+struct PlayingDisk: Decodable, Equatable {
   var title: String
   var artist: String?
   var imageKey: String?
@@ -105,12 +142,20 @@ struct ZoneOutput: Decodable, Identifiable {
   var volume: OutputVolume?
 }
 
+enum ZoneNowPlaying: Equatable {
+  /// No `nice_playing` key. Keep the current track across a brief gap.
+  case omitted
+  /// The key was present but empty or unreadable. Do not keep yesterday's track.
+  case empty
+  case present(ZoneNicePlaying)
+}
+
 struct ZoneStatePayload: Decodable {
   var zoneId: String
   var displayName: String
   var outputs: [ZoneOutput]
   var state: String
-  var nicePlaying: ZoneNicePlaying?
+  var nowPlaying: ZoneNowPlaying
   var isPreviousAllowed: Bool?
   var isNextAllowed: Bool?
   var isPauseAllowed: Bool?
@@ -127,11 +172,29 @@ struct ZoneStatePayload: Decodable {
     displayName = try container.decodeIfPresent(String.self, forKey: .displayName) ?? ""
     outputs = try container.decodeIfPresent([ZoneOutput].self, forKey: .outputs) ?? []
     state = try container.decodeIfPresent(String.self, forKey: .state) ?? "stopped"
-    nicePlaying = try? container.decode(ZoneNicePlaying.self, forKey: .nicePlaying)
+    nowPlaying = Self.decodeNowPlaying(from: container)
     isPreviousAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPreviousAllowed)
     isNextAllowed = try container.decodeIfPresent(Bool.self, forKey: .isNextAllowed)
     isPauseAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPauseAllowed)
     isPlayAllowed = try container.decodeIfPresent(Bool.self, forKey: .isPlayAllowed)
+  }
+
+  private static func decodeNowPlaying(
+    from container: KeyedDecodingContainer<CodingKeys>
+  ) -> ZoneNowPlaying {
+    guard container.contains(.nicePlaying) else { return .omitted }
+    if (try? container.decodeNil(forKey: .nicePlaying)) == true {
+      return .empty
+    }
+    guard let playing = try? container.decode(ZoneNicePlaying.self, forKey: .nicePlaying)
+    else {
+      return .empty
+    }
+    let artist = playing.track.artist ?? ""
+    if playing.track.title.isEmpty, artist.isEmpty {
+      return .empty
+    }
+    return .present(playing)
   }
 }
 
@@ -169,13 +232,7 @@ struct QueueTrackPayload: Decodable, Identifiable {
     artist = try container.decodeIfPresent(String.self, forKey: .artist)
     imageKey = try container.decodeIfPresent(String.self, forKey: .imageKey)
     disk = try container.decodeIfPresent(PlayingDisk.self, forKey: .disk)
-    if let value = try? container.decode(String.self, forKey: .length) {
-      length = value
-    } else if let value = try? container.decode(Double.self, forKey: .length) {
-      length = String(value)
-    } else {
-      length = nil
-    }
+    length = container.decodeTimeCode(forKey: .length)
   }
 }
 
@@ -273,6 +330,22 @@ struct SuggestedTrackPayload: Decodable, Identifiable {
   var error: String?
   var wasAutoCorrected: Bool?
   var correctionMessage: String?
+
+  init(
+    artist: String,
+    album: String,
+    track: String,
+    error: String? = nil,
+    wasAutoCorrected: Bool? = nil,
+    correctionMessage: String? = nil
+  ) {
+    self.artist = artist
+    self.album = album
+    self.track = track
+    self.error = error
+    self.wasAutoCorrected = wasAutoCorrected
+    self.correctionMessage = correctionMessage
+  }
 }
 
 struct TrackStoryPayload: Decodable {
@@ -327,5 +400,21 @@ enum RoonAPIError: Error, LocalizedError {
     case .unpaired: "This phone is not paired."
     case .missingOpenAI: "OpenAI is not configured on the bridge."
     }
+  }
+}
+
+private extension KeyedDecodingContainer {
+  /// Bridge time fields arrive as "M:SS" or as a second count.
+  /// `decodeIfPresent(String.self)` throws on a number and used to drop the
+  /// whole now-playing object, so the UI kept the previous track.
+  func decodeTimeCode(forKey key: Key) -> String? {
+    if let value = try? decode(String.self, forKey: key) { return value }
+    if let value = try? decode(Double.self, forKey: key) {
+      if value.rounded() == value {
+        return String(Int(value))
+      }
+      return String(value)
+    }
+    return nil
   }
 }

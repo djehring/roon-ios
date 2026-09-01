@@ -19,7 +19,7 @@ struct TVSearchView: View {
             store.runAISearch()
           }
           .frame(width: 240)
-          .disabled(store.aiQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+          .disabled(!store.canSubmitAISearch)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .focusSection()

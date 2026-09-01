@@ -99,6 +99,8 @@ final class HardwareVolumeBridge {
   private func activateSessionIfNeeded() {
     let session = AVAudioSession.sharedInstance()
     guard session.category != .playAndRecord else { return }
+    // Now Playing owns `.playback` so lock-screen controls stay live.
+    guard session.category != .playback else { return }
     do {
       try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
       try session.setActive(true)

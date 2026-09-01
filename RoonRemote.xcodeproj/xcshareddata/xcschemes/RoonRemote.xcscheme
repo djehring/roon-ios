@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "DEA0488C852F27408F183911"
-               BuildableName = "Roon Remote.app"
+               BuildableName = "House Remote.app"
                BlueprintName = "RoonRemote"
                ReferencedContainer = "container:RoonRemote.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "DEA0488C852F27408F183911"
-            BuildableName = "Roon Remote.app"
+            BuildableName = "House Remote.app"
             BlueprintName = "RoonRemote"
             ReferencedContainer = "container:RoonRemote.xcodeproj">
          </BuildableReference>
@@ -79,7 +79,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "DEA0488C852F27408F183911"
-            BuildableName = "Roon Remote.app"
+            BuildableName = "House Remote.app"
             BlueprintName = "RoonRemote"
             ReferencedContainer = "container:RoonRemote.xcodeproj">
          </BuildableReference>
@@ -96,7 +96,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "DEA0488C852F27408F183911"
-            BuildableName = "Roon Remote.app"
+            BuildableName = "House Remote.app"
             BlueprintName = "RoonRemote"
             ReferencedContainer = "container:RoonRemote.xcodeproj">
          </BuildableReference>

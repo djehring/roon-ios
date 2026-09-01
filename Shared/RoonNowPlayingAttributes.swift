@@ -8,6 +8,7 @@ struct RoonNowPlayingAttributes: ActivityAttributes {
     var title: String
     var artist: String
     var isPlaying: Bool
+    var artworkJPEG: Data? = nil
   }
 
   var zoneId: String

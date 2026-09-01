@@ -124,6 +124,14 @@ final class WatchStore {
   var cover: Data?
   var volume: Double = 0
   var phoneReachable = false
+  var isAwaitingServer = true
+
+  var showsFindingServer: Bool {
+    FindingServerGate.isVisible(
+      isAwaitingServer: isAwaitingServer,
+      isDiscovering: false
+    ) && !snapshot.sessionReady
+  }
 
   @ObservationIgnored private var lastImageKey: String?
   @ObservationIgnored private var crownUntil: Date?
@@ -159,8 +167,12 @@ final class WatchStore {
       for _ in 0..<25 {
         try? await Task.sleep(nanoseconds: 400_000_000)
         WatchSessionRelay.shared.pull()
-        if snapshot.sessionReady { return }
+        if snapshot.sessionReady {
+          isAwaitingServer = false
+          return
+        }
       }
+      isAwaitingServer = false
     }
   }
 
@@ -247,6 +259,9 @@ final class WatchStore {
       let resolved = resolve(next)
       snapshot = resolved
       phoneReachable = true
+      if resolved.sessionReady {
+        isAwaitingServer = false
+      }
       if let jpeg = resolved.coverJPEG {
         cover = jpeg
         lastImageKey = resolved.imageKey

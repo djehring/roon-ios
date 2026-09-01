@@ -91,7 +91,7 @@ struct LocalNetworkStep: View {
   var body: some View {
     OnboardingChrome(
       title: "Find your house",
-      subtitle: "Roon Remote uses the local network to reach the bridge on your Wi-Fi."
+      subtitle: "House Remote uses the local network to reach the bridge on your Wi-Fi."
     ) {
       Button("Continue") { store.advanceOnboarding() }
         .buttonStyle(GoldFillButton())

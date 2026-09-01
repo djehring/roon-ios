@@ -63,4 +63,25 @@ struct TimeCodeTests {
       TimeCode.durationSeconds(length: nil, seekPosition: "1:18", seekPercentage: 50) == 156
     )
   }
+
+  @Test("remaining is duration minus seek position")
+  func remainingFromPosition() {
+    #expect(
+      TimeCode.remaining(duration: 279, seekPosition: "1:18", seekPercentage: 10) == "3:21"
+    )
+  }
+
+  @Test("remaining uses percentage when position is missing")
+  func remainingFromPercentage() {
+    #expect(
+      TimeCode.remaining(duration: 200, seekPosition: nil, seekPercentage: 25) == "2:30"
+    )
+  }
+
+  @Test("remaining is nil without a track duration")
+  func remainingWithoutDuration() {
+    #expect(
+      TimeCode.remaining(duration: nil, seekPosition: "1:18", seekPercentage: 50) == nil
+    )
+  }
 }

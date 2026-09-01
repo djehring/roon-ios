@@ -43,4 +43,20 @@ enum TimeCode {
     else { return nil }
     return position / (percentage / 100)
   }
+
+  /// Time left on the current track. Prefer seek position over percentage.
+  static func remaining(
+    duration: Double?,
+    seekPosition: String?,
+    seekPercentage: Double?
+  ) -> String? {
+    guard let duration, duration > 0 else { return nil }
+    if let position = seconds(from: seekPosition) {
+      return string(from: max(0, duration - position))
+    }
+    if let percentage = seekPercentage {
+      return string(from: max(0, duration * (1 - percentage / 100)))
+    }
+    return string(from: duration)
+  }
 }

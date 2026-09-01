@@ -17,6 +17,36 @@ enum QueueTimeline {
     upcoming(queue: queue, current: current).first
   }
 
+  /// Whether a live queue event has taken over from the AI/local replacement.
+  ///
+  /// Play-tracks is slow and the first Core events still describe the previous
+  /// playlist. Accept only once the incoming list is the replacement, not the
+  /// leftover room queue.
+  static func hasAdoptedReplacement(
+    incoming: [QueueItem],
+    expected: [QueueItem],
+    current: Track?
+  ) -> Bool {
+    let expectedTitles = expected.map { RoonVoiceMatch.normalize($0.title) }.filter { !$0.isEmpty }
+    guard let firstExpected = expectedTitles.first else { return true }
+    let incomingTitles = incoming.map { RoonVoiceMatch.normalize($0.title) }
+    let rest = Array(expectedTitles.dropFirst())
+    if incomingTitles.first == firstExpected {
+      return titles(upcoming(queue: incoming, current: current), match: rest)
+    }
+    if let current, RoonVoiceMatch.normalize(current.title) == firstExpected {
+      return titles(upcoming(queue: incoming, current: current), match: rest)
+    }
+    return false
+  }
+
+  private static func titles(_ items: [QueueItem], match expected: [String]) -> Bool {
+    let incoming = items.map { RoonVoiceMatch.normalize($0.title) }
+    return incoming == expected
+      || incoming.starts(with: expected)
+      || expected.starts(with: incoming)
+  }
+
   private static func matches(_ item: QueueItem, _ track: Track) -> Bool {
     let itemTitle = RoonVoiceMatch.normalize(item.title)
     guard !itemTitle.isEmpty, itemTitle == RoonVoiceMatch.normalize(track.title) else {
