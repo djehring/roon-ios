@@ -16,10 +16,13 @@ Simulator can pair if you type the bridge `host:port` during onboarding.
 
 ## Pairing
 
-1. Start roon-web-stack so the API is on HTTP (not the 3443 HTTPS port).
+1. Run [`djehring/roon-web-stack`](https://hub.docker.com/r/djehring/roon-web-stack)
+   so the API is on HTTP port `3000` (not 3443). See the stack
+   [deploy guide](https://github.com/djehring/roon-web-stack/blob/main/doc/deploy.md).
 2. In the web Settings dialog, read the six-digit PIN.
 3. On the device, allow Local Network, pick the advertised
-   `_roon-web-stack._tcp` service (or enter `host:port`), and type that PIN.
+   `_roon-web-stack._tcp` service (or enter `192.168.0.14:3000`), and
+   type that PIN.
 4. Enable the extension in Roon if it is not already paired, wait until
    the bridge reports `SYNC`, then pick a zone.
 
@@ -66,8 +69,9 @@ layout inspired by Apple Music on TV. Camera / cover recognition is iPhone-only.
 ## Search & Story
 
 AI search and cover recognition live under Search on iPhone. Track story opens
-from Now Playing (Story chip) and also calls the bridge. Those routes
-return HTTP 503 when `OPENAI_API_KEY` is missing.
+from Now Playing (Story chip) and also calls the bridge. Paste the OpenAI
+API key once in the web Settings. Those routes return HTTP 503 until a
+key is set on the sidecar.
 
 Regenerate the Xcode project after editing `project.yml`:
 

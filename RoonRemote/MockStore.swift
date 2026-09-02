@@ -531,7 +531,7 @@ final class MockStore {
         }
       } catch RoonAPIError.missingOpenAI {
         guard isCurrentAIQuery(query) else { return }
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in the web Settings."
       } catch {
         guard isCurrentAIQuery(query) else { return }
         aiError = error.localizedDescription
@@ -609,7 +609,7 @@ final class MockStore {
         aiQuery = try await client.transcribe(audio: audio)
         runAISearch()
       } catch RoonAPIError.missingOpenAI {
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in the web Settings."
       } catch {
         aiError = error.localizedDescription
       }
@@ -646,7 +646,7 @@ final class MockStore {
           )
         }
       } catch RoonAPIError.missingOpenAI {
-        aiError = "OpenAI is not configured on the bridge."
+        aiError = "OpenAI API key is missing. Add yours in the web Settings."
       } catch let error as URLError where error.code == .timedOut {
         aiError = "Recognising the cover took too long. Try again, or add a description to narrow it down."
       } catch {
@@ -683,7 +683,7 @@ final class MockStore {
         storyTitle = story.title
         storyBody = story.content
       } catch RoonAPIError.missingOpenAI {
-        storyError = "OpenAI is not configured on the bridge."
+        storyError = "OpenAI API key is missing. Add yours in the web Settings."
       } catch {
         storyError = error.localizedDescription
       }

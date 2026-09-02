@@ -4,6 +4,7 @@ struct TVSettingsView: View {
   @Environment(MockStore.self) private var store
 
   var body: some View {
+    @Bindable var store = store
     ScrollView {
       VStack(alignment: .leading, spacing: 36) {
         Text("Settings")
