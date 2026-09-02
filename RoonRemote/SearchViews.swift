@@ -612,7 +612,7 @@ struct TrackStoryView: View {
         ContentUnavailableView(
           "No story yet",
           systemImage: "text.book.closed",
-          description: Text("Add your OpenAI API key in Settings.")
+          description: Text("Add your OpenAI API key in the web Settings.")
         )
       }
     }

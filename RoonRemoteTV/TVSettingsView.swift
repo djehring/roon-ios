@@ -28,13 +28,6 @@ struct TVSettingsView: View {
           .tvUnplated()
         }
 
-        settingsSection("OpenAI") {
-          SecureField("API key", text: $store.openAIApiKey)
-            .onChange(of: store.openAIApiKey) { _, _ in
-              store.saveOpenAIApiKey()
-            }
-        }
-
         settingsSection("Zone") {
           ForEach(store.zones) { zone in
             Button {

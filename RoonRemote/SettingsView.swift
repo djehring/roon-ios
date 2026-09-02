@@ -24,16 +24,6 @@ struct SettingsList: View {
         LabeledContent("PIN", value: store.pairingPinDisplay.isEmpty ? "—" : store.pairingPinDisplay)
         Button("Rotate PIN") { store.rotatePin() }
       }
-      Section("OpenAI") {
-        SecureField("API key", text: $store.openAIApiKey)
-          .textInputAutocapitalization(.never)
-          .autocorrectionDisabled()
-          .onChange(of: store.openAIApiKey) { _, _ in
-            store.saveOpenAIApiKey()
-          }
-        Text("Used for Search, Story, voice, and cover recognition. Stored on this device.")
-          .foregroundStyle(Palette.secondary)
-      }
       Section("Zone") {
         Picker("Displayed zone", selection: $store.selectedZoneId) {
           ForEach(store.zones) { zone in

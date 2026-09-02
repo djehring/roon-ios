@@ -69,8 +69,9 @@ layout inspired by Apple Music on TV. Camera / cover recognition is iPhone-only.
 ## Search & Story
 
 AI search and cover recognition live under Search on iPhone. Track story opens
-from Now Playing (Story chip) and also calls the bridge. Paste your OpenAI
-API key in Settings. Those routes return HTTP 503 until a key is set.
+from Now Playing (Story chip) and also calls the bridge. Paste the OpenAI
+API key once in the web Settings. Those routes return HTTP 503 until a
+key is set on the sidecar.
 
 Regenerate the Xcode project after editing `project.yml`:
 

@@ -4,7 +4,6 @@ final class RoonAPIClient: @unchecked Sendable {
   static let clientIdAccount = "client_id"
   static let hostAccount = "bridge_host"
   static let portAccount = "bridge_port"
-  static let openAIApiKeyAccount = "openai_api_key"
 
   private let decoder: JSONDecoder = {
     let decoder = JSONDecoder()
@@ -549,21 +548,7 @@ final class RoonAPIClient: @unchecked Sendable {
     if path.hasSuffix("/browse") {
       request.timeoutInterval = 15
     }
-    applyOpenAIKey(to: &request, path: path)
     return request
-  }
-
-  private func applyOpenAIKey(to request: inout URLRequest, path: String) {
-    let isAI = path.contains("/aisearch")
-      || path.contains("/trackstory")
-      || path.contains("/transcribe")
-      || path.contains("/recognize-album")
-      || path.contains("/play-tracks")
-    guard isAI else { return }
-    let stored = KeychainStore.get(Self.openAIApiKeyAccount) ?? ""
-    let key = stored.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !key.isEmpty else { return }
-    request.setValue(key, forHTTPHeaderField: "x-openai-api-key")
   }
 
   private func urlComponents(_ path: String) throws -> URLComponents {
