@@ -29,7 +29,7 @@ struct CinemaLibraryView: View {
         VStack(alignment: .leading, spacing: 24) {
           Text("The world around your music.")
             .font(.title2.weight(.semibold))
-          Text("Create a visual programme from any AI Search. Saved programmes are available on every device paired with this bridge.")
+          Text("A changing photo montage of the world around your music: news, politics, sport and everyday life from the period you requested.")
             .foregroundStyle(.secondary)
 
           if store.cinema.preparing {
@@ -94,24 +94,39 @@ struct CinemaLibraryView: View {
     VStack(alignment: .leading, spacing: 12) {
       Text(capsule.title).font(.title3.weight(.semibold))
       Text(capsule.contextLabel).foregroundStyle(.secondary)
-      Text("\(capsule.request.tracks.count) tracks · \(capsule.scenes.count) stories")
+      Text("\(capsule.request.tracks.count) tracks · \(capsule.montageFrames.count) photographs")
         .font(.caption).foregroundStyle(.secondary)
-      HStack(spacing: 16) {
-        Button {
-          Task { await store.cinema.play(capsule, zoneId: store.selectedZoneId, client: store.client) }
-        } label: {
-          Label("Play with Cinema", systemImage: "play.fill")
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(Palette.accent)
-        .foregroundStyle(Palette.onAccent)
-        .disabled(store.cinema.playing || store.selectedZoneId.isEmpty)
-
-        Button("Watch") { store.cinema.watch(capsule) }
-          .buttonStyle(.bordered)
+      if capsule.montageFrames.count < 3 {
+        Text("This capsule needs more photographs. Rebuild it to create a montage.")
+          .font(.subheadline).foregroundStyle(Palette.accent)
       }
+      ViewThatFits(in: .horizontal) {
+        HStack(spacing: 16) { playbackButtons(capsule) }
+        VStack(alignment: .leading, spacing: 12) { playbackButtons(capsule) }
+      }
+      Button("Rebuild montage", systemImage: "arrow.clockwise") {
+        store.cinema.rebuild(capsule, client: store.client)
+      }
+      .buttonStyle(.bordered)
+      .disabled(store.cinema.preparing)
     }
     .padding(.vertical, 8)
+  }
+
+  @ViewBuilder private func playbackButtons(_ capsule: TimeCapsule) -> some View {
+    Button {
+      Task { await store.cinema.play(capsule, zoneId: store.selectedZoneId, client: store.client) }
+    } label: {
+      Label("Play with Cinema", systemImage: "play.fill")
+    }
+    .buttonStyle(.borderedProminent)
+    .tint(Palette.accent)
+    .foregroundStyle(Palette.onAccent)
+    .disabled(store.cinema.playing || store.selectedZoneId.isEmpty || capsule.montageFrames.count < 3)
+
+    Button("Watch montage") { store.cinema.watch(capsule) }
+      .buttonStyle(.bordered)
+      .disabled(capsule.montageFrames.count < 3)
   }
 }
 

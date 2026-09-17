@@ -12,37 +12,66 @@ struct TimeCapsuleTests {
     #expect(restored.tracks.first?.track == "Test track")
   }
 
-  @Test func followsSeekWithoutAdvancingMusic() {
-    let capsule = sample()
-    var track = playing
-    track.position = "0:29"
-    #expect(capsule.sceneIndex(for: track) == 0)
-    track.position = "0:30"
-    #expect(capsule.sceneIndex(for: track) == 1)
-    track.position = "0:05"
-    #expect(capsule.sceneIndex(for: track) == 0)
+  @Test func photographsAdvanceEveryEightSecondsAndContinueAcrossSongs() {
+    var playback = MontagePlayback()
+    playback.advance(seconds: 7, playing: true, count: 5)
+    #expect(playback.index == 0)
+    playback.advance(seconds: 1, playing: true, count: 5)
+    #expect(playback.index == 1)
+    // No title/artist/track ID enters this clock: a skip cannot reset it.
+    playback.advance(seconds: 8, playing: true, count: 5)
+    #expect(playback.index == 2)
   }
 
-  @Test func rejectsUnrelatedMusicAndAmbiguousRecordings() {
-    var track = playing
-    track.artist = "Another artist"
-    #expect(sample().sceneIndex(for: track) == nil)
-    var duplicate = sample()
-    duplicate.request.tracks.append(duplicate.request.tracks[0])
-    #expect(duplicate.sceneIndex(for: playing) == nil)
+  @Test func pauseFreezesAndResumeKeepsTheRemainingHoldTime() {
+    var playback = MontagePlayback()
+    playback.advance(seconds: 5, playing: true, count: 3)
+    playback.advance(seconds: 60, playing: false, count: 3)
+    #expect(playback.index == 0)
+    #expect(playback.elapsed == 5)
+    playback.advance(seconds: 3, playing: true, count: 3)
+    #expect(playback.index == 1)
+    playback.advance(seconds: 16, playing: true, count: 3)
+    #expect(playback.index == 0)
   }
 
-  @Test func filtersScenesForCurrentArtistAndHandlesEmptyProgramme() {
+  @Test func manualNavigationRestartsPhotoHoldAndWrapsBothWays() {
+    var playback = MontagePlayback()
+    playback.advance(seconds: 6, playing: true, count: 4)
+    playback.move(-1, count: 4)
+    #expect(playback.index == 3)
+    #expect(playback.elapsed == 0)
+    playback.move(1, count: 4)
+    #expect(playback.index == 0)
+    playback.advance(seconds: .infinity, playing: true, count: 4)
+    #expect(playback.index == 0)
+  }
+
+  @Test func montageContainsDistinctActualPhotographsAndOmitsEmptyHeadlines() {
     var capsule = sample()
-    capsule.scenes[0].trackIndices = [1]
-    #expect(capsule.sceneIndex(for: playing) == 1)
-    capsule.scenes = []
-    #expect(capsule.sceneIndex(for: playing) == nil)
-    #expect(TimeCapsule.seconds("1:02:03") == 3723)
-    #expect(TimeCapsule.seconds("invalid") == 0)
-    #expect(TimeCapsule.seconds("invalid:30") == 0)
-    #expect(TimeCapsule.seconds("1::30") == 0)
-    #expect(TimeCapsule.seconds("1:90") == 0)
+    capsule.contextImage = photograph("background")
+    capsule.scenes[0].images = [photograph("one"), photograph("two")]
+    capsule.scenes[1].images = [photograph("one"), photograph("three")]
+    #expect(capsule.montageFrames.map(\.id) == ["one", "two", "three"])
+    #expect(capsule.montageFrames.last?.scene.title == "Story 1")
+  }
+
+  @Test func legacyCapsulesCannotRepeatOneContextImageAsAnEntireMontage() {
+    var capsule = sample()
+    capsule.contextImage = photograph("background")
+    #expect(capsule.montageFrames.isEmpty)
+    capsule.scenes[0].image = photograph("one")
+    capsule.scenes[1].image = photograph("one")
+    #expect(capsule.montageFrames.count == 1)
+    // An explicit empty replacement gallery must not revive an old image.
+    capsule.scenes[0].images = []
+    capsule.scenes[1].images = []
+    #expect(capsule.montageFrames.isEmpty)
+  }
+
+  private func photograph(_ file: String) -> CapsuleImage {
+    CapsuleImage(file: file, sourceUrl: URL(string: "https://example.org/photo")!,
+      credit: "Archive", license: "Public domain", licenseUrl: "", date: "Photograph date", description: "Archive photograph")
   }
 
   private var suggestion: SuggestedTrack {

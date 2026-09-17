@@ -234,6 +234,11 @@ final class RoonAPIClient: @unchecked Sendable {
     return try decoder.decode(CapsuleJob.self, from: await capsuleResponse("", method: "POST", body: body))
   }
 
+  func rebuildTimeCapsule(_ id: String) async throws -> CapsuleJob {
+    try decoder.decode(CapsuleJob.self,
+      from: await capsuleResponse("\(capsuleComponent(id))/rebuild", method: "POST"))
+  }
+
   func timeCapsuleJob(_ id: String) async throws -> CapsuleJob {
     try decoder.decode(CapsuleJob.self, from: await capsuleResponse("jobs/\(capsuleComponent(id))"))
   }

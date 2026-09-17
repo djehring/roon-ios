@@ -7,92 +7,123 @@ struct CinemaView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
-  @State private var browsingIndex: Int?
+  @State private var playback = MontagePlayback()
   @State private var controlsVisible = true
+  @State private var picturesPaused = false
   @State private var showingSources = false
   @State private var interaction = 0
   @State private var previousIdleTimerSetting = false
+  @State private var failedPhotos: Set<String> = []
+  @State private var loadedPhoto: String?
+  @State private var imageLoader = MontageImageLoader()
 
-  private var liveIndex: Int? { capsule.sceneIndex(for: store.currentTrack) }
-  private var index: Int { browsingIndex ?? liveIndex ?? 0 }
-  private var scene: CapsuleScene? { capsule.scenes.indices.contains(index) ? capsule.scenes[index] : nil }
-  private var displayedScene: CapsuleScene? {
-    guard var scene else { return nil }
-    scene.image = scene.image ?? capsule.contextImage
+  private var frames: [MontageFrame] {
+    capsule.montageFrames.filter { !failedPhotos.contains($0.id) }
+  }
+  private var frame: MontageFrame? {
+    frames.isEmpty ? nil : frames[playback.index % frames.count]
+  }
+  private var running: Bool { store.isPlaying && !picturesPaused && !showingSources }
+  private var sourceScene: CapsuleScene? {
+    guard let frame else { return nil }
+    var scene = frame.scene
+    scene.image = frame.image
     return scene
   }
 
   var body: some View {
     GeometryReader { geometry in
-      let portrait = geometry.size.width < geometry.size.height && geometry.size.width < 600
-      let inset: CGFloat = portrait ? 24 : max(36, geometry.size.width * 0.05)
+      let compact = geometry.size.width < 600
       ZStack {
         Color.black
-        if let scene = displayedScene {
-          CinemaBackdrop(scene: scene, client: store.client, artwork: artwork,
-            playing: store.isPlaying && browsingIndex == nil, reduceMotion: reduceMotion)
-            .id(scene.id)
+        if let frame {
+          MontagePhotograph(image: frame.image, client: store.client, loader: imageLoader, moving: running,
+            reduceMotion: reduceMotion,
+            loaded: { loadedPhoto = frame.id },
+            failed: { failedPhotos.insert(frame.id) })
+            .id(frame.id)
             .transition(.opacity)
-            .frame(width: geometry.size.width, height: portrait ? geometry.size.height * 0.57 : geometry.size.height)
-            .frame(maxHeight: .infinity, alignment: .top)
+          LinearGradient(colors: [.black.opacity(0.35), .clear, .black.opacity(0.85)],
+            startPoint: .top, endPoint: .bottom)
         }
-        LinearGradient(colors: [.black.opacity(0.35), .clear, .black.opacity(portrait ? 1 : 0.88)],
-          startPoint: .top, endPoint: .bottom)
-        if !controlsVisible {
-          Button { revealControls() } label: {
-            Color.clear.contentShape(Rectangle())
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel("Show Cinema controls")
-        }
-        ScrollView(.vertical) {
-          VStack(alignment: .leading, spacing: portrait ? 18 : 26) {
-            header(portrait: portrait)
-            Spacer(minLength: portrait ? 60 : 35)
-            if let scene {
-              caption(scene, portrait: portrait)
-            } else {
-              Text("No stories are available for this programme.").font(.title2)
+        VStack(alignment: .leading, spacing: 18) {
+          HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 8) {
+              Text("TIME CAPSULE").font(.caption.weight(.semibold)).tracking(5).foregroundStyle(Palette.accent)
+              Text(capsule.contextLabel).font(compact ? .subheadline : .title3)
             }
+            Spacer()
             if controlsVisible {
-              controls(portrait: portrait)
-                .transition(.opacity)
-            }
-            if let image = displayedScene?.image {
-              Text("\(scene?.image == nil ? "Context photograph · " : "")\(image.credit) · \(image.license) · \(image.date)")
-                .font(portrait ? .caption2 : .caption)
-                .foregroundStyle(.white.opacity(0.7))
-                .lineLimit(3)
+              Button { dismiss() } label: { Image(systemName: "xmark").padding(10) }
+                .buttonStyle(.bordered).accessibilityLabel("Close montage")
             }
           }
-          .frame(minHeight: max(0, geometry.size.height - (portrait ? 48 : 88)))
-          .padding(.horizontal, inset)
-          .padding(.vertical, portrait ? 24 : 44)
+          Spacer()
+          if let frame {
+            VStack(alignment: .leading, spacing: 10) {
+              Text([frame.scene.scope, frame.scene.dateLabel].filter { !$0.isEmpty }.joined(separator: " · "))
+                .font(.caption.weight(.semibold)).foregroundStyle(Palette.accent)
+              Text(frame.scene.title)
+                .font(.system(size: compact ? 30 : 48, weight: .semibold))
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+              if frames.count < 3 {
+                Text("Only \(frames.count) photograph(s) available · rebuild this montage for more pictures")
+                  .font(.caption).foregroundStyle(Palette.accent)
+              }
+              if !store.isPlaying {
+                Text("Play music in \(store.selectedZone.name) to continue the montage")
+                  .font(.caption).foregroundStyle(.white.opacity(0.75))
+              } else if picturesPaused {
+                Text("Pictures paused · music continues").font(.caption)
+              }
+              Text("\(frame.image.credit) · \(frame.image.license) · Photo: \(frame.image.date)")
+                .font(.caption2).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+            }
+            .frame(maxWidth: 1000, alignment: .leading)
+          } else {
+            ContentUnavailableView("This montage needs photographs", systemImage: "photo.on.rectangle.angled",
+              description: Text(failedPhotos.isEmpty
+                ? "Rebuild this capsule from Time Capsules to prepare a photo montage."
+                : "The archive pictures could not be loaded. Check the bridge connection, then reopen the montage."))
+          }
+          if controlsVisible { controls(compact: compact) }
         }
-        .scrollDisabled(!portrait)
+        .padding(compact ? 24 : 48)
       }
       .clipped()
       .contentShape(Rectangle())
       .onTapGesture { revealControls() }
+      .accessibilityAction(named: "Show montage controls") { revealControls() }
     }
-    .background(.black)
-    .foregroundStyle(.white)
-    .preferredColorScheme(.dark)
+    .background(.black).foregroundStyle(.white).preferredColorScheme(.dark)
     #if os(iOS)
     .statusBarHidden()
     #endif
-    .animation(reduceMotion ? nil : .easeInOut(duration: 1.4), value: scene?.id)
-    .animation(.easeInOut(duration: 0.25), value: controlsVisible)
+    .animation(reduceMotion ? nil : .easeInOut(duration: 1.2), value: frame?.id)
+    .animation(.easeInOut(duration: 0.2), value: controlsVisible)
     .sheet(isPresented: $showingSources) {
-      if let scene = displayedScene { CinemaSourcesView(scene: scene, query: capsule.request.query) }
+      if let scene = sourceScene { CinemaSourcesView(scene: scene, query: capsule.request.query) }
+    }
+    .task(id: frame?.id) {
+      guard frames.count > 1 else { return }
+      let next = frames[(playback.index + 1) % frames.count].image
+      _ = try? await imageLoader.load(next, client: store.client)
+    }
+    .task(id: running) {
+      guard running else { return }
+      while !Task.isCancelled {
+        do { try await Task.sleep(for: .seconds(1)) } catch { return }
+        // Start each eight-second hold only once the photograph has loaded.
+        playback.advance(seconds: 1, playing: loadedPhoto == frame?.id, count: frames.count)
+      }
     }
     .task(id: interaction) {
       guard !voiceOver else { return }
-      try? await Task.sleep(for: .seconds(8))
-      guard !Task.isCancelled, !showingSources else { return }
+      do { try await Task.sleep(for: .seconds(6)) } catch { return }
+      guard !showingSources else { return }
       controlsVisible = false
     }
-    .onChange(of: store.currentTrack?.id) { _, _ in revealControls() }
     .onChange(of: voiceOver) { _, enabled in if enabled { revealControls() } }
     .onAppear {
       previousIdleTimerSetting = UIApplication.shared.isIdleTimerDisabled
@@ -107,148 +138,112 @@ struct CinemaView: View {
     #endif
   }
 
-  private var artwork: Data? {
-    store.imageData(for: store.currentTrack?.imageKey, pixels: ArtworkCache.heroPixels)
-  }
-
-  private func header(portrait: Bool) -> some View {
-    HStack(alignment: .top) {
-      VStack(alignment: .leading, spacing: 8) {
-        Text("TIME CAPSULE").font(.caption.weight(.semibold)).tracking(5).foregroundStyle(Palette.accent)
-        Text(capsule.contextLabel)
-          .font(portrait ? .subheadline : .title3)
-          .fixedSize(horizontal: false, vertical: true)
-      }
-      Spacer(minLength: 20)
-      if controlsVisible {
-        Button { dismiss() } label: { Image(systemName: "xmark").padding(12) }
-          .buttonStyle(.bordered)
-          .accessibilityLabel("Close Cinema")
-      }
-    }
-  }
-
-  private func caption(_ scene: CapsuleScene, portrait: Bool) -> some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text([scene.scope, scene.dateLabel].filter { !$0.isEmpty }.joined(separator: " · "))
-        .font(.caption.weight(.medium)).foregroundStyle(Palette.accent)
-      Text(scene.title)
-        .font(.system(size: portrait ? 32 : 52, weight: .medium))
-        .fixedSize(horizontal: false, vertical: true)
-      Text(scene.body)
-        .font(portrait ? .body : .title3)
-        .foregroundStyle(.white.opacity(0.9))
-        .fixedSize(horizontal: false, vertical: true)
-      if browsingIndex != nil || liveIndex == nil {
-        Text(browsingIndex != nil ? "Exploring stories · music continues" : "Play this capsule’s tracks to follow the music")
-          .font(.caption).foregroundStyle(.white.opacity(0.65))
-      }
-    }
-    .frame(maxWidth: 920, alignment: .leading)
-  }
-
-  private func controls(portrait: Bool) -> some View {
+  private func controls(compact: Bool) -> some View {
     VStack(alignment: .leading, spacing: 14) {
-      ViewThatFits(in: .horizontal) {
-        HStack(spacing: 16) { storyControls }
-        VStack(alignment: .leading, spacing: 12) { storyControls }
+      HStack(spacing: 16) {
+        Button { playback.move(-1, count: frames.count); revealControls() } label: { Image(systemName: "backward.frame") }
+          .accessibilityLabel("Previous photograph")
+        Text("\(frames.isEmpty ? 0 : playback.index % frames.count + 1) / \(frames.count)")
+          .font(.caption.monospacedDigit())
+        Button { playback.move(1, count: frames.count); revealControls() } label: { Image(systemName: "forward.frame") }
+          .accessibilityLabel("Next photograph")
+        Button { picturesPaused.toggle(); revealControls() } label: {
+          Image(systemName: picturesPaused ? "play.rectangle" : "pause.rectangle")
+        }.accessibilityLabel(picturesPaused ? "Resume pictures" : "Pause pictures")
+        Button { showingSources = true; revealControls() } label: { Image(systemName: "info.circle") }
+          .accessibilityLabel("Photo and headline sources")
       }
+      .buttonStyle(.bordered).disabled(frame == nil)
       Divider().overlay(.white.opacity(0.2))
       HStack(spacing: 14) {
         Button { store.togglePlay(); revealControls() } label: {
-          Image(systemName: store.isPlaying ? "pause.fill" : "play.fill")
-            .frame(width: 28, height: 28)
+          Image(systemName: store.isPlaying ? "pause.fill" : "play.fill").frame(width: 28, height: 28)
         }
         .buttonStyle(.bordered)
         .disabled(store.currentTrack == nil)
         .accessibilityLabel(store.isPlaying ? "Pause music" : "Play music")
         VStack(alignment: .leading, spacing: 4) {
           Text(store.currentTrack?.title ?? "Nothing playing").font(.headline).lineLimit(1)
-          Text(store.currentTrack?.artist ?? "Choose a track in Roon").font(.subheadline).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
+          Text(store.currentTrack?.artist ?? store.selectedZone.name)
+            .font(.subheadline).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
         }
         Spacer(minLength: 0)
-        if !portrait {
-          Label(store.selectedZone.name, systemImage: "hifispeaker.fill")
-            .font(.subheadline).foregroundStyle(.white.opacity(0.7))
-        }
-      }
-      if let track = store.currentTrack {
-        ProgressView(value: min(1, max(0, track.progress)))
-          .tint(Palette.accent)
-          .accessibilityLabel("Music progress")
+        if !compact { Text(store.selectedZone.name).font(.subheadline) }
       }
     }
   }
 
-  @ViewBuilder private var storyControls: some View {
-    HStack(spacing: 12) {
-      Button { browse(-1) } label: { Image(systemName: "chevron.left") }
-        .accessibilityLabel("Previous story")
-      Text("\(capsule.scenes.isEmpty ? 0 : index + 1) / \(capsule.scenes.count)").font(.caption.monospacedDigit())
-      Button { browse(1) } label: { Image(systemName: "chevron.right") }
-        .accessibilityLabel("Next story")
-    }
-    .buttonStyle(.bordered)
-    .disabled(capsule.scenes.isEmpty)
-    Button {
-      browsingIndex = index
-      showingSources = true
-      revealControls()
-    } label: { Label("Explore this story", systemImage: "text.book.closed") }
-      .buttonStyle(.borderedProminent)
-      .tint(Palette.accent)
-      .foregroundStyle(Palette.onAccent)
-      .disabled(scene == nil)
-    if browsingIndex != nil && liveIndex != nil {
-      Button("Return to live") { browsingIndex = nil; revealControls() }
-        .buttonStyle(.bordered)
-    }
-  }
-
-  private func browse(_ direction: Int) {
-    guard !capsule.scenes.isEmpty else { return }
-    browsingIndex = (index + direction + capsule.scenes.count) % capsule.scenes.count
-    revealControls()
-  }
   private func revealControls() { controlsVisible = true; interaction += 1 }
 }
 
-private struct CinemaBackdrop: View {
-  let scene: CapsuleScene
+/// Keep only a few decoded photographs in memory, including the next frame.
+@MainActor
+private final class MontageImageLoader {
+  private let cache = NSCache<NSString, UIImage>()
+
+  init() {
+    cache.countLimit = 3
+    cache.totalCostLimit = 64 * 1024 * 1024
+  }
+
+  func load(_ image: CapsuleImage, client: RoonAPIClient) async throws -> UIImage {
+    if let cached = cache.object(forKey: image.file as NSString) { return cached }
+    guard let url = client.timeCapsuleImageURL(image.file) else { throw URLError(.badURL) }
+    var request = URLRequest(url: url)
+    request.timeoutInterval = 12
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard (response as? HTTPURLResponse)?.statusCode == 200,
+          let result = UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 2560, height: 2560)) else {
+      throw URLError(.cannotDecodeContentData)
+    }
+    try Task.checkCancellation()
+    let cost = (result.cgImage?.bytesPerRow ?? 0) * (result.cgImage?.height ?? 0)
+    cache.setObject(result, forKey: image.file as NSString, cost: cost)
+    return result
+  }
+}
+
+private struct MontagePhotograph: View {
+  let image: CapsuleImage
   let client: RoonAPIClient
-  let artwork: Data?
-  let playing: Bool
+  let loader: MontageImageLoader
+  let moving: Bool
   let reduceMotion: Bool
+  let loaded: () -> Void
+  let failed: () -> Void
+  @State private var photograph: UIImage?
   @State private var motionSeconds = 0
 
   var body: some View {
     GeometryReader { geometry in
       Group {
-        if let asset = scene.image {
-          AsyncImage(url: client.timeCapsuleImageURL(asset.file)) { image in
-            image.resizable().scaledToFill()
-          } placeholder: { fallback }
-          .accessibilityLabel(asset.description)
-        } else { fallback }
+        if let photograph {
+          Image(uiImage: photograph).resizable().scaledToFit()
+        } else { ProgressView("Loading photograph…").tint(.white) }
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
-      .scaleEffect(reduceMotion ? 1 : 1 + Double(motionSeconds) * 0.0015)
+      .scaleEffect(reduceMotion ? 1 : 1 + Double(motionSeconds) * 0.002)
       .clipped()
-      .task(id: playing && !reduceMotion) {
-        guard !reduceMotion, playing else { return }
-        while motionSeconds < 30 && !Task.isCancelled {
-          do { try await Task.sleep(for: .seconds(1)) } catch { return }
-          withAnimation(.linear(duration: 1)) { motionSeconds += 1 }
-        }
-      }
     }
     .accessibilityHidden(true)
-  }
-
-  @ViewBuilder private var fallback: some View {
-    if let artwork, let image = UIImage(data: artwork) {
-      Image(uiImage: image).resizable().scaledToFill().blur(radius: 28).opacity(0.5)
-    } else { Color(red: 0.075, green: 0.07, blue: 0.06) }
+    .task(id: image.file) {
+      do {
+        let result = try await loader.load(image, client: client)
+        guard !Task.isCancelled else { return }
+        photograph = result
+        loaded()
+      } catch {
+        guard !Task.isCancelled else { return }
+        failed()
+      }
+    }
+    .task(id: moving && !reduceMotion) {
+      guard moving, !reduceMotion else { return }
+      while motionSeconds < 15 {
+        do { try await Task.sleep(for: .seconds(1)) } catch { return }
+        withAnimation(.linear(duration: 1)) { motionSeconds += 1 }
+      }
+    }
   }
 }
 

@@ -14,7 +14,8 @@ The bridge researches the supplied subject. A chart-week request produces dated 
 2. Choose **Create Time Capsule**. Research continues on the bridge while music remains available.
 3. Open **Cinema** on Now Playing to see saved programmes. **Play with Cinema** sends the saved selection to the selected Roon room and associates the capsule with that room. **Watch** opens only the visuals.
 4. On another paired device, select the same Roon room, open Cinema and choose **Join [room]**. This joins without restarting music. The phone need not remain open for the native Apple TV app to follow Roon.
-5. Previous/next story and **Explore this story** browse locally. **Return to live** follows the current song and position again. Closing Cinema leaves music playing.
+5. Photographs change every eight seconds while the room plays music, continuing across songs. Previous/next photograph and **Pause pictures** affect only this screen. The information button holds the photo while showing its sources. Closing Cinema leaves music playing.
+6. Choose **Rebuild montage** to replace an older capsule’s visuals using the same original search, dates and tracks. The existing capsule remains available if rebuilding fails.
 
 All clients connected to the same bridge share its saved library. The bridge retains the most recent capsule association for each room. Choosing another programme with **Watch** does not replace that shared association.
 
@@ -25,18 +26,20 @@ The companion implementation is in `app/roon-web-api/src/ai-service/time-capsule
 | Setting | Behaviour |
 | --- | --- |
 | Settings API key / `OPENAI_API_KEY` | Uses the key saved on the bridge config volume; environment variable is the operator fallback |
-| `TIME_CAPSULE_MODEL` | Defaults to `gpt-4.1`; selected model must support Responses web search and JSON output |
+| `TIME_CAPSULE_MODEL` | Defaults to `gpt-4.1`; selected model must support Responses web search, image input and JSON output |
 | `TIME_CAPSULE_CACHE_DIR` | Defaults to `cache/time-capsules` relative to the API process; mount persistent storage here in Docker |
 
 The bridge needs outbound access to OpenAI and Wikimedia Commons. Cached programmes and downloaded images can replay without fresh internet research. Keep the bridge available on the LAN. Do not expose this LAN service publicly as part of this feature.
 
 ## Content preparation
 
-The pipeline uses web search for research, then compiles short original summaries referencing URLs present in the research tool's output. It resolves requested date boundaries, excludes extracted later events, and labels dated earlier material as earlier context. Model-extracted dates and claim relevance can still be wrong; source links are available for inspection.
+For a dated music search, the bridge researches world events in the exact requested period: politics, economy, sport, culture and everyday life. The tracks supply the soundtrack. Research does not default to biographies of the performing artists. Each headline has retrieved source URLs and event dates inside the requested window. Model-extracted claims and dates can still be wrong; source links are available for inspection.
 
-Commons image searches are generated from the actual programme. Candidate metadata must include an allowed licence, credit, source page, sufficient resolution and an approved Wikimedia download host. Photo dates come from original-date metadata, not upload dates. AI selects suitable scene subjects and a separate contextual photograph. Failed image retrieval leaves the sourced text programme usable. No newspaper scans or historical photographs are synthesised.
+Commons searches target those headlines. Candidates require an allowed licence, credit, source page, an original width of at least 1,000 pixels, and an approved HTTPS Wikimedia host. Original photographic dates must fall on or before the requested period’s end. Unknown or ambiguous dates are excluded from dated montages; an imprecise year/month is accepted only when its entire range precedes the cutoff. Earlier photographs of the correct subjects may illustrate a headline, with their actual photo date visible.
 
-The app labels the shared contextual photograph, preserves credits and licences, and exposes its original caption and source. When no archive image is available, it uses blurred current artwork or a dark background. Image coverage depends on the archive; a programme may have few or no photographs.
+Images are associated with headlines by explicit IDs. The selector rejects unrelated subjects, later photographs and alternate crops of the same photograph. The bridge deduplicates file references and caches successful downloads. A separate AI review inspects the actual images for obvious blur, pixelation and subject relevance before including them; it is a best-effort check, not a guarantee of archival quality. If a thumbnail fails, it tries the approved original image, with the same timeout and size limits.
+
+Each scene can contain several photographs. Only available photos enter the montage: no text-only slides, repeated context backdrop, blurred album artwork or synthetic archive pictures. A prepared montage requires at least three distinct downloaded photos; otherwise preparation fails with an explanation. A sparse montage can still repeat frequently, and archive coverage remains a constraint. The saved library shows its actual photo count before playback.
 
 The first version uses Commons, not a licensed newspaper archive. It can use eligible scans discovered there, but does not promise automatic access to specific newspaper editions.
 
@@ -50,28 +53,27 @@ All paths begin `/api/:client_id/time-capsules`; the existing registered-client 
 | POST `/` | Request snapshot → 202 preparation job, or 200 cached result |
 | GET `/jobs/:id` | `researching`, `images`, `ready` or `failed` |
 | GET `/:id` | Saved manifest |
+| POST `/:id/rebuild` | Rebuild from the saved request; preserve its ID and room association |
 | GET `/images/:hash` | Cached JPEG, PNG or WebP |
 | GET `/zone/:zoneId` | Associated manifest, or 204 |
 | PUT `/zone/:zoneId` | `{capsuleId}` associates a saved manifest; 204 |
 
 Request: `{query, requestedAt, locale, timeZone, tracks:[{artist,track,album}]}`. IDs hash this snapshot plus a format version. Manifests and zone associations use atomic file writes; image paths accept only hashes. Two concurrent generation jobs are allowed. Research calls and media downloads have time and size bounds. Jobs run on the bridge; completed manifests survive restart, in-progress jobs do not.
 
-The UI polls for up to 15 minutes. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. There is no job cancellation, deletion UI, regeneration UI or retention policy in this version.
+The UI polls for up to 15 minutes. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. There is no job cancellation, deletion UI or automatic retention policy in this version.
 
 ## Playback and limits
 
-The viewer uses Roon's existing current-track and seek events to choose a scene every 30 seconds. Clients calculate the same scene for the same capsule, song and position. Music remains entirely in the selected Roon zone; this does not make Apple TV a Roon audio endpoint.
+The viewer has an independent eight-second photo clock. Roon’s play/pause state starts and holds it; song changes and seeks do not restart it. It cycles through all distinct photographs continuously while music plays. A new image gets its full hold after loading; failed images are skipped and the next photograph is preloaded. Clear images fit the screen without blur, with a subtle zoom and dissolve. Reduce Motion disables both.
 
-Matching uses normalized artist/title and album disambiguation. Ambiguous duplicate recordings and unrelated music disable automatic following; users can still browse. It does not yet use queue-item IDs, preserve verified chart rank metadata or broadcast shared story-browsing commands. A different room association is picked up when a receiver chooses Join again.
+Joining a room loads its associated montage without restarting the music. Screens share the content and room’s music state but do not have frame-exact synchronisation: each starts its own montage clock. Music remains entirely in the selected Roon zone; this does not make Apple TV a Roon audio endpoint. A different room association is picked up when a receiver chooses Join again.
 
 Native iPhone, iPad and tvOS viewers are included. AirPlay video rendering, remote TV wake/launch, exported movies, licensed newspaper providers, a chart-date editor and content preferences are not included.
 
 ## Verification
 
-- iOS simulator build succeeds; four Time Capsule model tests pass (arbitrary request, frozen date, seek mapping, ambiguity and invalid timecodes). The isolated release checkout’s 144 existing tests also pass.
-- Nine bridge tests pass, covering request identity, source restrictions, image metadata, date boundaries, cached replay, room persistence, client checks and asynchronous route responses. TypeScript and ESLint pass for the new implementation.
-- A live request for a different subject, “David Bowie in Berlin in 1977,” generated a 12-story programme with real source links and an attributed period context photograph. This manifest predates the final stricter date-boundary and scene-image selection rules, which are covered by code checks and date tests, not a second live generation.
-- iPhone simulator: source sheet, next-story browsing, control reveal and image rendering checked. iPad rendering checked. Portrait captions can scroll; larger screens use the immersive composition.
-- tvOS sources pass SDK type checking. A tvOS simulator runtime is not installed, so remote focus, late joining and real multi-device Roon playback still require device validation before release.
+The native playback tests cover eight-second progression, pause/resume, manual navigation, arbitrary request preservation and deduplication. Bridge tests cover date boundaries, photo chronology, explicit photo/headline IDs, rebuild failure preserving existing content, cached replay and paired route access. The viewer is checked with externally generated archive content rather than bundled historical examples.
+
+iPhone/iPad simulator checks and tvOS SDK type checking are available locally. A tvOS simulator runtime is not installed, so real remote focus, multi-device Roon playback and Apple TV presentation need device validation. Source release does not deploy the running bridge or update installed apps.
 
 For local renderer checks, a Debug build accepts `ROON_CINEMA_PREVIEW_MANIFEST` pointing to an external JSON manifest with `-roon-demo-store`. Optional `ROON_CINEMA_PREVIEW_ASSETS` points to a local server serving `<hash>.image` files. These are developer inputs, not bundled historical fixtures.

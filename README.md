@@ -75,8 +75,10 @@ key is set on the sidecar.
 
 ## Cinema / Time Capsules
 
-After an AI Search, choose **Create Time Capsule** to research a visual programme
-for that exact request and its selected tracks. No historical programme is bundled.
+After an AI Search, choose **Create Time Capsule** to prepare a changing photo montage
+for that exact request, with its selected tracks as the soundtrack. For a dated
+search, headlines cover the news, politics, sport and culture of that period.
+Photos change every eight seconds while music plays and continue across songs. No historical programme is bundled.
 Open **Cinema** from Now Playing to replay saved programmes. On Apple TV, select
 the same Roon room and choose **Join** to follow its programme without restarting music.
 

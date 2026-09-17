@@ -47,41 +47,19 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var scenes: [CapsuleScene]
   var contextImage: CapsuleImage?
 
-  /// Refuse ambiguous recordings instead of attaching an unrelated artist story.
-  func trackIndex(for track: Track?) -> Int? {
-    guard let track else { return nil }
-    let candidates = request.tracks.indices.filter {
-      Self.normalized(request.tracks[$0].artist) == Self.normalized(track.artist)
-        && Self.normalized(request.tracks[$0].track) == Self.normalized(track.title)
+  /// Only real photographs enter the montage. Empty story cards and repeated
+  /// context backgrounds must not masquerade as a changing photo sequence.
+  var montageFrames: [MontageFrame] {
+    var seen = Set<String>()
+    return scenes.flatMap { scene in
+      let images = scene.images ?? scene.image.map { [$0] } ?? []
+      return images.compactMap { image -> MontageFrame? in
+        guard seen.insert(image.file).inserted else { return nil }
+        return MontageFrame(scene: scene, image: image)
+      }
     }
-    let exact = candidates.filter { Self.normalized(request.tracks[$0].album) == Self.normalized(track.album) }
-    if exact.count == 1 { return exact.first }
-    return candidates.count == 1 ? candidates.first : nil
   }
 
-  func sceneIndex(for track: Track?) -> Int? {
-    guard let track, let index = trackIndex(for: track), !scenes.isEmpty else { return nil }
-    let eligible = scenes.indices.filter { scenes[$0].trackIndices.isEmpty || scenes[$0].trackIndices.contains(index) }
-    guard !eligible.isEmpty else { return nil }
-    let seconds = Self.seconds(track.position)
-    let offset = Int(max(0, seconds) / 30)
-    // A deterministic phase gives all receivers the same scene on late join or seek.
-    return eligible[(index * 3 + offset) % eligible.count]
-  }
-
-  static func seconds(_ timecode: String) -> Double {
-    let components = timecode.split(separator: ":", omittingEmptySubsequences: false)
-    let parts = components.compactMap { Double($0) }
-    guard parts.count == components.count, !parts.isEmpty, parts.count <= 3,
-          parts.allSatisfy({ $0.isFinite && $0 >= 0 }),
-          parts.dropFirst().allSatisfy({ $0 < 60 }) else { return 0 }
-    return parts.reduce(0) { $0 * 60 + $1 }
-  }
-
-  private static func normalized(_ value: String) -> String {
-    value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-  }
 }
 
 struct CapsuleScene: Codable, Identifiable, Equatable {
@@ -93,6 +71,7 @@ struct CapsuleScene: Codable, Identifiable, Equatable {
   var sources: [CapsuleSource]
   var trackIndices: [Int]
   var image: CapsuleImage?
+  var images: [CapsuleImage]?
 }
 
 struct CapsuleSource: Codable, Hashable {
@@ -115,4 +94,34 @@ struct CapsuleJob: Decodable {
   var status: String
   var error: String?
   var capsule: TimeCapsule?
+}
+
+
+struct MontageFrame: Identifiable {
+  let scene: CapsuleScene
+  let image: CapsuleImage
+  var id: String { image.file }
+}
+
+/// The montage has its own pace. Song changes and song-title formatting do not
+/// reset it; only music pause or an explicit picture pause holds the sequence.
+struct MontagePlayback {
+  private(set) var index = 0
+  private(set) var elapsed: Double = 0
+  static let secondsPerPhoto: Double = 8
+
+  mutating func advance(seconds: Double, playing: Bool, count: Int) {
+    guard playing, count > 1, seconds.isFinite, seconds > 0 else { return }
+    elapsed += seconds
+    if elapsed >= Self.secondsPerPhoto {
+      index = (index + Int(elapsed / Self.secondsPerPhoto)) % count
+      elapsed.formTruncatingRemainder(dividingBy: Self.secondsPerPhoto)
+    }
+  }
+
+  mutating func move(_ offset: Int, count: Int) {
+    guard count > 0 else { return }
+    index = ((index + offset) % count + count) % count
+    elapsed = 0
+  }
 }

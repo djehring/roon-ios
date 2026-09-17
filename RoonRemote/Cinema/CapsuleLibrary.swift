@@ -28,27 +28,36 @@ final class CapsuleLibrary {
     guard !preparing else { showingLibrary = true; return }
     let request = CapsuleRequest(context: context, tracks: tracks)
     guard !request.tracks.isEmpty else { return }
+    prepare(client: client) { try await client.createTimeCapsule(request) }
+  }
+
+  func rebuild(_ capsule: TimeCapsule, client: RoonAPIClient) {
+    guard !preparing else { return }
+    prepare(client: client) { try await client.rebuildTimeCapsule(capsule.id) }
+  }
+
+  private func prepare(client: RoonAPIClient, start: @escaping () async throws -> CapsuleJob) {
     showingLibrary = true
     preparing = true
     error = nil
-    preparationMessage = "Researching your request…"
+    preparationMessage = "Finding the events behind your music…"
     generation = Task {
       defer { preparing = false }
       do {
-        var job = try await client.createTimeCapsule(request)
+        var job = try await start()
         let deadline = Date().addingTimeInterval(900)
         while job.status != "ready" && job.status != "failed" {
-          guard Date() < deadline else { throw CapsuleFailure("Preparation is taking longer than expected. Reopen Time Capsules to check saved programmes.") }
-          preparationMessage = job.status == "images" ? "Finding archive photographs…" : "Researching your request…"
+          guard Date() < deadline else { throw CapsuleFailure("Preparation is taking longer than expected. Reopen Time Capsules to check saved montages.") }
+          preparationMessage = job.status == "images" ? "Gathering photographs for the montage…" : "Researching the requested period…"
           try await Task.sleep(for: .seconds(3))
           job = try await client.timeCapsuleJob(job.id)
         }
-        guard let capsule = job.capsule, !capsule.scenes.isEmpty else {
-          throw CapsuleFailure(job.error ?? "No sourced stories were found for this request.")
+        guard let capsule = job.capsule else {
+          throw CapsuleFailure(job.error ?? "No photo montage could be prepared for this request.")
         }
         capsules.removeAll { $0.id == capsule.id }
         capsules.insert(capsule, at: 0)
-        preparationMessage = "Ready to watch"
+        preparationMessage = "Montage ready"
       } catch is CancellationError {
       } catch { self.error = message(for: error) }
     }
@@ -72,7 +81,7 @@ final class CapsuleLibrary {
       // Retain the original programme and identity even if Roon cannot find every track.
       try await client.setTimeCapsule(capsule.id, zoneId: zoneId)
       if !missing.isEmpty {
-        error = "Roon could not find \(missing.count) track(s). Available tracks can still play. Choose Watch to join them."
+        error = "Roon could not find \(missing.count) track(s). Available tracks can still play. Choose Watch montage to join them."
       } else {
         watch(capsule)
       }
