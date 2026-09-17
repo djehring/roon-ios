@@ -48,21 +48,6 @@ enum AISearchPlayback {
       && artistsAlign(payload.artist, result.artist)
   }
 
-  /// One title hit is enough. Artist is only a tie-break — Roon often
-  /// subtitles the album ("The Muppet Show…") instead of "The Muppets".
-  static func preferredHit(
-    title: String,
-    artist: String,
-    in items: [BrowseNode]
-  ) -> BrowseNode? {
-    let titled = items.filter {
-      $0.itemKey != nil && RoonVoiceMatch.titlesMatch($0.title, title)
-    }
-    guard !titled.isEmpty else { return nil }
-    if titled.count == 1 { return titled[0] }
-    return titled.first { artistsAlign(artist, $0.subtitle) } ?? titled[0]
-  }
-
   static func artistsAlign(_ requested: String, _ listed: String?) -> Bool {
     let artist = RoonVoiceMatch.normalize(requested)
     guard !artist.isEmpty else { return true }
