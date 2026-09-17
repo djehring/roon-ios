@@ -208,6 +208,9 @@ struct RegularNowPlayingView: View {
         chip(label: "Story", symbol: "text.book.closed") {
           store.showStory = true
         }
+        chip(label: "Cinema", symbol: "sparkles.tv") {
+          store.cinema.showingLibrary = true
+        }
         ForEach(store.toolbar) { action in
           chip(label: action.label, symbol: action.symbol) {
             store.runToolbar(action)

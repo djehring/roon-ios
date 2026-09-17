@@ -225,6 +225,64 @@ final class RoonAPIClient: @unchecked Sendable {
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }
 
+  func timeCapsules() async throws -> [TimeCapsule] {
+    try decoder.decode([TimeCapsule].self, from: await capsuleResponse(""))
+  }
+
+  func createTimeCapsule(_ input: CapsuleRequest) async throws -> CapsuleJob {
+    let body = try JSONEncoder().encode(input)
+    return try decoder.decode(CapsuleJob.self, from: await capsuleResponse("", method: "POST", body: body))
+  }
+
+  func timeCapsuleJob(_ id: String) async throws -> CapsuleJob {
+    try decoder.decode(CapsuleJob.self, from: await capsuleResponse("jobs/\(capsuleComponent(id))"))
+  }
+
+  func zoneTimeCapsule(_ zoneId: String) async throws -> TimeCapsule? {
+    let bytes = try await capsuleResponse("zone/\(capsuleComponent(zoneId))")
+    return bytes.isEmpty ? nil : try decoder.decode(TimeCapsule.self, from: bytes)
+  }
+
+  func setTimeCapsule(_ id: String, zoneId: String) async throws {
+    let body = try JSONEncoder().encode(["capsuleId": id])
+    _ = try await capsuleResponse("zone/\(capsuleComponent(zoneId))", method: "PUT", body: body)
+  }
+
+  func timeCapsuleImageURL(_ file: String) -> URL? {
+    #if DEBUG
+    if let base = ProcessInfo.processInfo.environment["ROON_CINEMA_PREVIEW_ASSETS"], let url = URL(string: base) {
+      return url.appendingPathComponent(file + ".image")
+    }
+    #endif
+    return try? capsuleRequest("images/\(capsuleComponent(file))", method: "GET").url
+  }
+
+  private func capsuleComponent(_ value: String) -> String {
+    value.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
+  }
+
+  private func capsuleResponse(_ suffix: String, method: String = "GET", body: Data? = nil) async throws -> Data {
+    var request = try capsuleRequest(suffix, method: method)
+    if let body {
+      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.httpBody = body
+    }
+    let (bytes, response) = try await data(for: request)
+    try throwIfNeeded(response, data: bytes, ok: [200, 202, 204])
+    return bytes
+  }
+
+  private func capsuleRequest(_ encodedSuffix: String, method: String) throws -> URLRequest {
+    let clientId = try requireClient()
+    var components = try urlComponents("/api/\(clientId)/time-capsules/")
+    // Segment escaping must happen once; URLComponents.path would escape '%' again.
+    components.percentEncodedPath += encodedSuffix
+    guard let url = components.url else { throw RoonAPIError.invalidURL }
+    var request = URLRequest(url: url)
+    request.httpMethod = method
+    return request
+  }
+
   func transcribe(audio: Data) async throws -> String {
     let clientId = try requireClient()
     let boundary = UUID().uuidString

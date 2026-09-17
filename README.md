@@ -73,6 +73,18 @@ from Now Playing (Story chip) and also calls the bridge. Paste the OpenAI
 API key once in the web Settings. Those routes return HTTP 503 until a
 key is set on the sidecar.
 
+## Cinema / Time Capsules
+
+After an AI Search, choose **Create Time Capsule** to research a visual programme
+for that exact request and its selected tracks. No historical programme is bundled.
+Open **Cinema** from Now Playing to replay saved programmes. On Apple TV, select
+the same Roon room and choose **Join** to follow its programme without restarting music.
+
+This requires the accompanying Time Capsule bridge update and an OpenAI API key
+on the bridge. See [implementation and setup](docs/time-capsule.md) and the
+[Cinema design](docs/design/time-capsule.md). Native viewing is implemented;
+AirPlay video export and licensed newspaper archive integration are future work.
+
 Regenerate the Xcode project after editing `project.yml`:
 
 ```bash

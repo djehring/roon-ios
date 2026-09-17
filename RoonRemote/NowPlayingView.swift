@@ -134,6 +134,9 @@ struct NowPlayingView: View {
         chipButton(label: "Story", symbol: "text.book.closed") {
           store.showStory = true
         }
+        chipButton(label: "Cinema", symbol: "sparkles.tv") {
+          store.cinema.showingLibrary = true
+        }
         ForEach(store.toolbar) { action in
           chipButton(label: action.label, symbol: action.symbol) {
             store.runToolbar(action)

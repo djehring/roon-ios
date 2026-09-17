@@ -57,6 +57,10 @@ struct TVNowPlayingView: View {
 
             TVTransportControls()
 
+            Button("Cinema", systemImage: "sparkles.tv") {
+              store.cinema.showingLibrary = true
+            }
+
             Button {
               store.showQueue = true
             } label: {
@@ -75,6 +79,10 @@ struct TVNowPlayingView: View {
             TVTransportControls()
               .disabled(true)
               .opacity(0.45)
+
+            Button("Cinema", systemImage: "sparkles.tv") {
+              store.cinema.showingLibrary = true
+            }
 
             HStack(spacing: 24) {
               Button {

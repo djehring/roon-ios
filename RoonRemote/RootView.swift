@@ -34,6 +34,7 @@ struct RootView: View {
       }
     }
     .tint(Palette.accent)
+    .modifier(CinemaPresentation())
     .animation(Motion.sheet, value: store.sessionLabel)
     .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
   }

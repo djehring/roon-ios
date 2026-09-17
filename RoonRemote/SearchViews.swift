@@ -113,6 +113,8 @@ struct AISearchView: View {
         .buttonStyle(GoldFillButton())
         .padding(.horizontal, 16)
         .disabled(store.aiResults.isEmpty)
+        CreateTimeCapsuleButton()
+          .padding(.horizontal, 16)
       }
 
       if store.aiLoading {

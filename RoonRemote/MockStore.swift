@@ -28,11 +28,14 @@ final class MockStore {
   var aiQuery = "" {
     didSet {
       guard aiQuery != oldValue else { return }
+      aiSearchContext = nil
       aiResults = []
       aiError = nil
     }
   }
   var aiResults: [SuggestedTrack] = []
+  var aiSearchContext: CapsuleSearchContext?
+  var cinema = CapsuleLibrary()
   var aiLoading = false
   var aiError: String?
   var canSubmitAISearch: Bool {
@@ -166,6 +169,7 @@ final class MockStore {
     #if DEBUG
     if Self.wantsDemoContent || Self.wantsDemoOnboarding {
       applyDemoContent()
+      applyCinemaPreviewIfRequested()
       if Self.wantsDemoOnboarding {
         session = .onboarding(.localNetwork)
       }
@@ -511,6 +515,8 @@ final class MockStore {
   func runAISearch() {
     let query = aiQuery.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !query.isEmpty, !aiLoading else { return }
+    let searchContext = CapsuleSearchContext(query: query)
+    aiSearchContext = nil
     aiLoading = true
     aiError = nil
     aiResults = []
@@ -519,6 +525,7 @@ final class MockStore {
       do {
         let items = try await client.aiSearch(query: query)
         guard isCurrentAIQuery(query) else { return }
+        aiSearchContext = searchContext
         aiResults = items.map {
           SuggestedTrack(
             id: $0.id,

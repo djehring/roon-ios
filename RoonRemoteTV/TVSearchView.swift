@@ -55,6 +55,7 @@ struct TVSearchView: View {
           .frame(maxWidth: .infinity)
 
           LazyVStack(spacing: 12) {
+            CreateTimeCapsuleButton()
             ForEach(store.aiResults) { item in
               Button {
                 store.playAIResults([item])

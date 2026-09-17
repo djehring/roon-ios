@@ -141,6 +141,7 @@ targets:
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
+      - path: RoonRemote/Cinema/TimeCapsule.swift
       - path: RoonRemote/Sidebar.swift
     settings:
       base:
@@ -252,6 +253,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
       - path: RoonRemote/DemoStore.swift
+      - path: RoonRemote/Cinema
       - path: RoonRemote/QueueTimeline.swift
       - path: RoonRemote/QueueRouting.swift
         type: file
