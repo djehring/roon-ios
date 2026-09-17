@@ -99,44 +99,4 @@ struct AISearchPlaybackTests {
     #expect(AISearchPlayback.artistsAlign("The Muppets", "The Muppets"))
     #expect(!AISearchPlayback.artistsAlign("The Muppets", "The Beatles"))
   }
-
-  @Test("a unique title hit is enough when the subtitle is the album")
-  func uniqueTitleHitIgnoresAlbumSubtitle() {
-    let hit = node("Mahna Mahna", subtitle: "The Muppet Show: Music, Mayhem, and More!")
-    let chosen = AISearchPlayback.preferredHit(
-      title: "Mah Na Mah Na",
-      artist: "The Muppets",
-      in: [node("Rainbow Connection"), hit]
-    )
-    #expect(chosen?.title == "Mahna Mahna")
-  }
-
-  @Test("artist breaks a tie between two title hits")
-  func artistBreaksTitleTie() {
-    let chosen = AISearchPlayback.preferredHit(
-      title: "Mah Na Mah Na",
-      artist: "The Muppets",
-      in: [
-        node("Mahna Mahna", subtitle: "Cake"),
-        node("Mah Na Mah Na", subtitle: "The Muppets"),
-      ]
-    )
-    #expect(chosen?.subtitle == "The Muppets")
-  }
-
-  private func node(_ title: String, subtitle: String? = nil) -> BrowseNode {
-    BrowseNode(
-      id: title + (subtitle ?? ""),
-      title: title,
-      subtitle: subtitle,
-      symbol: "",
-      actions: [],
-      isPrompt: false,
-      children: [],
-      itemKey: title,
-      imageKey: nil,
-      hierarchy: "search",
-      hint: nil
-    )
-  }
 }

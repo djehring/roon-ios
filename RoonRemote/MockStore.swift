@@ -556,10 +556,7 @@ final class MockStore {
     replaceQueue(with: playable)
     selectedTab = .nowPlaying
     Task {
-      var unfound = await playAIResultsViaSearch(playable)
-      if unfound.count == playable.count {
-        unfound = await playAIResultsViaBridge(playable)
-      }
+      let unfound = await playAIResultsViaBridge(playable)
       aiError = AISearchPlayback.applyUnfound(unfound, to: &aiResults)
       if AISearchPlayback.allFailed(playable: playable, unfound: unfound) {
         abandonFailedAIPlayback()
@@ -569,43 +566,25 @@ final class MockStore {
     }
   }
 
-  /// Title search first. play-tracks walks the album GPT named and misses
-  /// "Mah Na Mah Na" when Roon filed it as "Mahna Mahna".
-  private func playAIResultsViaSearch(_ playable: [SuggestedTrack]) async -> [SuggestedTrackPayload] {
-    var startPlay = true
-    var missing: [SuggestedTrackPayload] = []
-    for track in playable {
-      if await playTrackViaSearch(title: track.title, artist: track.artist, playNow: startPlay) {
-        startPlay = false
-        if let index = aiResults.firstIndex(where: {
-          RoonVoiceMatch.titlesMatch($0.title, track.title)
-            && AISearchPlayback.artistsAlign(track.artist, $0.artist)
-        }) {
-          aiResults[index].error = nil
-        }
-      } else {
-        missing.append(
-          SuggestedTrackPayload(artist: track.artist, album: track.album, track: track.title)
-        )
-      }
-    }
-    return missing
-  }
-
   private func playAIResultsViaBridge(_ playable: [SuggestedTrack]) async -> [SuggestedTrackPayload] {
     let payload = playable.map {
       ["artist": $0.artist, "album": $0.album, "track": $0.title]
     }
-    do {
-      return try await client.playTracks(zoneId: selectedZoneId, tracks: payload)
-    } catch {
-      return playable.map {
-        SuggestedTrackPayload(
-          artist: $0.artist,
-          album: $0.album,
-          track: $0.title,
-          error: error.localizedDescription
-        )
+    let zoneId = selectedZoneId
+    // The bridge owns matching and queueing. Keep local browsing from changing
+    // its Roon session while the shared resolver is choosing playback keys.
+    return await withBrowseSession {
+      do {
+        return try await self.client.playTracks(zoneId: zoneId, tracks: payload)
+      } catch {
+        return playable.map {
+          SuggestedTrackPayload(
+            artist: $0.artist,
+            album: $0.album,
+            track: $0.title,
+            error: error.localizedDescription
+          )
+        }
       }
     }
   }
@@ -1783,105 +1762,6 @@ final class MockStore {
       expected: expected,
       current: currentTrack
     )
-  }
-
-  private func playTrackViaSearch(title: String, artist: String, playNow: Bool) async -> Bool {
-    await withBrowseSession {
-      let queries = [title, "\(title) \(artist)", "\(artist) \(title)"]
-      for query in queries {
-        let page = await self.searchLibrary(query: query)
-        if await self.playSearchHit(title: title, artist: artist, in: page, playNow: playNow) {
-          return true
-        }
-      }
-      return false
-    }
-  }
-
-  private func searchLibrary(query: String) async -> BrowsePage {
-    let page = await performLoadLibrary(hierarchy: "search", itemKey: nil, input: query)
-    if AISearchPlayback.preferredHit(title: query, artist: "", in: page.items) != nil
-      || page.items.contains(where: { Self.isTracksSection($0) })
-    {
-      return page
-    }
-    if let prompt = page.items.first(where: \.isPrompt), let key = prompt.itemKey {
-      return await performLoadLibrary(hierarchy: "search", itemKey: key, input: query)
-    }
-    let root = await performLoadLibrary(hierarchy: "search", itemKey: nil, input: nil)
-    if let prompt = root.items.first(where: \.isPrompt), let key = prompt.itemKey {
-      return await performLoadLibrary(hierarchy: "search", itemKey: key, input: query)
-    }
-    return page
-  }
-
-  private func playSearchHit(
-    title: String,
-    artist: String,
-    in page: BrowsePage,
-    playNow: Bool
-  ) async -> Bool {
-    let action = playNow ? "Play Now" : "Queue"
-    if let item = AISearchPlayback.preferredHit(title: title, artist: artist, in: page.items),
-       let key = item.itemKey
-    {
-      return await playSearchItem(key: key, action: action)
-    }
-    guard let tracks = page.items.first(where: { Self.isTracksSection($0) }),
-          let tracksKey = tracks.itemKey
-    else { return false }
-    let list = await performLoadLibrary(hierarchy: "search", itemKey: tracksKey, input: nil)
-    guard let item = AISearchPlayback.preferredHit(title: title, artist: artist, in: list.items),
-          let key = item.itemKey
-    else { return false }
-    return await playSearchItem(key: key, action: action)
-  }
-
-  private static func isTracksSection(_ item: BrowseNode) -> Bool {
-    item.title.compare("Tracks", options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
-  }
-
-  private func playSearchItem(key: String, action: String) async -> Bool {
-    let names = action == "Queue"
-      ? ["Queue", "Add to Queue", "Play Next", "Play Now"]
-      : ["Play Now", "Play", "Play From Here"]
-    let actions = await collectActions(hierarchy: "search", itemKey: key, depth: 0)
-    for name in names {
-      if let found = actions.first(where: {
-        $0.title.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
-      }), let actionKey = found.itemKey
-      {
-        do {
-          _ = try await client.browse([
-            "hierarchy": "search",
-            "item_key": actionKey,
-            "zone_or_output_id": selectedZoneId,
-          ])
-          return true
-        } catch {
-          continue
-        }
-      }
-    }
-    if action != "Queue",
-       let firstPlay = actions.first(where: { Self.isPlayAction($0.title) }),
-       let actionKey = firstPlay.itemKey
-    {
-      do {
-        _ = try await client.browse([
-          "hierarchy": "search",
-          "item_key": actionKey,
-          "zone_or_output_id": selectedZoneId,
-        ])
-        return true
-      } catch {}
-    }
-    do {
-      try await client.playItem(zoneId: selectedZoneId, itemKey: key, actionTitle: action)
-      return true
-    } catch {
-      return false
-    }
   }
 
   private func abandonFailedAIPlayback() {
