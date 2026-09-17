@@ -3,19 +3,32 @@ import SwiftUI
 struct CinemaPresentation: ViewModifier {
   @Environment(MockStore.self) private var store
   @State private var viewer: TimeCapsule?
+  @State private var libraryIsActive = false
 
   func body(content: Content) -> some View {
     @Bindable var cinema = store.cinema
     content
       .sheet(isPresented: $cinema.showingLibrary, onDismiss: {
+        libraryIsActive = false
         viewer = cinema.presented
       }) {
         CinemaLibraryView()
+          .onAppear { libraryIsActive = true }
       }
-      .fullScreenCover(item: $viewer, onDismiss: { cinema.presented = nil }) { capsule in
-        CinemaView(capsule: capsule)
+      .fullScreenCover(item: $viewer, onDismiss: {
+        cinema.presented = nil
+        if cinema.libraryAfterViewer {
+          cinema.libraryAfterViewer = false
+          cinema.showingLibrary = true
+        }
+      }) { capsule in
+        let resolved = cinema.preparation?.resolve(capsule) ?? capsule
+        CinemaView(capsule: resolved).id(resolved.id)
       }
       .onAppear { viewer = cinema.presented }
+      .onChange(of: cinema.presented?.id) { _, _ in
+        if !libraryIsActive && !cinema.showingLibrary { viewer = cinema.presented }
+      }
   }
 }
 
@@ -27,11 +40,6 @@ struct CinemaLibraryView: View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 24) {
-          Text("The world around your music.")
-            .font(.title2.weight(.semibold))
-          Text("A changing photo montage of the world around your music: news, politics, sport and everyday life from the period you requested.")
-            .foregroundStyle(.secondary)
-
           if store.cinema.preparing {
             HStack(spacing: 14) {
               ProgressView().tint(Palette.accent)
@@ -42,19 +50,35 @@ struct CinemaLibraryView: View {
             }
             .padding(.vertical, 12)
             .accessibilityElement(children: .combine)
+
+            Button {
+              Task {
+                await store.cinema.playPreparation(zoneId: store.selectedZoneId, current: store.currentTrack,
+                  queue: store.queue, isPlaying: store.isPlaying, client: store.client)
+              }
+            } label: {
+              Label("Play now", systemImage: "play.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Palette.accent)
+            .foregroundStyle(Palette.onAccent)
+            .disabled(store.cinema.playing || store.selectedZoneId.isEmpty)
           }
 
-          if let error = store.cinema.error {
+          if let error = store.cinema.preparationError ?? store.cinema.error {
             Text(error).foregroundStyle(Palette.accent).fixedSize(horizontal: false, vertical: true)
           }
 
-          if !store.selectedZoneId.isEmpty {
+          if !store.selectedZoneId.isEmpty, !store.cinema.preparing,
+             CapsuleNowPlaying.select(preparing: false, current: store.currentTrack, queue: store.queue,
+               associated: nil, saved: store.cinema.capsules) != nil {
             Button {
-              Task { await store.cinema.join(zoneId: store.selectedZoneId, client: store.client) }
+              Task { await store.cinema.open(zoneId: store.selectedZoneId, current: store.currentTrack, queue: store.queue, client: store.client) }
             } label: {
               Label("Join \(store.selectedZone.name)", systemImage: "tv")
             }
             .buttonStyle(.bordered)
+            .disabled(store.cinema.preparing || store.cinema.opening || store.cinema.preparationError != nil)
           }
 
           if store.cinema.loading {
@@ -117,14 +141,14 @@ struct CinemaLibraryView: View {
     Button {
       Task { await store.cinema.play(capsule, zoneId: store.selectedZoneId, client: store.client) }
     } label: {
-      Label("Play with Cinema", systemImage: "play.fill")
+      Label("Play music & montage", systemImage: "play.fill")
     }
     .buttonStyle(.borderedProminent)
     .tint(Palette.accent)
     .foregroundStyle(Palette.onAccent)
     .disabled(store.cinema.playing || store.selectedZoneId.isEmpty || capsule.montageFrames.count < 3)
 
-    Button("Watch montage") { store.cinema.watch(capsule) }
+    Button("Watch pictures", systemImage: "photo.on.rectangle") { store.cinema.watch(capsule) }
       .buttonStyle(.bordered)
       .disabled(capsule.montageFrames.count < 3)
   }

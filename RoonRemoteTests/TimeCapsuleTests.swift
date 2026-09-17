@@ -3,6 +3,74 @@ import Testing
 
 @Suite("Time Capsule request and playback")
 struct TimeCapsuleTests {
+  @Test func preparationViewerSwitchesToItsResultWithoutChangingAnotherOpenCapsule() {
+    let request = sample().request
+    var preparation = CapsulePreparation(request: request)
+    let waiting = preparation.placeholder
+    #expect(waiting.scenes.isEmpty)
+    #expect(waiting.request == request)
+    #expect(preparation.resolve(waiting).id == waiting.id)
+    var ready = sample()
+    ready.id = "ready"
+    preparation.result = ready
+    #expect(preparation.resolve(waiting).id == ready.id)
+    #expect(preparation.resolve(sample()).id == "test")
+  }
+
+  @Test func preparingNeverOpensAnOldCapsule() {
+    #expect(CapsuleNowPlaying.select(preparing: true, current: playing, queue: [],
+      associated: sample(), saved: [sample()]) == nil)
+  }
+
+  @Test func anotherPlaylistDoesNotReuseTheRoomCapsule() {
+    var current = playing
+    current.title = "Karma Chameleon"
+    current.artist = "Culture Club"
+    #expect(CapsuleNowPlaying.select(preparing: false, current: current, queue: [],
+      associated: sample(), saved: [sample()]) == nil)
+    #expect(CapsuleNowPlaying.select(preparing: false, current: nil, queue: [],
+      associated: sample(), saved: [sample()]) == nil)
+  }
+
+  @Test func newlyCompletedCapsuleCanOpenWithoutRestartingMusic() {
+    var old = sample()
+    old.id = "old"
+    old.request.tracks = []
+    #expect(CapsuleNowPlaying.select(preparing: false, current: playing, queue: [],
+      associated: old, saved: [sample()])?.id == "test")
+  }
+
+  @Test func upcomingMusicDistinguishesPlaylistsSharingASong() {
+    let next = QueueItem(id: "next", title: "Modern Love", artist: "David Bowie", album: "", imageKey: nil)
+    var new = sample()
+    new.id = "new"
+    new.request.tracks.append(.init(artist: next.artist, track: next.title, album: next.album))
+    #expect(CapsuleNowPlaying.select(preparing: false, current: playing, queue: [next],
+      associated: sample(), saved: [sample(), new])?.id == "new")
+    #expect(CapsuleNowPlaying.select(preparing: false, current: playing, queue: [next],
+      associated: sample(), saved: [sample()]) == nil)
+  }
+
+  @Test func matchingAssociationResumesAndSavedRebuildWins() {
+    var rebuilt = sample()
+    rebuilt.createdAt = "2026-09-18T00:00:00Z"
+    var current = playing
+    current.title = "Test track (Remastered)"
+    #expect(CapsuleNowPlaying.select(preparing: false, current: current, queue: [],
+      associated: sample(), saved: [rebuilt])?.createdAt == rebuilt.createdAt)
+  }
+
+  @Test func reopeningCapsuleResumesPhotoAndHoldButRebuildStartsFresh() {
+    var memory = MontagePlaybackMemory()
+    var playback = MontagePlayback()
+    playback.advance(seconds: 19, playing: true, count: 5)
+    memory.remember(playback, capsuleId: "capsule", revision: "original")
+    let resumed = memory.resume(capsuleId: "capsule", revision: "original")
+    #expect(resumed.index == 2)
+    #expect(resumed.elapsed == 3)
+    #expect(memory.resume(capsuleId: "capsule", revision: "rebuilt").index == 0)
+    #expect(memory.resume(capsuleId: "another", revision: "original").index == 0)
+  }
   @Test func preservesArbitrarySearchAndAnchor() throws {
     let context = CapsuleSearchContext(query: "Brazilian jazz from the sixties", date: Date(timeIntervalSince1970: 1234567890))
     let request = CapsuleRequest(context: context, tracks: [suggestion])

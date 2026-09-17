@@ -10,7 +10,14 @@ final class CapsuleLibrary {
   var preparing = false
   var loading = false
   var playing = false
+  var opening = false
+  var libraryAfterViewer = false
+  var playbackMemory = MontagePlaybackMemory()
+  var playbackCapsuleId: String?
+  var playbackMessage: String?
   var preparationMessage = ""
+  var preparationError: String?
+  var preparation: CapsulePreparation?
   var error: String?
   @ObservationIgnored private var generation: Task<Void, Never>?
 
@@ -28,17 +35,19 @@ final class CapsuleLibrary {
     guard !preparing else { showingLibrary = true; return }
     let request = CapsuleRequest(context: context, tracks: tracks)
     guard !request.tracks.isEmpty else { return }
-    prepare(client: client) { try await client.createTimeCapsule(request) }
+    prepare(request: request, client: client) { try await client.createTimeCapsule(request) }
   }
 
   func rebuild(_ capsule: TimeCapsule, client: RoonAPIClient) {
     guard !preparing else { return }
-    prepare(client: client) { try await client.rebuildTimeCapsule(capsule.id) }
+    prepare(request: capsule.request, client: client) { try await client.rebuildTimeCapsule(capsule.id) }
   }
 
-  private func prepare(client: RoonAPIClient, start: @escaping () async throws -> CapsuleJob) {
+  private func prepare(request: CapsuleRequest, client: RoonAPIClient, start: @escaping () async throws -> CapsuleJob) {
     showingLibrary = true
     preparing = true
+    preparationError = nil
+    preparation = CapsulePreparation(request: request)
     error = nil
     preparationMessage = "Finding the events behind your music…"
     generation = Task {
@@ -57,9 +66,10 @@ final class CapsuleLibrary {
         }
         capsules.removeAll { $0.id == capsule.id }
         capsules.insert(capsule, at: 0)
+        preparation?.result = capsule
         preparationMessage = "Montage ready"
       } catch is CancellationError {
-      } catch { self.error = message(for: error) }
+      } catch { self.preparationError = message(for: error) }
     }
   }
 
@@ -69,31 +79,66 @@ final class CapsuleLibrary {
     showingLibrary = false
   }
 
-  func play(_ capsule: TimeCapsule, zoneId: String, client: RoonAPIClient) async {
+  func open(zoneId: String, current: Track?, queue: [QueueItem], client: RoonAPIClient) async {
+    guard !opening else { return }
+    guard !preparing, preparationError == nil else {
+      if let pending = preparation?.placeholder { watch(pending) }
+      else { showingLibrary = true }
+      return
+    }
+    opening = true
+    error = nil
+    defer { opening = false }
+    do {
+      let associated = zoneId.isEmpty ? nil : try await client.zoneTimeCapsule(zoneId)
+      capsules = try await client.timeCapsules()
+      guard preparationError == nil else { showingLibrary = true; return }
+      if let capsule = CapsuleNowPlaying.select(preparing: preparing, current: current, queue: queue,
+        associated: associated, saved: capsules) {
+        watch(capsule)
+      } else {
+        showingLibrary = true
+      }
+    } catch {
+      self.error = message(for: error)
+      showingLibrary = true
+    }
+  }
+
+  func playPreparation(zoneId: String, current: Track?, queue: [QueueItem], isPlaying: Bool,
+    client: RoonAPIClient) async {
+    guard let pending = preparation?.placeholder else { return }
+    if CapsuleNowPlaying.select(preparing: false, current: current, queue: queue,
+      associated: nil, saved: [pending]) != nil {
+      watch(pending)
+      if !isPlaying {
+        do { try await client.command(["type": "PLAY_PAUSE", "data": ["zone_id": zoneId]]) }
+        catch { playbackCapsuleId = pending.id; playbackMessage = message(for: error) }
+      }
+    } else {
+      await play(pending, zoneId: zoneId, client: client, associate: false)
+    }
+  }
+
+  func play(_ capsule: TimeCapsule, zoneId: String, client: RoonAPIClient, associate: Bool = true) async {
     guard !playing, !zoneId.isEmpty else { return }
     playing = true
+    playbackCapsuleId = capsule.id
+    playbackMessage = "Starting music..."
     error = nil
+    watch(capsule)
     defer { playing = false }
     do {
       let missing = try await client.playTracks(zoneId: zoneId, tracks: capsule.request.tracks.map {
         ["artist": $0.artist, "track": $0.track, "album": $0.album]
       })
       // Retain the original programme and identity even if Roon cannot find every track.
-      try await client.setTimeCapsule(capsule.id, zoneId: zoneId)
-      if !missing.isEmpty {
-        error = "Roon could not find \(missing.count) track(s). Available tracks can still play. Choose Watch montage to join them."
-      } else {
-        watch(capsule)
-      }
-    } catch { self.error = message(for: error) }
-  }
-
-  func join(zoneId: String, client: RoonAPIClient) async {
-    error = nil
-    do {
-      if let capsule = try await client.zoneTimeCapsule(zoneId) { watch(capsule) }
-      else { error = "No Time Capsule is attached to this room yet. Play one from the saved programmes below." }
-    } catch { self.error = message(for: error) }
+      if associate { try await client.setTimeCapsule(capsule.id, zoneId: zoneId) }
+      playbackMessage = missing.isEmpty ? nil
+        : "\(missing.count) of \(capsule.request.tracks.count) tracks unavailable. Pictures will continue."
+    } catch {
+      playbackMessage = "Music could not start: \(message(for: error))"
+    }
   }
 
   private func message(for error: Error) -> String {

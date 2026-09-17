@@ -209,8 +209,9 @@ struct RegularNowPlayingView: View {
           store.showStory = true
         }
         chip(label: "Cinema", symbol: "sparkles.tv") {
-          store.cinema.showingLibrary = true
+          Task { await store.cinema.open(zoneId: store.selectedZoneId, current: store.currentTrack, queue: store.queue, client: store.client) }
         }
+        .disabled(store.cinema.opening)
         ForEach(store.toolbar) { action in
           chip(label: action.label, symbol: action.symbol) {
             store.runToolbar(action)

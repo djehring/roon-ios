@@ -9,7 +9,6 @@ struct CinemaView: View {
   @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
   @State private var playback = MontagePlayback()
   @State private var controlsVisible = true
-  @State private var picturesPaused = false
   @State private var showingSources = false
   @State private var interaction = 0
   @State private var previousIdleTimerSetting = false
@@ -23,7 +22,15 @@ struct CinemaView: View {
   private var frame: MontageFrame? {
     frames.isEmpty ? nil : frames[playback.index % frames.count]
   }
-  private var running: Bool { store.isPlaying && !picturesPaused && !showingSources }
+  private var running: Bool { !showingSources }
+  private var awaitingMontage: Bool { store.cinema.preparation?.placeholder.id == capsule.id }
+  private var playbackMessage: String? {
+    let cinema = store.cinema
+    guard cinema.playbackCapsuleId == capsule.id
+      || (cinema.preparation?.result?.id == capsule.id && cinema.playbackCapsuleId == cinema.preparation?.placeholder.id)
+      else { return nil }
+    return cinema.playbackMessage
+  }
   private var sourceScene: CapsuleScene? {
     guard let frame else { return nil }
     var scene = frame.scene
@@ -54,6 +61,11 @@ struct CinemaView: View {
             }
             Spacer()
             if controlsVisible {
+              Button {
+                store.cinema.libraryAfterViewer = true
+                dismiss()
+              } label: { Image(systemName: "rectangle.stack").padding(10) }
+                .buttonStyle(.bordered).accessibilityLabel("Saved Time Capsules")
               Button { dismiss() } label: { Image(systemName: "xmark").padding(10) }
                 .buttonStyle(.bordered).accessibilityLabel("Close montage")
             }
@@ -71,16 +83,31 @@ struct CinemaView: View {
                 Text("Only \(frames.count) photograph(s) available · rebuild this montage for more pictures")
                   .font(.caption).foregroundStyle(Palette.accent)
               }
-              if !store.isPlaying {
-                Text("Play music in \(store.selectedZone.name) to continue the montage")
-                  .font(.caption).foregroundStyle(.white.opacity(0.75))
-              } else if picturesPaused {
-                Text("Pictures paused · music continues").font(.caption)
+              if let message = playbackMessage {
+                HStack(spacing: 8) {
+                  if store.cinema.playing { ProgressView().tint(.white) }
+                  Text(message).font(.caption)
+                }
               }
               Text("\(frame.image.credit) · \(frame.image.license) · Photo: \(frame.image.date)")
                 .font(.caption2).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
             }
             .frame(maxWidth: 1000, alignment: .leading)
+          } else if awaitingMontage {
+            VStack(alignment: .leading, spacing: 16) {
+              if let error = store.cinema.preparationError {
+                Label("Montage could not be prepared", systemImage: "exclamationmark.triangle")
+                  .font(.title2.weight(.semibold))
+                Text(error).foregroundStyle(.secondary)
+              } else {
+                ProgressView().tint(Palette.accent)
+                Text("Preparing Time Capsule").font(.title2.weight(.semibold))
+                Text(store.cinema.preparationMessage).foregroundStyle(.secondary)
+              }
+              if let message = playbackMessage { Text(message).font(.subheadline) }
+            }
+            .frame(maxWidth: 650, alignment: .leading)
+            Spacer()
           } else {
             ContentUnavailableView("This montage needs photographs", systemImage: "photo.on.rectangle.angled",
               description: Text(failedPhotos.isEmpty
@@ -119,17 +146,21 @@ struct CinemaView: View {
       }
     }
     .task(id: interaction) {
-      guard !voiceOver else { return }
+      guard !voiceOver, !awaitingMontage else { return }
       do { try await Task.sleep(for: .seconds(6)) } catch { return }
       guard !showingSources else { return }
       controlsVisible = false
     }
     .onChange(of: voiceOver) { _, enabled in if enabled { revealControls() } }
     .onAppear {
+      playback = store.cinema.playbackMemory.resume(capsuleId: capsule.id, revision: capsule.createdAt)
       previousIdleTimerSetting = UIApplication.shared.isIdleTimerDisabled
       UIApplication.shared.isIdleTimerDisabled = true
     }
-    .onDisappear { UIApplication.shared.isIdleTimerDisabled = previousIdleTimerSetting }
+    .onDisappear {
+      store.cinema.playbackMemory.remember(playback, capsuleId: capsule.id, revision: capsule.createdAt)
+      UIApplication.shared.isIdleTimerDisabled = previousIdleTimerSetting
+    }
     #if os(tvOS)
     .onPlayPauseCommand { store.togglePlay(); revealControls() }
     .onMoveCommand { _ in revealControls() }
@@ -140,28 +171,8 @@ struct CinemaView: View {
 
   private func controls(compact: Bool) -> some View {
     VStack(alignment: .leading, spacing: 14) {
-      HStack(spacing: 16) {
-        Button { playback.move(-1, count: frames.count); revealControls() } label: { Image(systemName: "backward.frame") }
-          .accessibilityLabel("Previous photograph")
-        Text("\(frames.isEmpty ? 0 : playback.index % frames.count + 1) / \(frames.count)")
-          .font(.caption.monospacedDigit())
-        Button { playback.move(1, count: frames.count); revealControls() } label: { Image(systemName: "forward.frame") }
-          .accessibilityLabel("Next photograph")
-        Button { picturesPaused.toggle(); revealControls() } label: {
-          Image(systemName: picturesPaused ? "play.rectangle" : "pause.rectangle")
-        }.accessibilityLabel(picturesPaused ? "Resume pictures" : "Pause pictures")
-        Button { showingSources = true; revealControls() } label: { Image(systemName: "info.circle") }
-          .accessibilityLabel("Photo and headline sources")
-      }
-      .buttonStyle(.bordered).disabled(frame == nil)
       Divider().overlay(.white.opacity(0.2))
       HStack(spacing: 14) {
-        Button { store.togglePlay(); revealControls() } label: {
-          Image(systemName: store.isPlaying ? "pause.fill" : "play.fill").frame(width: 28, height: 28)
-        }
-        .buttonStyle(.bordered)
-        .disabled(store.currentTrack == nil)
-        .accessibilityLabel(store.isPlaying ? "Pause music" : "Play music")
         VStack(alignment: .leading, spacing: 4) {
           Text(store.currentTrack?.title ?? "Nothing playing").font(.headline).lineLimit(1)
           Text(store.currentTrack?.artist ?? store.selectedZone.name)
@@ -170,6 +181,31 @@ struct CinemaView: View {
         Spacer(minLength: 0)
         if !compact { Text(store.selectedZone.name).font(.subheadline) }
       }
+      HStack(spacing: 16) {
+        Group {
+          Button { store.previous(); revealControls() } label: {
+            Image(systemName: "backward.end.fill").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel("Previous track")
+          Button { store.togglePlay(); revealControls() } label: {
+            Image(systemName: store.isPlaying ? "pause.fill" : "play.fill").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel(store.isPlaying ? "Pause music" : "Play music")
+          Button { store.skip(); revealControls() } label: {
+            Image(systemName: "forward.end.fill").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel("Next track")
+        }
+        .disabled(store.currentTrack == nil)
+        Spacer(minLength: 0)
+        if frame != nil {
+          Button { showingSources = true; revealControls() } label: {
+            Image(systemName: "info.circle").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel("Photo and headline sources")
+        }
+      }
+      .buttonStyle(.bordered)
     }
   }
 

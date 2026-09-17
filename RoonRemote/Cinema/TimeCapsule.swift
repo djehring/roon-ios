@@ -74,6 +74,56 @@ struct CapsuleScene: Codable, Identifiable, Equatable {
   var images: [CapsuleImage]?
 }
 
+struct CapsulePreparation {
+  let placeholder: TimeCapsule
+  var result: TimeCapsule?
+
+  init(request: CapsuleRequest) {
+    placeholder = TimeCapsule(id: UUID().uuidString, title: "Preparing Time Capsule",
+      contextLabel: request.query, request: request, createdAt: request.requestedAt, scenes: [])
+  }
+
+  func resolve(_ presented: TimeCapsule) -> TimeCapsule {
+    presented.id == placeholder.id ? result ?? placeholder : presented
+  }
+}
+
+enum CapsuleNowPlaying {
+  static func select(preparing: Bool, current: Track?, queue: [QueueItem], associated: TimeCapsule?,
+    saved: [TimeCapsule]) -> TimeCapsule? {
+    guard !preparing, let current else { return nil }
+    let upcoming = Array(QueueTimeline.upcoming(queue: queue, current: current).prefix(2))
+    var candidates = saved
+    if let associated, !saved.contains(where: { $0.id == associated.id }) { candidates.append(associated) }
+    let matching = candidates.filter { capsule in
+      capsule.request.tracks.contains {
+        titlesMatch($0.track, current.title) && AISearchPlayback.artistsAlign($0.artist, current.artist)
+      }
+    }
+    // The next tracks distinguish playlists that happen to share the current song.
+    func score(_ capsule: TimeCapsule) -> Int {
+      upcoming.filter { queued in
+        capsule.request.tracks.contains {
+          titlesMatch($0.track, queued.title) && AISearchPlayback.artistsAlign($0.artist, queued.artist)
+        }
+      }.count
+    }
+    return matching.filter { upcoming.isEmpty || score($0) > 0 }.sorted {
+      if score($0) != score($1) { return score($0) > score($1) }
+      if ($0.id == associated?.id) != ($1.id == associated?.id) { return $0.id == associated?.id }
+      return $0.createdAt > $1.createdAt
+    }.first
+  }
+
+  private static func titlesMatch(_ left: String, _ right: String) -> Bool {
+    func title(_ value: String) -> String {
+      RoonVoiceMatch.normalize(value).replacingOccurrences(
+        of: #"\s+(?:\d{4}\s+)?remaster(?:ed)?(?:\s+\d{4})?$"#, with: "", options: .regularExpression)
+    }
+    return RoonVoiceMatch.titlesMatch(title(left), title(right))
+  }
+}
+
 struct CapsuleSource: Codable, Hashable {
   var title: String
   var url: URL
@@ -104,7 +154,7 @@ struct MontageFrame: Identifiable {
 }
 
 /// The montage has its own pace. Song changes and song-title formatting do not
-/// reset it; only music pause or an explicit picture pause holds the sequence.
+/// reset it; image loading and source inspection hold the sequence.
 struct MontagePlayback {
   private(set) var index = 0
   private(set) var elapsed: Double = 0
@@ -123,5 +173,19 @@ struct MontagePlayback {
     guard count > 0 else { return }
     index = ((index + offset) % count + count) % count
     elapsed = 0
+  }
+}
+
+struct MontagePlaybackMemory {
+  private var saved: [String: (revision: String, playback: MontagePlayback)] = [:]
+
+  func resume(capsuleId: String, revision: String) -> MontagePlayback {
+    guard let entry = saved[capsuleId], entry.revision == revision else { return MontagePlayback() }
+    return entry.playback
+  }
+
+  mutating func remember(_ playback: MontagePlayback, capsuleId: String, revision: String) {
+    if saved[capsuleId] == nil, saved.count >= 50, let oldest = saved.keys.first { saved.removeValue(forKey: oldest) }
+    saved[capsuleId] = (revision, playback)
   }
 }

@@ -12,7 +12,25 @@ extension MockStore {
     zones[0].track = Track(id: "cinema-preview", title: first.track, artist: first.artist,
       album: first.album, position: "0:00", remaining: "", progress: 0)
     cinema.capsules = [capsule]
-    cinema.presented = capsule
+    if ProcessInfo.processInfo.environment["ROON_CINEMA_PREVIEW_PREPARING"] == "1" {
+      // Keep the delayed preview deterministic even on a paired simulator.
+      client.onState = nil
+      client.onZone = nil
+      client.onQueue = nil
+      queue = []
+      isPlaying = true
+      cinema.preparation = CapsulePreparation(request: capsule.request)
+      cinema.preparing = true
+      cinema.preparationMessage = "Gathering photographs for the montage..."
+      cinema.showingLibrary = true
+      Task {
+        try? await Task.sleep(for: .seconds(45))
+        cinema.preparation?.result = capsule
+        cinema.preparing = false
+      }
+    } else {
+      cinema.presented = capsule
+    }
   }
 }
 #endif
