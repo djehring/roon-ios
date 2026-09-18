@@ -9,7 +9,8 @@ search and selected tracks, suggests **Around this time**, **About the artist**,
 **About the work**, and allows an override. **My photos** is always available on iOS.
 The visual subject can be edited without changing the soundtrack or original time anchor.
 **More topics** allows combinations beyond the suggested set, such as headlines with artist photographs.
-**Album covers** is a separate option and uses only cover images available under the bridge's reusable-image licence gate.
+**Album covers** is a separate option. The bridge resolves the selected albums in Roon and uses the same
+artwork shown in the listener's Roon library; archive search is not used for covers.
 
 - Period: headlines, sports, TV/film/culture and everyday life; country perspective and optional exact dates.
 - Artist: photographs, career, collaborators, places and optional wider historical context.
@@ -34,9 +35,9 @@ Artist setup derives its canonical subject from the selected tracks, so “Bowie
 David Bowie rather than the search wording. Work setup combines the selected artist/composer and parent
 work title, collapsing concerto or symphony movements where their metadata permits it.
 
-Configured research only commissions selected topics, audits sources and dates, and filters unselected topic IDs.
+Configured research only commissions selected topics, checks sources and dates, and filters unselected topic IDs.
 It does not impose the legacy news/sport/culture quota. At least three distinct accepted images are required;
-missing topics are reported in the saved library while available material can play. Work imagery can include
+missing topics are reported in the saved library while available material can play. A covers-only montage accepts one album and uses Roon without AI or web research. Covers are cached with the montage and attached after web-picture review in every mode. Work imagery can include
 genuine artwork and manuscripts; no synthetic archive imagery is generated. Caption-free viewing retains credits.
 
 Personal montages bypass the bridge and AI entirely, save in Application Support/PersonalCinema, and merge
@@ -82,6 +83,10 @@ another device. To watch on TV while music plays elsewhere, select the same Roon
 use **Watch pictures**. TV has its own remote focus controls and editor. Personal photos
 remain on their source device.
 
+Completed builds compare topics as a selection, independent of the bridge's canonical
+ordering. A refresh can recover a completed generation after a polling failure, but only
+when its saved ID, generation token and requested options match the failed preparation.
+
 Photographs have an independent clock. Music previous/play/pause/next control the selected
 Roon room; photograph previous/hold/next control the visuals. Closing Cinema leaves music
 playing. Dismissing the library does not cancel a bridge generation job.
@@ -110,7 +115,7 @@ Images are associated with headlines by explicit IDs. The selector rejects unrel
 
 For a single-artist montage, artist-picture scenes use the available archive photograph's own date and attribution. They do not claim to depict an unrelated named studio session. Each accepted portrait gets its own scene after the normal subject, licence and quality checks. Repeated archive queries within a build share their results.
 
-Simple galleries for a fully named artist, with only artist pictures, career photos and album covers selected, fetch archive images directly. Career captions use the actual photo description and date. These requests do not wait for biography research or AI search planning; candidates still undergo licence, subject and pixel checks. Rebuilding prefers unused archive sources. Date ranges, additional subject context, ambiguous short names and wider contextual topics use the researched workflow. This speed improvement is entirely on the bridge and requires no new native protocol.
+Simple galleries for a fully named artist fetch archive images directly. Career captions use the actual photo description and date. These requests do not wait for biography research or AI search planning; candidates still undergo licence, subject and pixel checks. Extra topics such as Places research their own context while artist photos retain the direct gallery path. That mixed path verifies facts during its initial research rather than commissioning a second whole-programme audit. When Commons provides fewer than six matching candidates, the gallery also tries Wikipedia and Openverse/Flickr. Commons searches restrict results to bitmap images so scanned-book text cannot exhaust the result limit. Album covers come separately from Roon. Rebuilding prefers unused archive sources. Date ranges, additional subject context and ambiguous short names use the researched workflow. Progress distinguishes archive searches, candidate downloads and accepted pictures.
 
 Each scene can contain several photographs. Only available photos enter the montage: no text-only slides, repeated context backdrop, blurred album artwork or synthetic archive pictures. Explicitly dated requests require at least six distinct downloaded photos; other requests require three. All require at least three illustrated stories. Only generic dated chart montages additionally require illustrated non-music stories across three topics, including at least three domestic stories. Subject-focused history does not inherit those quotas. Insufficient content fails preparation rather than replacing an existing capsule. Archive coverage remains a constraint. The saved library shows its actual photo count before playback. Research drafts are versioned so retries cannot reuse drafts produced under obsolete subject-selection rules.
 
@@ -137,7 +142,7 @@ All paths begin `/api/:client_id/time-capsules`; the existing registered-client 
 
 Request: `{query, requestedAt, locale, timeZone, tracks:[{artist,track,album}]}`. IDs hash this snapshot plus a format version. Manifests and zone associations use atomic file writes; image paths accept only hashes. Two concurrent generation jobs are allowed. Research calls and media downloads have time and size bounds. Jobs run on the bridge. A persisted generation marker distinguishes an interrupted job from a previously saved montage. Finished manifests carry the completed generation and a fresh timestamp; active work cannot resume after restart and reports a retryable failure.
 
-The UI polls using a dedicated Cinema HTTP session. Its 15-minute watchdog measures time without reported progress, rather than total generation time; a build progressing through research and pictures stays connected. Transient status-request timeouts, network drops and 408/502/503/504 responses reconnect to the same generation rather than fail the montage or submit it again. Bridge messages describe the current research or image stage. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. Verified research is checkpointed separately from saved montages so an image-stage retry with the same request can reuse it. Drafts are not shown as finished capsules and are removed after successful publication. There is no job cancellation or automatic retention policy. Edit and delete require `managementVersion >= 1`; older bridges show an update message before either operation is attempted.
+The UI polls using a dedicated Cinema HTTP session. Its 15-minute watchdog measures time without reported progress, rather than total generation time; a build progressing through research and pictures stays connected. Transient status-request timeouts, network drops and 408/502/503/504 responses reconnect to the same generation rather than fail the montage or submit it again. Bridge messages describe the current research or image stage. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. Verified research is checkpointed separately from saved montages so an image-stage retry with the same request can reuse it. Drafts are not shown as finished capsules and are retained after successful publication for later picture updates. There is no job cancellation or automatic retention policy. Edit and delete require `managementVersion >= 1`; older bridges show an update message before either operation is attempted.
 
 ## Playback and limits
 
@@ -157,4 +162,4 @@ For local renderer checks, a Debug build accepts `ROON_CINEMA_PREVIEW_MANIFEST` 
 
 Album artwork is prefetched during setup without altering playback or the main Roon browse session. While waiting, the player can immediately display the loaded room cover even when its song is outside the playlist, then replace it with a playlist cover. Debug artwork tests use `ROON_CINEMA_PREVIEW_NEW=1`, a PNG encoded in `ROON_CINEMA_PREVIEW_COVER`, and `ROON_CINEMA_PREVIEW_COVER_SOURCE=current` or `playlist`.
 
-Web-research calls have a 300-second budget from the first attempt; structured-output calls use 150 seconds. Both allow one 300-second retry for a timeout, connection failure or transient service error. Completed web research is checkpointed per exact request and reused by Retry picture update. Structured model output is not cached before validation; validated research drafts retain their existing checkpoint. Successful publication and deletion clean up step checkpoints. Failed jobs persist their stage and error across bridge restarts.
+The bridge no longer automatically retries paid requests. Research requests are bounded to 180 seconds and structured requests to 120 seconds, within a ten-minute preparation deadline. Completed research, valid JSON responses and usage reservations survive successful publication and retries; deletion removes them. Each unchanged request allows at most 24 paid calls, 80,000 reserved output tokens and 32 web-tool calls across retries, with per-stage limits. These are usage bounds, not a currency cap. A usage ledger records returned tokens and unknown-usage failures. Native Retry first checks the previous generation and recovers a ready result or resumes active polling without submitting another build. Failed jobs persist their stage and error across bridge restarts.

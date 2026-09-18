@@ -163,6 +163,53 @@ struct CapsuleLibraryTests {
     #expect(library.capsules == [old])
   }
 
+  @Test func completedRebuildAcceptsBridgeCanonicalTopicOrder() async throws {
+    let library = CapsuleLibrary(pollInterval: .milliseconds(1))
+    let client = CinemaStub()
+    let old = sample()
+    library.capsules = [old]
+    var request = old.request
+    request.options?.topics = [.artistImages, .career, .places, .albumCovers]
+    client.job = CapsuleJob(id: old.id, status: "images", generation: "finished-build")
+    library.regenerate(request: request, original: old, client: client)
+    try await wait { client.requestedGeneration != nil }
+    var ready = old
+    ready.request = request
+    ready.request.options?.topics = [.albumCovers, .artistImages, .career, .places]
+    ready.createdAt = "2026-09-19T00:00:00Z"
+    ready.generation = "finished-build"
+    client.job = CapsuleJob(id: old.id, status: "ready", capsule: ready, generation: ready.generation)
+    try await wait { !library.preparing }
+    #expect(library.preparationError == nil)
+    #expect(library.preparation?.result == ready)
+    #expect(library.capsules == [ready])
+  }
+
+  @Test func refreshRecoversACompletedBuildAfterAPollingFailure() async throws {
+    let library = CapsuleLibrary(pollInterval: .milliseconds(1))
+    let client = CinemaStub()
+    let old = sample()
+    library.capsules = [old]
+    client.job = CapsuleJob(id: old.id, status: "images", generation: "expected-build")
+    client.pollFailure = RoonAPIError.httpStatus(403, nil)
+    library.rebuild(old, client: client)
+    try await wait { !library.preparing }
+    #expect(library.preparationError != nil)
+    var ready = old
+    ready.generation = "another-build"
+    ready.createdAt = "2026-09-19T00:00:00Z"
+    client.saved = [ready]
+    await library.load(client: client)
+    #expect(library.preparationError != nil)
+    #expect(library.preparation?.result == nil)
+    ready.generation = "expected-build"
+    client.saved = [ready]
+    await library.load(client: client)
+    #expect(library.preparationError == nil)
+    #expect(library.preparation?.result == ready)
+    #expect(client.rebuildCount == 1)
+  }
+
   @Test func pollingFollowsThisGenerationAndRejectsAResultFromAnotherBuild() async throws {
     let library = CapsuleLibrary(pollInterval: .milliseconds(1))
     let client = CinemaStub()

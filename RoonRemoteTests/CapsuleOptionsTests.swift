@@ -3,6 +3,25 @@ import Testing
 
 @Suite("Cinema setup")
 struct CapsuleOptionsTests {
+  @Test func topicSelectionIgnoresOrderButOtherOptionsStillMatter() {
+    var selected = CapsuleOptions(mode: .artist, subject: " Crowded House ")
+    selected.topics = [.artistImages, .career, .places, .albumCovers]
+    var returned = selected
+    returned.subject = "Crowded House"
+    returned.topics = [.albumCovers, .artistImages, .career, .places, .places]
+    #expect(selected == returned)
+    returned.topics.removeAll { $0 == .places }
+    #expect(selected != returned)
+    returned = selected
+    returned.pace = .lively
+    #expect(selected != returned)
+    returned = selected
+    returned.order = .shuffled
+    #expect(selected != returned)
+    returned = selected
+    returned.subject = "David Bowie"
+    #expect(selected != returned)
+  }
   @Test func suggestsContextWithoutLosingANamedArtistToDates() {
     #expect(CapsuleMode.suggested(query: "UK top ten this week in 1978", tracks: []) == .period)
     #expect(CapsuleMode.suggested(query: "Top ten from 1984", tracks: []) == .period)

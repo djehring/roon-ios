@@ -142,6 +142,15 @@ struct CapsuleOptions: Codable, Equatable {
   var pace: CapsulePace = .standard
   var order: CapsuleOrder = .curated
 
+  /// Topics are a selection, not an ordering; the bridge sorts and deduplicates them.
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.mode == rhs.mode && Set(lhs.topics) == Set(rhs.topics)
+      && lhs.subject.trimmingCharacters(in: .whitespacesAndNewlines) == rhs.subject.trimmingCharacters(in: .whitespacesAndNewlines)
+      && lhs.region == rhs.region && lhs.periodStart == rhs.periodStart && lhs.periodEnd == rhs.periodEnd
+      && lhs.workContext == rhs.workContext && lhs.captions == rhs.captions && lhs.motion == rhs.motion
+      && lhs.pace == rhs.pace && lhs.order == rhs.order
+  }
+
   init(mode: CapsuleMode, subject: String, locale: String = Locale.current.identifier) {
     self.mode = mode
     self.subject = subject

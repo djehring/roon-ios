@@ -3,6 +3,17 @@ import Testing
 
 @Suite("Time Capsule request and playback")
 struct TimeCapsuleTests {
+  @Test func coversOnlyMontageCanPlayWithOneAlbum() {
+    var capsule = sample()
+    capsule.scenes = Array(capsule.scenes.prefix(1))
+    capsule.scenes[0].image = photograph("roon-cover")
+    capsule.request.options = CapsuleOptions(mode: .artist, subject: "Artist")
+    capsule.request.options?.topics = [.albumCovers]
+    #expect(capsule.canWatch)
+    #expect(capsule.minimumPictures == 1)
+    capsule.request.options?.topics.append(.artistImages)
+    #expect(!capsule.canWatch)
+  }
   @Test func preparationViewerSwitchesToItsResultWithoutChangingAnotherOpenCapsule() {
     let request = sample().request
     var preparation = CapsulePreparation(request: request)

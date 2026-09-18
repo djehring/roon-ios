@@ -53,7 +53,8 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var generation: String?
 
   var isPersonal: Bool { request.options?.mode == .photos }
-  var canWatch: Bool { montageFrames.count >= (isPersonal ? 1 : 3) }
+  var minimumPictures: Int { isPersonal || request.options?.topics == [.albumCovers] ? 1 : 3 }
+  var canWatch: Bool { montageFrames.count >= minimumPictures }
 
   /// Only real photographs enter the montage. Empty story cards and repeated
   /// context backgrounds must not masquerade as a changing photo sequence.
@@ -86,6 +87,8 @@ struct CapsulePreparation {
   let placeholder: TimeCapsule
   let original: TimeCapsule?
   var result: TimeCapsule?
+  var jobId: String?
+  var expectedGeneration: String?
 
   init(request: CapsuleRequest, original: TimeCapsule? = nil) {
     self.original = original

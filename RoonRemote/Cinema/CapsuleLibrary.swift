@@ -116,9 +116,24 @@ final class CapsuleLibrary {
       // An older response must not resurrect a deletion or overwrite a completed edit.
       guard snapshot == revision else { return }
       merge(personal + shared)
+      recoverCompletedPreparation(from: shared)
       error = nil
     } catch is CancellationError {
     } catch { self.error = message(for: error) }
+  }
+
+  private func recoverCompletedPreparation(from saved: [TimeCapsule]) {
+    guard !preparing, preparationError != nil, let preparation, preparation.result == nil,
+      let expected = preparation.expectedGeneration,
+      let completed = saved.first(where: {
+        $0.id == preparation.jobId && $0.generation == expected
+          && $0.request.options == preparation.placeholder.request.options
+      }) else { return }
+    revision += 1
+    self.preparation?.result = completed
+    preparationError = nil
+    preparationMessage = "Pictures ready"
+    selectedId = completed.id
   }
 
   func create(context: CapsuleSearchContext, tracks: [SuggestedTrack], client: any CinemaClient) {
@@ -194,6 +209,8 @@ final class CapsuleLibrary {
       do {
         var job = try await start()
         let expectedGeneration = job.generation
+        preparation?.jobId = job.id
+        preparation?.expectedGeneration = expectedGeneration
         var deadline = now().addingTimeInterval(progressTimeout)
         var progress = job.status + (job.message ?? "")
         while job.status != "ready" && job.status != "failed" {

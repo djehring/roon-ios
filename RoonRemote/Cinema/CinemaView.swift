@@ -101,7 +101,7 @@ struct CinemaView: View {
                 Text(frame.scene.body).font(compact ? .subheadline : .title3).lineLimit(4)
               }
               }
-              if frames.count < (capsule.isPersonal ? 1 : 3) {
+              if frames.count < capsule.minimumPictures {
                 Text("Only \(frames.count) photograph(s) available · rebuild this montage for more pictures")
                   .font(.caption).foregroundStyle(Palette.accent)
               }
