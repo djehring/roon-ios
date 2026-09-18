@@ -1,6 +1,6 @@
 import Foundation
 
-final class RoonAPIClient: @unchecked Sendable {
+final class RoonAPIClient: CinemaClient, @unchecked Sendable {
   static let clientIdAccount = "client_id"
   static let hostAccount = "bridge_host"
   static let portAccount = "bridge_port"
@@ -13,6 +13,8 @@ final class RoonAPIClient: @unchecked Sendable {
 
   private let session: URLSession
   private let imageSession: URLSession
+  /// Status polling must not queue behind slow library browsing requests.
+  private let cinemaSession: URLSession
   /// OpenAI-backed endpoints upload a photo or audio clip and then wait on model
   /// inference. The general session's 20s request / 60s resource budget cut those
   /// off mid-flight and surfaced as "The request timed out".
@@ -42,6 +44,12 @@ final class RoonAPIClient: @unchecked Sendable {
     config.waitsForConnectivity = false
     config.httpMaximumConnectionsPerHost = 4
     session = URLSession(configuration: config)
+    let cinema = URLSessionConfiguration.default
+    cinema.timeoutIntervalForRequest = 20
+    cinema.timeoutIntervalForResource = 60
+    cinema.waitsForConnectivity = false
+    cinema.httpMaximumConnectionsPerHost = 2
+    cinemaSession = URLSession(configuration: cinema)
     let images = URLSessionConfiguration.default
     images.timeoutIntervalForRequest = 12
     images.timeoutIntervalForResource = 20
@@ -254,8 +262,50 @@ final class RoonAPIClient: @unchecked Sendable {
       from: await capsuleResponse("\(capsuleComponent(id))/rebuild", method: "POST"))
   }
 
-  func timeCapsuleJob(_ id: String) async throws -> CapsuleJob {
-    try decoder.decode(CapsuleJob.self, from: await capsuleResponse("jobs/\(capsuleComponent(id))"))
+  func requireCinemaManagementSupport() async throws {
+    struct Capabilities: Decodable { var managementVersion: Int? }
+    do {
+      let capabilities = try decoder.decode(Capabilities.self, from: await capsuleResponse("capabilities"))
+      guard (capabilities.managementVersion ?? 0) >= 1 else {
+        throw PersonalCinemaError("Update the bridge to edit and delete Cinema playlists.")
+      }
+    } catch {
+      if case RoonAPIError.httpStatus(404, _) = error {
+        throw PersonalCinemaError("Update the bridge to edit and delete Cinema playlists.")
+      }
+      throw error
+    }
+  }
+
+  func updateTimeCapsule(_ id: String, options: CapsuleOptions) async throws -> CapsuleJob {
+    let body = try JSONEncoder().encode(["options": options])
+    return try decoder.decode(CapsuleJob.self,
+      from: await capsuleResponse(capsuleComponent(id), method: "PUT", body: body))
+  }
+
+  func deleteTimeCapsule(_ id: String) async throws {
+    _ = try await capsuleResponse(capsuleComponent(id), method: "DELETE")
+  }
+
+  func timeCapsuleJob(_ id: String, generation: String? = nil) async throws -> CapsuleJob {
+    var request = try capsuleRequest("jobs/\(capsuleComponent(id))", method: "GET")
+    if let generation, let url = request.url {
+      var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+      components?.queryItems = [URLQueryItem(name: "generation", value: generation)]
+      request.url = components?.url
+    }
+    let (bytes, response) = try await data(for: request, using: cinemaSession)
+    try throwIfNeeded(response, data: bytes, ok: [200])
+    return try decoder.decode(CapsuleJob.self, from: bytes)
+  }
+
+  func cinemaArtwork(tracks: [CapsuleTrack], zoneId: String) async throws -> Data? {
+    struct Input: Encodable { let tracks: [CapsuleTrack]; let zoneId: String }
+    struct Output: Decodable { let imageKey: String? }
+    let body = try JSONEncoder().encode(Input(tracks: tracks, zoneId: zoneId))
+    let output = try decoder.decode(Output.self, from: await capsuleResponse("artwork", method: "POST", body: body))
+    guard let key = output.imageKey else { return nil }
+    return try await image(imageKey: key, width: ArtworkCache.heroPixels, height: ArtworkCache.heroPixels)
   }
 
   func zoneTimeCapsule(_ zoneId: String) async throws -> TimeCapsule? {
@@ -287,7 +337,7 @@ final class RoonAPIClient: @unchecked Sendable {
       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
       request.httpBody = body
     }
-    let (bytes, response) = try await data(for: request)
+    let (bytes, response) = try await data(for: request, using: cinemaSession)
     try throwIfNeeded(response, data: bytes, ok: [200, 202, 204])
     return bytes
   }

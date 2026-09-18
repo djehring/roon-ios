@@ -301,6 +301,9 @@ final class MockStore {
       zones = next
     }
     publishWatchSnapshot()
+    #if DEBUG
+    if Self.wantsDemoContent { return }
+    #endif
     Task {
       try? await client.command([
         "type": "PLAY_PAUSE",
@@ -315,6 +318,9 @@ final class MockStore {
     } else {
       clearPinnedTrack()
     }
+    #if DEBUG
+    if Self.wantsDemoContent { return }
+    #endif
     Task {
       try? await client.command([
         "type": "NEXT",
@@ -325,6 +331,9 @@ final class MockStore {
 
   func previous() {
     clearPinnedTrack()
+    #if DEBUG
+    if Self.wantsDemoContent { return }
+    #endif
     Task {
       try? await client.command([
         "type": "PREVIOUS",

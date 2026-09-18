@@ -52,17 +52,39 @@ The earlier behavior below describes capsules created without setup options, exc
 
 The bridge researches the supplied subject. A chart-week request produces dated historical context; an artist, genre or mood request produces relevant music and cultural context without assigning an arbitrary historical year. There is no fixed year, week, country, artist list or historical content pack in the app. The selected design mockup is illustrative and is not shipped as archive content.
 
-## Use
+## Saved Cinema playlists (18 September 2026)
 
-1. Run an AI Search and remove unwanted results as usual.
-2. Choose **Create Time Capsule**. Research continues on the bridge while music remains available. During preparation, **Play now** opens a preparation player with previous track, play/pause and next track controls. It starts the requested tracks unless they already match the room's current music and queue; an already playing playlist is not restarted. The viewer automatically switches to photographs when preparation succeeds. A failure remains visible without replacing it with an older montage.
-3. **Cinema** on Now Playing returns to an active preparation first. Otherwise it selects a saved capsule matching the current music, using upcoming tracks to distinguish playlists sharing a song. A room's old association is not enough. This does not restart music or change the queue. It resumes the last photograph and remaining hold time on this device while the app remains open. A rebuilt capsule starts fresh. If no capsule matches, Cinema opens the saved library. The stack icon in the viewer also opens that library.
-   In the library, **Play music & montage** immediately opens the pictures, sends the saved selection to the selected Roon room and associates the capsule with that room. Loading or unavailable-track messages appear in the montage. **Watch pictures** opens the visuals without changing the music.
-4. On another paired device, select the same Roon room, open Cinema and choose **Join [room]**. This joins without restarting music. The phone need not remain open for the native Apple TV app to follow Roon.
-5. Photographs change every eight seconds, including while music is paused and when watching without music. The viewer has two separate transports. **Music** previous, play/pause and next control the selected Roon room. **Photographs** previous, hold/resume and next control the montage only; swiping left or right moves between photographs, and on Apple TV the remote's left and right do the same. A held montage shows "Photograph held" over the picture and keeps playing music. The information button also holds the photo while showing its sources. Closing Cinema leaves music playing.
-6. Choose **Rebuild montage** to replace an older capsule’s visuals using the same original search, dates and tracks. The existing capsule remains available if rebuilding fails.
+Cinema opens the saved playlist library on iPhone, iPad and Apple TV. Playlists belong to
+House Remote and its bridge; they do not depend on Roon playlist support. Each item holds
+a soundtrack, visual options and saved photographs.
 
-All clients connected to the same bridge share its saved library. The bridge retains the most recent capsule association for each room. Choosing another programme with **Watch pictures** does not replace that shared association. **Done** dismisses the library without cancelling preparation on the bridge.
+1. Use **Set up Cinema** from AI Search to create an item from the selected tracks.
+2. Open **Cinema** on Now Playing to browse all saved items. iPhone expands actions beneath
+   the selected row. iPad and TV show the library beside a preview and actions.
+3. **Play music & pictures** sends the saved tracks to the selected Roon room and opens the
+   pictures. **Watch pictures** opens only the visuals and leaves the room's music and queue
+   untouched. The room selector makes the audio destination explicit.
+4. **Edit** restores that item's saved options. Change visual context, topics or presentation,
+   then choose **Save & regenerate**. The saved ID and soundtrack stay the same; the bridge
+   replaces the manifest atomically only when generation succeeds. Existing pictures remain
+   available on failure, with a retry action. Personal-photo edits reuse the imported copies.
+5. While updating, the library keeps the item visible. Playing or watching it opens a fitted
+   current album cover when available, otherwise a saved picture, plus progress and music
+   controls. The viewer changes to the finished montage automatically. Music need not wait
+   for new pictures; a soundtrack already playing is not restarted by the preparation action.
+6. **Delete** asks for confirmation, then removes the saved Cinema item. Shared deletion
+   clears its room associations and research draft, retaining image files that other items
+   may use. Personal deletion removes this app's imported copies. Original music and Photos
+   library assets are unaffected. An item cannot be deleted while it is regenerating.
+
+All devices paired to a bridge share the saved library; refresh discovers changes made on
+another device. To watch on TV while music plays elsewhere, select the same Roon room and
+use **Watch pictures**. TV has its own remote focus controls and editor. Personal photos
+remain on their source device.
+
+Photographs have an independent clock. Music previous/play/pause/next control the selected
+Roon room; photograph previous/hold/next control the visuals. Closing Cinema leaves music
+playing. Dismissing the library does not cancel a bridge generation job.
 
 ## Bridge setup
 
@@ -86,6 +108,8 @@ Event-specific archive queries are scheduled across all scenes before generic su
 
 Images are associated with headlines by explicit IDs. The selector rejects unrelated subjects, commemorations, misleading different events, materially changed places, wrong team affiliations and alternate crops of the same photograph. The bridge deduplicates file references and caches successful downloads. A separate AI review inspects the actual images for obvious blur, pixelation and subject relevance before including them; it is a best-effort check, not a guarantee of archival quality. If a thumbnail fails, it tries the approved original image, with the same timeout and size limits.
 
+For a single-artist montage, artist-picture scenes use the available archive photograph's own date and attribution. They do not claim to depict an unrelated named studio session. Each accepted portrait gets its own scene after the normal subject, licence and quality checks. Repeated archive queries within a build share their results.
+
 Each scene can contain several photographs. Only available photos enter the montage: no text-only slides, repeated context backdrop, blurred album artwork or synthetic archive pictures. Explicitly dated requests require at least six distinct downloaded photos; other requests require three. All require at least three illustrated stories. Only generic dated chart montages additionally require illustrated non-music stories across three topics, including at least three domestic stories. Subject-focused history does not inherit those quotas. Insufficient content fails preparation rather than replacing an existing capsule. Archive coverage remains a constraint. The saved library shows its actual photo count before playback. Research drafts are versioned so retries cannot reuse drafts produced under obsolete subject-selection rules.
 
 The first version uses Commons, not a licensed newspaper archive. It can use eligible scans discovered there, but does not promise automatic access to specific newspaper editions.
@@ -97,23 +121,27 @@ All paths begin `/api/:client_id/time-capsules`; the existing registered-client 
 | Method / suffix | Result |
 | --- | --- |
 | GET `/` | Up to 50 saved manifests, newest first |
+| GET `/capabilities` | `{optionsVersion:2, managementVersion:1}` |
 | POST `/` | Request snapshot → 202 preparation job, or 200 cached result |
-| GET `/jobs/:id` | `researching`, `images`, `ready` or `failed` |
+| GET `/jobs/:id?generation=…` | Status for this build; interrupted/superseded builds fail instead of returning an old manifest |
+| POST `/artwork` | `{zoneId,tracks}` → `{imageKey}` for a playlist album, using an isolated browse session |
 | GET `/:id` | Saved manifest |
 | POST `/:id/rebuild` | Rebuild from the saved request; preserve its ID and room association |
+| PUT `/:id` | `{options}` → 202 job; preserve ID and soundtrack; 409 if already updating |
+| DELETE `/:id` | 204, idempotent; remove manifest/draft/associations; 409 if updating |
 | GET `/images/:hash` | Cached JPEG, PNG or WebP |
 | GET `/zone/:zoneId` | Associated manifest, or 204 |
 | PUT `/zone/:zoneId` | `{capsuleId}` associates a saved manifest; 204 |
 
-Request: `{query, requestedAt, locale, timeZone, tracks:[{artist,track,album}]}`. IDs hash this snapshot plus a format version. Manifests and zone associations use atomic file writes; image paths accept only hashes. Two concurrent generation jobs are allowed. Research calls and media downloads have time and size bounds. Jobs run on the bridge; completed manifests survive restart, in-progress jobs do not.
+Request: `{query, requestedAt, locale, timeZone, tracks:[{artist,track,album}]}`. IDs hash this snapshot plus a format version. Manifests and zone associations use atomic file writes; image paths accept only hashes. Two concurrent generation jobs are allowed. Research calls and media downloads have time and size bounds. Jobs run on the bridge. A persisted generation marker distinguishes an interrupted job from a previously saved montage. Finished manifests carry the completed generation and a fresh timestamp; active work cannot resume after restart and reports a retryable failure.
 
-The UI polls for up to 15 minutes. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. Verified research is checkpointed separately from saved montages so an image-stage retry with the same request can reuse it. Drafts are not shown as finished capsules and are removed after successful publication. There is no job cancellation, deletion UI or automatic retention policy in this version.
+The UI polls using a dedicated Cinema HTTP session. Its 15-minute watchdog measures time without reported progress, rather than total generation time; a build progressing through research and pictures stays connected. Transient status-request timeouts, network drops and 408/502/503/504 responses reconnect to the same generation rather than fail the montage or submit it again. Bridge messages describe the current research or image stage. If it loses the connection or the app closes, the server can still finish; refresh the saved library later. Verified research is checkpointed separately from saved montages so an image-stage retry with the same request can reuse it. Drafts are not shown as finished capsules and are removed after successful publication. There is no job cancellation or automatic retention policy. Edit and delete require `managementVersion >= 1`; older bridges show an update message before either operation is attempted.
 
 ## Playback and limits
 
 The viewer has an independent eight-second photo clock. Music playback, pauses, song changes and seeks do not restart or hold it. The sources sheet and the hold button stop it while they apply; manual navigation gives the chosen photograph a full hold. A new image gets its full hold after loading; failed images are skipped and the next photograph is preloaded. Images fit the screen without an artificial blur effect, with a subtle zoom and dissolve. Reduce Motion disables both. Source photographs can still vary in sharpness despite automated review.
 
-Joining a room selects a montage matching its current music without restarting it. Screens share the content and room’s music state but do not have frame-exact synchronisation: each starts its own montage clock. Music remains entirely in the selected Roon zone; this does not make Apple TV a Roon audio endpoint. In-progress preparation is tracked by the app that started it; other clients can discover the saved result after completion.
+Watching a saved item on another device does not restart its soundtrack. Screens share the content and room’s music state but do not have frame-exact synchronisation: each starts its own montage clock. Music remains entirely in the selected Roon zone; this does not make Apple TV a Roon audio endpoint. In-progress preparation is tracked by the app that started it; other clients can discover the saved result after completion.
 
 Native iPhone, iPad and tvOS viewers, content preferences and optional exact date ranges are included. AirPlay video rendering, remote TV wake/launch, exported movies, licensed newspaper providers and personal-photo sharing to Apple TV are not included.
 
@@ -121,6 +149,10 @@ Native iPhone, iPad and tvOS viewers, content preferences and optional exact dat
 
 The native playback tests cover eight-second progression, pause/resume, manual navigation, arbitrary request preservation and deduplication. Bridge tests cover date boundaries, photo chronology, explicit photo/headline IDs, rebuild failure preserving existing content, cached replay and paired route access. The viewer is checked with externally generated archive content rather than bundled historical examples.
 
-iPhone/iPad simulator checks and tvOS SDK type checking are available locally. A tvOS simulator runtime is not installed, so real remote focus, multi-device Roon playback and Apple TV presentation need device validation. Source release does not deploy the running bridge or update installed apps.
+iPhone/iPad and tvOS simulators are available locally. See [Cinema implementation validation](design/cinema-playlists-validation.md) for the current checks. Physical remote behavior and live multi-device Roon playback still need device validation. The local `yarn dev` bridge automatically reloads source changes; installed native apps still need rebuilding/reinstalling.
 
-For local renderer checks, a Debug build accepts `ROON_CINEMA_PREVIEW_MANIFEST` pointing to an external JSON manifest with `-roon-demo-store`. Optional `ROON_CINEMA_PREVIEW_ASSETS` points to a local server serving `<hash>.image` files. `ROON_CINEMA_PREVIEW_PREPARING=1` presents a deterministic 45-second preparation followed by that manifest, isolating incoming room events for this preview. These are developer inputs, not bundled historical fixtures.
+For local renderer checks, a Debug build accepts `ROON_CINEMA_PREVIEW_MANIFEST` pointing to an external JSON manifest with `-roon-demo-store`. The input can be one manifest or an array; `ROON_CINEMA_PREVIEW_JSON` also accepts inline JSON. Optional `ROON_CINEMA_PREVIEW_ASSETS` points to a local server serving `<hash>.image` files. `ROON_CINEMA_PREVIEW_LIBRARY=1` opens the library with an isolated in-memory client for edit/delete/play testing. `ROON_CINEMA_PREVIEW_DELAY` controls mocked generation time and `ROON_CINEMA_PREVIEW_FAIL=1` exercises failure recovery. `ROON_CINEMA_PREVIEW_PREPARING=1` opens the library during a deterministic 45-second preparation followed by that manifest, isolating incoming room events for this preview. These are developer inputs, not bundled historical fixtures.
+
+Album artwork is prefetched during setup without altering playback or the main Roon browse session. While waiting, the player can immediately display the loaded room cover even when its song is outside the playlist, then replace it with a playlist cover. Debug artwork tests use `ROON_CINEMA_PREVIEW_NEW=1`, a PNG encoded in `ROON_CINEMA_PREVIEW_COVER`, and `ROON_CINEMA_PREVIEW_COVER_SOURCE=current` or `playlist`.
+
+Web-research calls have a 300-second budget from the first attempt; structured-output calls use 150 seconds. Both allow one 300-second retry for a timeout, connection failure or transient service error. Completed web research is checkpointed per exact request and reused by Retry picture update. Structured model output is not cached before validation; validated research drafts retain their existing checkpoint. Successful publication and deletion clean up step checkpoints. Failed jobs persist their stage and error across bridge restarts.

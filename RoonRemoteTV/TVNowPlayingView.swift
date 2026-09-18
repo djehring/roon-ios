@@ -58,9 +58,8 @@ struct TVNowPlayingView: View {
             TVTransportControls()
 
             Button("Cinema", systemImage: "sparkles.tv") {
-              Task { await store.cinema.open(zoneId: store.selectedZoneId, current: store.currentTrack, queue: store.queue, client: store.client) }
+              store.cinema.openLibrary()
             }
-            .disabled(store.cinema.opening)
 
             Button {
               store.showQueue = true
@@ -82,9 +81,8 @@ struct TVNowPlayingView: View {
               .opacity(0.45)
 
             Button("Cinema", systemImage: "sparkles.tv") {
-              Task { await store.cinema.open(zoneId: store.selectedZoneId, current: store.currentTrack, queue: store.queue, client: store.client) }
+              store.cinema.openLibrary()
             }
-            .disabled(store.cinema.opening)
 
             HStack(spacing: 24) {
               Button {

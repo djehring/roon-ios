@@ -12,7 +12,6 @@ struct CinemaView: View {
   @State private var showingSources = false
   @State private var photosHeld = false
   @State private var interaction = 0
-  @State private var previousIdleTimerSetting = false
   @State private var failedPhotos: Set<String> = []
   @State private var loadedPhoto: String?
   @State private var imageLoader = MontageImageLoader()
@@ -43,6 +42,17 @@ struct CinemaView: View {
   }
 
   var body: some View {
+    Group {
+      if awaitingMontage { CinemaPreparationView(capsule: capsule) }
+      else { montage }
+    }
+    .background(.black).foregroundStyle(.white).preferredColorScheme(.dark)
+    #if os(iOS)
+    .statusBarHidden()
+    #endif
+  }
+
+  private var montage: some View {
     GeometryReader { geometry in
       let compact = geometry.size.width < 600
       ZStack {
@@ -72,7 +82,7 @@ struct CinemaView: View {
                 store.cinema.libraryAfterViewer = true
                 dismiss()
               } label: { Image(systemName: "rectangle.stack").padding(10) }
-                .buttonStyle(.bordered).accessibilityLabel("Saved Time Capsules")
+                .buttonStyle(.bordered).accessibilityLabel("Cinema playlists")
               Button { dismiss() } label: { Image(systemName: "xmark").padding(10) }
                 .buttonStyle(.bordered).accessibilityLabel("Close montage")
             }
@@ -111,21 +121,6 @@ struct CinemaView: View {
               }
             }
             .frame(maxWidth: 1000, alignment: .leading)
-          } else if awaitingMontage {
-            VStack(alignment: .leading, spacing: 16) {
-              if let error = store.cinema.preparationError {
-                Label("Montage could not be prepared", systemImage: "exclamationmark.triangle")
-                  .font(.title2.weight(.semibold))
-                Text(error).foregroundStyle(.secondary)
-              } else {
-                ProgressView().tint(Palette.accent)
-              Text("Preparing Cinema").font(.title2.weight(.semibold))
-                Text(store.cinema.preparationMessage).foregroundStyle(.secondary)
-              }
-              if let message = playbackMessage { Text(message).font(.subheadline) }
-            }
-            .frame(maxWidth: 650, alignment: .leading)
-            Spacer()
           } else {
             ContentUnavailableView("This montage needs pictures", systemImage: "photo.on.rectangle.angled",
               description: Text(capsule.isPersonal
@@ -180,12 +175,9 @@ struct CinemaView: View {
     .onChange(of: voiceOver) { _, enabled in if enabled { revealControls() } }
     .onAppear {
       playback = store.cinema.playbackMemory.resume(capsuleId: capsule.id, revision: capsule.createdAt)
-      previousIdleTimerSetting = UIApplication.shared.isIdleTimerDisabled
-      UIApplication.shared.isIdleTimerDisabled = true
     }
     .onDisappear {
       store.cinema.playbackMemory.remember(playback, capsuleId: capsule.id, revision: capsule.createdAt)
-      UIApplication.shared.isIdleTimerDisabled = previousIdleTimerSetting
     }
     #if os(tvOS)
     .onPlayPauseCommand { store.togglePlay(); revealControls() }
@@ -302,11 +294,14 @@ struct CinemaView: View {
 
 /// Keep only a few decoded photographs in memory, including the next frame.
 @MainActor
-private final class MontageImageLoader {
+final class MontageImageLoader {
+  static let previews = MontageImageLoader(maximumDimension: 800)
+  private let maximumDimension: CGFloat
   private let cache = NSCache<NSString, UIImage>()
 
-  init() {
-    cache.countLimit = 3
+  init(maximumDimension: CGFloat = 2560) {
+    self.maximumDimension = maximumDimension
+    cache.countLimit = maximumDimension < 1000 ? 20 : 3
     cache.totalCostLimit = 64 * 1024 * 1024
   }
 
@@ -323,7 +318,7 @@ private final class MontageImageLoader {
     request.timeoutInterval = 12
     let (data, response) = try await URLSession.shared.data(for: request)
     guard (response as? HTTPURLResponse)?.statusCode == 200,
-          let result = UIImage(data: data)?.preparingThumbnail(of: CGSize(width: 2560, height: 2560)) else {
+          let result = UIImage(data: data)?.preparingThumbnail(of: CGSize(width: maximumDimension, height: maximumDimension)) else {
       throw URLError(.cannotDecodeContentData)
     }
     try Task.checkCancellation()

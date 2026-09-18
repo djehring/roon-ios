@@ -144,6 +144,7 @@ targets:
       - path: RoonRemote/Cinema/TimeCapsule.swift
       - path: RoonRemote/Cinema/CapsuleOptions.swift
       - path: RoonRemote/Cinema/PersonalCinemaStore.swift
+      - path: RoonRemote/Cinema/CapsuleLibrary.swift
       - path: RoonRemote/Sidebar.swift
     settings:
       base:
@@ -161,6 +162,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: RoonRemote
+  RoonRemoteTVUITests:
+    type: bundle.ui-testing
+    platform: tvOS
+    sources:
+      - path: RoonRemoteTVUITests
+      - path: RoonRemoteUITests/CinemaPlaylistFixture.swift
+    dependencies:
+      - target: RoonRemoteTV
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tv.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: RoonRemoteTV
   RoonRemoteIntents:
     type: app-extension
     platform: iOS
@@ -266,6 +280,7 @@ targets:
           - WatchPayload.swift
       - path: RoonRemote/Models.swift
       - path: RoonRemote/MockStore.swift
+      - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/Cinema
       - path: RoonRemote/QueueTimeline.swift
@@ -337,5 +352,9 @@ schemes:
     run:
       config: Debug
       executable: RoonRemoteTV
+    test:
+      config: Debug
+      targets:
+        - RoonRemoteTVUITests
     archive:
       config: Release

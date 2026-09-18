@@ -20,13 +20,16 @@ Apple TV, iPad and iPhone show clear photographs fitted to the screen, with a sh
 
 ## Journey
 
-1. AI Search returns music. The listener adjusts the result list and chooses **Create Time Capsule**.
+The current library and editor implement the [Cinema playlist redesign](cinema-playlists-iphone-tv-mockups.md).
+
+1. AI Search returns music. The listener adjusts the result list and chooses **Set up Cinema**.
 2. The bridge researches that exact request and gathers permitted archive imagery. Music can continue during preparation.
 3. The saved programme appears in **Cinema** with its subject, track count and photograph count.
-4. **Play with Cinema** starts the saved music in the selected room and opens the visuals. **Watch** opens visuals alone.
-5. A second device selects the same room and chooses **Join**. The native TV app can continue independently of the phone.
+4. **Play music & pictures** starts the saved music in the selected room and opens the visuals. **Watch** opens visuals alone.
+5. A second device selects the same room and chooses **Watch pictures** from Cinema. The native TV app can continue independently of the phone.
 6. Photos change every eight seconds, whether or not music plays. A swipe or the photograph transport moves between pictures, and a hold button stops the montage without stopping the music. An information button holds the current photograph and opens its sources; dismissing the sheet continues the montage.
-7. **Rebuild montage** gathers new events and photos for the original request, including upgrading older story-based capsules.
+7. **Edit → Save & regenerate** gathers pictures using the changed options while preserving the soundtrack and saved identity. Album artwork or a previous picture appears while it works.
+8. **Delete** removes the saved Cinema item after confirmation, leaving original music and photos intact.
 
 Photo navigation and music transport are separate controls. Closing the viewer never stops the music. The photo clock runs independently: music pauses, song changes and seeks leave the montage flowing. A separate picture pause lets the listener hold a photo without stopping music.
 
@@ -63,6 +66,6 @@ from the recording. My photos accepts individual selections or an album snapshot
 keeps copied images on the device. See the adaptive setup section in the implementation
 guide for the saved request contract, bridge compatibility and Photos permissions.
 
-The implemented first version is dynamic research, Commons imagery, saved replay, room joining and native Cinema rendering. See [implementation, setup and validation](../time-capsule.md) for precise behaviour and limits.
+The implemented first version is dynamic research, Commons imagery, saved playlist management, room playback and native Cinema rendering. See [implementation, setup and validation](../time-capsule.md) for precise behaviour and limits.
 
-Future additions: licensed newspaper archives; explicit chart-date/rank metadata and date editing; frame-exact synchronisation between screens; shared TV control and viewer discovery; manifest corrections and deletion; optional silent AirPlay video and archival clips. None requires replacing the request-driven model with a curated fixed programme.
+Future additions: licensed newspaper archives; explicit chart-date/rank metadata; frame-exact synchronisation between screens; shared TV control and viewer discovery; source-level manifest corrections; optional silent AirPlay video and archival clips. None requires replacing the request-driven model with a curated fixed programme.

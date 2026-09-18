@@ -48,6 +48,9 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var scenes: [CapsuleScene]
   var contextImage: CapsuleImage?
   var notices: [String]?
+  var periodStart: String?
+  var periodEnd: String?
+  var generation: String?
 
   var isPersonal: Bool { request.options?.mode == .photos }
   var canWatch: Bool { montageFrames.count >= (isPersonal ? 1 : 3) }
@@ -81,11 +84,19 @@ struct CapsuleScene: Codable, Identifiable, Equatable {
 
 struct CapsulePreparation {
   let placeholder: TimeCapsule
+  let original: TimeCapsule?
   var result: TimeCapsule?
 
-  init(request: CapsuleRequest) {
-    placeholder = TimeCapsule(id: UUID().uuidString, title: "Preparing Time Capsule",
-      contextLabel: request.query, request: request, createdAt: request.requestedAt, scenes: [])
+  init(request: CapsuleRequest, original: TimeCapsule? = nil) {
+    self.original = original
+    placeholder = TimeCapsule(id: UUID().uuidString, title: original?.title ?? request.query,
+      contextLabel: original?.contextLabel ?? request.query, request: request,
+      createdAt: ISO8601DateFormatter().string(from: Date()), scenes: [],
+      contextImage: original?.montageFrames.first?.image ?? original?.contextImage)
+  }
+
+  func contains(_ capsule: TimeCapsule) -> Bool {
+    capsule.id == placeholder.id || capsule.id == original?.id
   }
 
   func resolve(_ presented: TimeCapsule) -> TimeCapsule {
@@ -150,6 +161,8 @@ struct CapsuleJob: Decodable {
   var status: String
   var error: String?
   var capsule: TimeCapsule?
+  var generation: String?
+  var message: String?
 }
 
 

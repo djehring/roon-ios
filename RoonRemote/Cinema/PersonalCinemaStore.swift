@@ -89,16 +89,42 @@ actor PersonalCinemaStore {
     return try Data(contentsOf: url)
   }
 
+  /// Reuses the imported copies and identity; editing never reimports Photos.
+  func update(_ capsule: TimeCapsule, options: CapsuleOptions) throws -> TimeCapsule {
+    guard capsule.isPersonal, options.mode == .photos,
+      capsule.id.hasPrefix("personal-"), UUID(uuidString: String(capsule.id.dropFirst(9))) != nil else {
+      throw PersonalCinemaError("This personal montage could not be updated.")
+    }
+    var updated = capsule
+    updated.request.options = options
+    updated.createdAt = ISO8601DateFormatter().string(from: Date())
+    if options.order == .chronological {
+      updated.scenes = updated.scenes.enumerated().sorted { left, right in
+        let a = left.element.image?.date ?? "", b = right.element.image?.date ?? ""
+        if a == b { return left.offset < right.offset }
+        if a.isEmpty { return false }
+        if b.isEmpty { return true }
+        return a < b
+      }.map(\.element)
+    } else if options.order == .shuffled { updated.scenes.shuffle() }
+    try Task.checkCancellation()
+    try JSONEncoder().encode(updated).write(to: root.appendingPathComponent(capsule.id + ".json"), options: .atomic)
+    return updated
+  }
+
   func discard(_ images: [CapsuleImage]) {
     for image in images {
       if let name = image.localFile, let url = Self.imageURL(name, directory: root) { try? FileManager.default.removeItem(at: url) }
     }
   }
 
-  func remove(_ capsule: TimeCapsule) {
+  func remove(_ capsule: TimeCapsule) throws {
     guard capsule.isPersonal, capsule.id.hasPrefix("personal-"),
       UUID(uuidString: String(capsule.id.dropFirst(9))) != nil else { return }
-    try? FileManager.default.removeItem(at: root.appendingPathComponent(capsule.id + ".json"))
+    let manifest = root.appendingPathComponent(capsule.id + ".json")
+    if FileManager.default.fileExists(atPath: manifest.path) {
+      try FileManager.default.removeItem(at: manifest)
+    }
     discard(capsule.montageFrames.map(\.image))
   }
 }

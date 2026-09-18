@@ -188,4 +188,19 @@ struct CapsuleOptions: Codable, Equatable {
 struct CapsuleSetup: Identifiable {
   let id = UUID()
   let request: CapsuleRequest
+  var original: TimeCapsule? = nil
+  var isEditing: Bool { original != nil }
+
+  var initialOptions: CapsuleOptions {
+    if let saved = request.options { return saved }
+    let mode = CapsuleMode.suggested(query: request.query, tracks: request.tracks)
+    var options = CapsuleOptions(mode: mode,
+      subject: mode.suggestedSubject(query: request.query, tracks: request.tracks), locale: request.locale)
+    if !isEditing { options.restorePreferences() }
+    if let original {
+      options.periodStart = original.periodStart
+      options.periodEnd = original.periodEnd
+    }
+    return options
+  }
 }

@@ -4,6 +4,7 @@ struct CapsuleSetupView: View {
   let setup: CapsuleSetup
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
+  @State private var presentationCategory = false
   @State private var options: CapsuleOptions
   @State private var drafts: [CapsuleMode: CapsuleOptions] = [:]
   @State private var customDates = false
@@ -18,23 +19,45 @@ struct CapsuleSetupView: View {
 
   init(setup: CapsuleSetup) {
     self.setup = setup
-    let request = setup.request
-    let mode = CapsuleMode.suggested(query: request.query, tracks: request.tracks)
-    var suggested = CapsuleOptions(
-      mode: mode,
-      subject: mode.suggestedSubject(query: request.query, tracks: request.tracks),
-      locale: request.locale
-    )
-    suggested.restorePreferences()
-    _options = State(initialValue: suggested)
-    let anchor = ISO8601DateFormatter().date(from: request.requestedAt) ?? Date()
-    _startDate = State(initialValue: anchor)
-    _endDate = State(initialValue: anchor)
+    let chosen = setup.initialOptions
+    _options = State(initialValue: chosen)
+    let anchor = ISO8601DateFormatter().date(from: setup.request.requestedAt) ?? Date()
+    let formatter = Self.dateFormatter
+    _startDate = State(initialValue: chosen.periodStart.flatMap(formatter.date(from:)) ?? anchor)
+    _endDate = State(initialValue: chosen.periodEnd.flatMap(formatter.date(from:)) ?? anchor)
+    _customDates = State(initialValue: chosen.periodStart != nil && chosen.periodEnd != nil)
   }
 
   var body: some View {
     NavigationStack {
-      Form {
+      Group {
+        if setup.isEditing { editor }
+        else {
+          creationForm
+            .navigationTitle("Set up Cinema")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+              ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { creation?.cancel(); dismiss() }
+              }
+            }
+        }
+      }
+      .background(Palette.background)
+    }
+    .tint(Palette.accent)
+    .preferredColorScheme(.dark)
+    .interactiveDismissDisabled(saving)
+    .task(id: setup.id) {
+      store.cinema.warmArtwork(tracks: setup.request.tracks, zoneId: store.selectedZoneId, client: store.client)
+    }
+    .onDisappear { creation?.cancel() }
+  }
+
+  private var creationForm: some View {
+    Form {
         Section {
           Text(setup.request.query).font(.headline)
           Text("\(setup.request.tracks.count) selected tracks · your soundtrack stays the same")
@@ -102,27 +125,214 @@ struct CapsuleSetupView: View {
       #if os(iOS)
       .scrollContentBackground(.hidden)
       #endif
-      .background(Palette.background)
-      .navigationTitle("Set up Cinema")
-      #if os(iOS)
-      .navigationBarTitleDisplayMode(.inline)
-      #endif
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
+  }
+
+  private var editor: some View {
+    GeometryReader { geometry in
+      let wide = CinemaLayout.isTV || geometry.size.width >= 760
+      VStack(spacing: 0) {
+        HStack {
+          Text("Edit Cinema").font(.system(size: CinemaLayout.isTV ? 42 : wide ? 28 : 22, weight: .bold))
+          Spacer()
           Button("Cancel") { creation?.cancel(); dismiss() }
+            #if os(tvOS)
+            .buttonStyle(CinemaButtonStyle()).frame(width: 160)
+            #else
+            .frame(minHeight: 44)
+            #endif
         }
+        .padding(.horizontal, CinemaLayout.inset).padding(.vertical, 16)
+        Divider()
+        if wide {
+          HStack(alignment: .top, spacing: 0) {
+            ScrollView { editorSummary(wide: true).padding(CinemaLayout.inset) }
+              .frame(width: geometry.size.width * 0.35)
+              .cinemaFocusSection()
+            Divider()
+            editorOptions(wide: true).cinemaFocusSection()
+          }
+        } else { editorOptions(wide: false) }
       }
     }
-    .tint(Palette.accent)
-    .interactiveDismissDisabled(saving)
-    .onDisappear { creation?.cancel() }
+    .foregroundStyle(Palette.primary)
+    #if os(tvOS)
+    .onExitCommand { dismiss() }
+    #endif
+  }
+
+  private func editorSummary(wide: Bool) -> some View {
+    VStack(alignment: .leading, spacing: wide ? 20 : 12) {
+      if let original = setup.original {
+        if wide {
+          if CinemaLayout.isTV {
+            CinemaArtwork(capsule: original).frame(height: 210)
+              .clipShape(RoundedRectangle(cornerRadius: 8))
+          } else {
+            CinemaArtwork(capsule: original).aspectRatio(1.7, contentMode: .fit)
+              .clipShape(RoundedRectangle(cornerRadius: 8))
+          }
+          Text(original.title).font(CinemaLayout.isTV ? .system(size: 38, weight: .bold) : .title.bold())
+            .lineLimit(CinemaLayout.isTV ? 2 : nil)
+          Text("\(setup.request.tracks.count) tracks · soundtrack unchanged")
+            .font(.subheadline).foregroundStyle(Palette.secondary)
+        } else {
+          HStack(spacing: 14) {
+            CinemaArtwork(capsule: original).frame(width: 56, height: 56)
+              .clipShape(RoundedRectangle(cornerRadius: 6))
+            VStack(alignment: .leading, spacing: 4) {
+              Text(original.title).font(.headline)
+              Text("\(setup.request.tracks.count) tracks · soundtrack unchanged")
+                .font(.caption).foregroundStyle(Palette.secondary)
+            }
+          }
+        }
+      }
+      if CinemaLayout.isTV {
+        Button { presentationCategory = false } label: {
+          CinemaSettingLabel(title: "Pictures")
+            .background(!presentationCategory ? Palette.surface : .clear)
+        }.cinemaPlainButton()
+        Button { presentationCategory = true } label: {
+          CinemaSettingLabel(title: "Presentation", detail: "Captions, motion, pace & order")
+            .background(presentationCategory ? Palette.surface : .clear)
+        }.cinemaPlainButton()
+      }
+      if wide {
+        Divider()
+        Text("Your current pictures stay available until the new montage is ready.")
+          .font(.subheadline).foregroundStyle(Palette.secondary)
+      }
+    }
+  }
+
+  private func editorOptions(wide: Bool) -> some View {
+    VStack(spacing: 0) {
+      ScrollView {
+        VStack(alignment: .leading, spacing: 20) {
+          if !wide { editorSummary(wide: false) }
+          if !CinemaLayout.isTV || !presentationCategory {
+            if options.mode != .photos {
+              sectionHeading("Pictures")
+              CinemaOptionRow(title: "Visual companion", selection: Binding(get: { options.mode }, set: changeMode),
+                choices: availableModes.map { CinemaOption(value: $0, title: $0.title) })
+                .accessibilityIdentifier("cinema-mode")
+              Divider()
+              NavigationLink {
+                Form { contextSection }
+                  .navigationTitle("Context")
+                  .tint(Palette.accent)
+              } label: {
+                CinemaSettingLabel(title: "Context", value: options.subject,
+                  detail: options.mode == .period ? Locale.current.localizedString(forRegionCode: options.region) : nil)
+              }.cinemaPlainButton()
+              sectionHeading("Include")
+              VStack(spacing: 0) {
+                ForEach(options.mode.topics) { topic in
+                  CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
+                  Divider()
+                }
+                CinemaTopicRow(title: CapsuleTopic.albumCovers.title, selected: topicBinding(.albumCovers))
+                Divider()
+                NavigationLink {
+                  ScrollView {
+                    VStack(spacing: 0) {
+                      ForEach(additionalTopics) { topic in
+                        CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
+                        Divider()
+                      }
+                    }.padding(CinemaLayout.inset)
+                  }.navigationTitle("More topics")
+                } label: { CinemaSettingLabel(title: "More topics") }.cinemaPlainButton()
+              }
+            } else {
+              Label("Your saved photos", systemImage: "photo.on.rectangle")
+              Text("Presentation changes use the photos already saved with this playlist.")
+                .font(.subheadline).foregroundStyle(Palette.secondary)
+            }
+          }
+          if !CinemaLayout.isTV || presentationCategory || options.mode == .photos {
+            sectionHeading("Presentation")
+            if wide { editorPresentation }
+            else {
+              NavigationLink {
+                ScrollView { editorPresentation.padding(24) }.navigationTitle("Presentation")
+              } label: {
+                CinemaSettingLabel(title: "\(options.captions.title) · \(options.motion.title)",
+                  detail: "\(Int(options.pace.seconds)) seconds · \(options.order.title)")
+              }.cinemaPlainButton()
+            }
+          }
+          if !wide {
+            Text("Your current pictures stay available until the new montage is ready.")
+              .font(.footnote).foregroundStyle(Palette.secondary)
+          }
+          if let failure { Text(failure).foregroundStyle(.red).font(.subheadline) }
+        }
+        .padding(CinemaLayout.inset)
+        .disabled(saving)
+      }
+      Divider()
+      VStack(spacing: 8) {
+        Button(action: create) {
+          HStack {
+            if saving { ProgressView().tint(Palette.onAccent) }
+            else { Image(systemName: "arrow.clockwise") }
+            Text("Save & regenerate")
+          }
+        }
+        .buttonStyle(CinemaButtonStyle(prominent: true))
+        .disabled(!canCreate || saving)
+        .accessibilityIdentifier("cinema-save")
+        Text("Album artwork or a saved picture appears straight away.")
+          .font(.caption).foregroundStyle(Palette.secondary)
+      }.padding(.horizontal, CinemaLayout.inset).padding(.vertical, 16)
+    }
+  }
+
+  private var editorPresentation: some View {
+    VStack(spacing: 0) {
+      CinemaOptionRow(title: "Captions", selection: $options.captions,
+        choices: CapsuleCaptions.allCases.filter { options.mode != .photos || $0 != .detailed }.map { CinemaOption(value: $0, title: $0.title) })
+      Divider()
+      CinemaOptionRow(title: "Movement", selection: $options.motion,
+        choices: CapsuleMotion.allCases.map { CinemaOption(value: $0, title: $0.title) })
+      Divider()
+      CinemaOptionRow(title: "Pace", selection: $options.pace,
+        choices: CapsulePace.allCases.map { CinemaOption(value: $0, title: "\(Int($0.seconds)) seconds") })
+      Divider()
+      CinemaOptionRow(title: "Order", selection: $options.order,
+        choices: CapsuleOrder.allCases.map { CinemaOption(value: $0, title: $0.title) })
+    }
+  }
+
+  private func sectionHeading(_ title: String) -> some View {
+    Text(title.uppercased()).font(.caption.weight(.semibold)).tracking(2).foregroundStyle(Palette.secondary)
+      .padding(.top, 4)
+  }
+
+  private func topicBinding(_ topic: CapsuleTopic) -> Binding<Bool> {
+    Binding(get: { options.topics.contains(topic) }, set: { selected in
+      options.topics.removeAll { $0 == topic }
+      if selected { options.topics.append(topic) }
+      options.topics = CapsuleTopic.allCases.filter { options.topics.contains($0) }
+    })
+  }
+
+  private static var dateFormatter: DateFormatter {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyy-MM-dd"
+    return formatter
   }
 
   private var availableModes: [CapsuleMode] {
+    if setup.original?.isPersonal == true { return [.photos] }
+    if setup.isEditing { return CapsuleMode.allCases.filter { $0 != .photos } }
     #if os(iOS)
-    CapsuleMode.allCases
+    return CapsuleMode.allCases
     #else
-    CapsuleMode.allCases.filter { $0 != .photos }
+    return CapsuleMode.allCases.filter { $0 != .photos }
     #endif
   }
 
@@ -202,7 +412,7 @@ struct CapsuleSetupView: View {
   private var canCreate: Bool {
     if options.mode == .photos {
       #if os(iOS)
-      return photos.count > 0 && photos.count <= 200
+      return setup.original?.isPersonal == true || (photos.count > 0 && photos.count <= 200)
       #else
       return false
       #endif
@@ -229,6 +439,8 @@ struct CapsuleSetupView: View {
   private func create() {
     var request = setup.request
     var chosen = options
+    chosen.periodStart = nil
+    chosen.periodEnd = nil
     if customDates && options.mode != .work && options.mode != .photos {
       let formatter = DateFormatter()
       formatter.calendar = Calendar(identifier: .gregorian)
@@ -241,6 +453,7 @@ struct CapsuleSetupView: View {
     if options.mode != .photos {
       chosen.rememberPreferences()
       store.cinema.pendingRequest = request
+      store.cinema.pendingOriginal = setup.original
       dismiss()
       return
     }
@@ -249,9 +462,14 @@ struct CapsuleSetupView: View {
     creation = Task {
       defer { saving = false }
       do {
-        let capsule = try await photos.create(request: request)
+        let capsule: TimeCapsule
+        if let original = setup.original {
+          capsule = try await PersonalCinemaStore.shared.update(original, options: chosen)
+        } else {
+          capsule = try await photos.create(request: request)
+        }
         if Task.isCancelled {
-          await PersonalCinemaStore.shared.remove(capsule)
+          if setup.original == nil { try? await PersonalCinemaStore.shared.remove(capsule) }
           return
         }
         chosen.rememberPreferences()
