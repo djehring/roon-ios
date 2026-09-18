@@ -9,6 +9,7 @@ search and selected tracks, suggests **Around this time**, **About the artist**,
 **About the work**, and allows an override. **My photos** is always available on iOS.
 The visual subject can be edited without changing the soundtrack or original time anchor.
 **More topics** allows combinations beyond the suggested set, such as headlines with artist photographs.
+**Album covers** is a separate option and uses only cover images available under the bridge's reusable-image licence gate.
 
 - Period: headlines, sports, TV/film/culture and everyday life; country perspective and optional exact dates.
 - Artist: photographs, career, collaborators, places and optional wider historical context.
@@ -23,11 +24,15 @@ Captions can be hidden, brief or detailed (personal photos offer hidden or date 
 Ordering is selected/curated, chronological or shuffled at creation; saved replay preserves it.
 Topic and presentation preferences are remembered per mode on this device. Subjects and date ranges are not.
 
-The bridge's authenticated **GET `/capabilities`** must return `{optionsVersion:1}` before a configured
+The bridge's authenticated **GET `/capabilities`** must return `{optionsVersion:2}` before a configured
 request is submitted. Older bridges get an actionable update message rather than silently ignoring options.
 The optional request `options` object includes `mode`, `topics`, `subject`, `region`, optional
 `periodStart`/`periodEnd`, `workContext`, `captions`, `motion`, `pace` and `order`.
 These values participate in cache identity and survive saved replay/rebuild. Requests without options remain compatible.
+
+Artist setup derives its canonical subject from the selected tracks, so “Bowie greatest hits” researches
+David Bowie rather than the search wording. Work setup combines the selected artist/composer and parent
+work title, collapsing concerto or symphony movements where their metadata permits it.
 
 Configured research only commissions selected topics, audits sources and dates, and filters unselected topic IDs.
 It does not impose the legacy news/sport/culture quota. At least three distinct accepted images are required;

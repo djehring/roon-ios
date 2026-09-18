@@ -10,6 +10,29 @@ struct CapsuleOptionsTests {
     #expect(CapsuleMode.suggested(query: "Beethoven Symphony No. 6", tracks: []) == .work)
     #expect(CapsuleMode.suggested(query: "Brazilian jazz in the sixties", tracks: []) == .artist)
   }
+  @Test func usesTrackMetadataForArtistAndClassicalWorkSubjects() {
+    let bowie = [
+      CapsuleTrack(artist: "David Bowie", track: "Changes", album: "Hunky Dory"),
+      CapsuleTrack(artist: "David Bowie", track: "Heroes", album: "Heroes"),
+    ]
+    #expect(CapsuleMode.artist.suggestedSubject(query: "Bowie greatest hits", tracks: bowie) == "David Bowie")
+    let concerto = [
+      CapsuleTrack(artist: "Beethoven", track: "Piano Concerto No. 5: I. Allegro", album: ""),
+      CapsuleTrack(artist: "Beethoven", track: "Piano Concerto No. 5: II. Adagio", album: ""),
+    ]
+    #expect(
+      CapsuleMode.work.suggestedSubject(query: "Emperor concerto", tracks: concerto)
+        == "Beethoven — Piano Concerto No. 5"
+    )
+  }
+  @Test func albumCoversAreAnExplicitRememberedTopic() throws {
+    let options = CapsuleOptions(mode: .artist, subject: "David Bowie")
+    #expect(!options.topics.contains(.albumCovers))
+    var selected = options
+    selected.topics.append(.albumCovers)
+    let restored = try JSONDecoder().decode(CapsuleOptions.self, from: JSONEncoder().encode(selected))
+    #expect(restored.topics.contains(.albumCovers))
+  }
   @Test func savedPreferencesStayWithinTheirModeAndDoNotCarryOverDatesOrSubjects() throws {
     let suite = "CinemaTests-" + UUID().uuidString
     let defaults = try #require(UserDefaults(suiteName: suite))

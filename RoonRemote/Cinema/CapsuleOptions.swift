@@ -38,11 +38,40 @@ enum CapsuleMode: String, Codable, CaseIterable, Identifiable {
       .replacingOccurrences(of: #"[^\p{L}]"#, with: "", options: .regularExpression)
     return remainder.isEmpty ? .period : .artist
   }
+
+  func suggestedSubject(query: String, tracks: [CapsuleTrack]) -> String {
+    let artists = unique(tracks.map(\.artist))
+    switch self {
+    case .artist:
+      return artists.count == 1 ? artists[0] : query
+    case .work:
+      let works = unique(tracks.map(\.track).map(Self.workTitle))
+      let work = works.count == 1 ? works[0] : query
+      return ([artists.count == 1 ? artists[0] : nil, work] as [String?])
+        .compactMap { $0 }.joined(separator: " — ")
+    case .period, .photos:
+      return query
+    }
+  }
+
+  private func unique(_ values: [String]) -> [String] {
+    var seen = Set<String>()
+    return values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+  }
+
+  private static func workTitle(_ title: String) -> String {
+    title.replacingOccurrences(
+      of: #":\s*(?:[IVXLCDM]+|\d+)\.?\s+.*$"#,
+      with: "",
+      options: [.regularExpression, .caseInsensitive]
+    )
+  }
 }
 
 enum CapsuleTopic: String, Codable, CaseIterable, Identifiable {
   case headlines, sports, culture, everydayLife, artistImages, career, collaborators, places
-  case historicalContext, composer, programmeNotes, artwork, manuscripts, performers
+  case historicalContext, composer, programmeNotes, artwork, manuscripts, performers, albumCovers
   var id: Self { self }
   var title: String {
     switch self {
@@ -60,6 +89,7 @@ enum CapsuleTopic: String, Codable, CaseIterable, Identifiable {
     case .artwork: "Art & architecture"
     case .manuscripts: "Manuscripts & scores"
     case .performers: "Performers & recording"
+    case .albumCovers: "Album covers"
     }
   }
 }

@@ -238,7 +238,7 @@ final class RoonAPIClient: @unchecked Sendable {
     struct Capabilities: Decodable { var optionsVersion: Int }
     do {
       let capabilities = try decoder.decode(Capabilities.self, from: await capsuleResponse("capabilities"))
-      guard capabilities.optionsVersion >= 1 else {
+      guard capabilities.optionsVersion >= 2 else {
         throw PersonalCinemaError("Update the bridge to use Cinema's content and presentation options.")
       }
     } catch {

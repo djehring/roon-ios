@@ -19,8 +19,12 @@ struct CapsuleSetupView: View {
   init(setup: CapsuleSetup) {
     self.setup = setup
     let request = setup.request
-    var suggested = CapsuleOptions(mode: CapsuleMode.suggested(query: request.query, tracks: request.tracks),
-      subject: request.query, locale: request.locale)
+    let mode = CapsuleMode.suggested(query: request.query, tracks: request.tracks)
+    var suggested = CapsuleOptions(
+      mode: mode,
+      subject: mode.suggestedSubject(query: request.query, tracks: request.tracks),
+      locale: request.locale
+    )
     suggested.restorePreferences()
     _options = State(initialValue: suggested)
     let anchor = ISO8601DateFormatter().date(from: request.requestedAt) ?? Date()
@@ -55,17 +59,18 @@ struct CapsuleSetupView: View {
             ForEach(options.mode.topics) { topic in
               topicToggle(topic)
             }
+            topicToggle(.albumCovers)
             #if os(tvOS)
             NavigationLink("More topics") {
               Form {
-                ForEach(CapsuleTopic.allCases.filter { !options.mode.topics.contains($0) }) { topic in
+                ForEach(additionalTopics) { topic in
                   topicToggle(topic)
                 }
               }.navigationTitle("More topics")
             }
             #else
             DisclosureGroup("More topics") {
-              ForEach(CapsuleTopic.allCases.filter { !options.mode.topics.contains($0) }) { topic in
+              ForEach(additionalTopics) { topic in
                 topicToggle(topic)
               }
             }
@@ -187,6 +192,13 @@ struct CapsuleSetupView: View {
     Array(Set([options.region, "GB", "US", "FR", "DE", "IT", "ES", "AU", "CA", "BR", "JP"]))
       .sorted { (Locale.current.localizedString(forRegionCode: $0) ?? $0) < (Locale.current.localizedString(forRegionCode: $1) ?? $1) }
   }
+
+  private var additionalTopics: [CapsuleTopic] {
+    CapsuleTopic.allCases.filter {
+      $0 != .albumCovers && !options.mode.topics.contains($0)
+    }
+  }
+
   private var canCreate: Bool {
     if options.mode == .photos {
       #if os(iOS)
@@ -203,7 +215,11 @@ struct CapsuleSetupView: View {
     drafts[options.mode] = options
     if let draft = drafts[mode] { options = draft }
     else {
-      options = CapsuleOptions(mode: mode, subject: setup.request.query, locale: setup.request.locale)
+      options = CapsuleOptions(
+        mode: mode,
+        subject: mode.suggestedSubject(query: setup.request.query, tracks: setup.request.tracks),
+        locale: setup.request.locale
+      )
       options.restorePreferences()
     }
     customDates = false
