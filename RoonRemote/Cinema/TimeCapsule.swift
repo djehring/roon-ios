@@ -20,6 +20,7 @@ struct CapsuleRequest: Codable, Equatable {
   var locale: String
   var timeZone: String
   var tracks: [CapsuleTrack]
+  var options: CapsuleOptions?
 
   init(context: CapsuleSearchContext, tracks: [SuggestedTrack]) {
     query = context.query
@@ -46,6 +47,10 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var createdAt: String
   var scenes: [CapsuleScene]
   var contextImage: CapsuleImage?
+  var notices: [String]?
+
+  var isPersonal: Bool { request.options?.mode == .photos }
+  var canWatch: Bool { montageFrames.count >= (isPersonal ? 1 : 3) }
 
   /// Only real photographs enter the montage. Empty story cards and repeated
   /// context backgrounds must not masquerade as a changing photo sequence.
@@ -137,6 +142,7 @@ struct CapsuleImage: Codable, Equatable {
   var licenseUrl: String
   var date: String
   var description: String
+  var localFile: String?
 }
 
 struct CapsuleJob: Decodable {
@@ -160,12 +166,13 @@ struct MontagePlayback {
   private(set) var elapsed: Double = 0
   static let secondsPerPhoto: Double = 8
 
-  mutating func advance(seconds: Double, playing: Bool, count: Int) {
+  mutating func advance(seconds: Double, playing: Bool, count: Int, secondsPerPhoto: Double = Self.secondsPerPhoto) {
     guard playing, count > 1, seconds.isFinite, seconds > 0 else { return }
+    guard secondsPerPhoto.isFinite, secondsPerPhoto > 0 else { return }
     elapsed += seconds
-    if elapsed >= Self.secondsPerPhoto {
-      index = (index + Int(elapsed / Self.secondsPerPhoto)) % count
-      elapsed.formTruncatingRemainder(dividingBy: Self.secondsPerPhoto)
+    if elapsed >= secondsPerPhoto {
+      index = (index + Int(elapsed / secondsPerPhoto)) % count
+      elapsed.formTruncatingRemainder(dividingBy: secondsPerPhoto)
     }
   }
 

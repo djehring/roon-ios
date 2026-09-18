@@ -75,10 +75,13 @@ key is set on the sidecar.
 
 ## Cinema / Time Capsules
 
-After an AI Search, choose **Create Time Capsule** to prepare a changing photo montage
-for that exact request, with its selected tracks as the soundtrack. For a dated
-search, headlines cover the news, politics, sport and culture of that period.
-Photos change every eight seconds while music plays and continue across songs. No historical programme is bundled.
+After an AI Search, choose **Set up Cinema**. The setup suggests a period, artist,
+or musical-work companion with relevant topic choices. On iPhone and iPad,
+**My photos** also supports selected photos or an album snapshot kept on that device.
+Choose captions, still/gentle/Ken Burns movement, order, and a 5-, 8- or 16-second pace.
+The selected tracks remain the soundtrack. Pictures continue across songs. Swipe or use the
+photograph controls to move between pictures, or hold the montage while the music keeps playing.
+No historical programme is bundled.
 Open **Cinema** from Now Playing to replay saved programmes. On Apple TV, select
 the same Roon room and choose **Join** to follow its programme without restarting music.
 
@@ -96,7 +99,8 @@ xcodegen generate
 ## Tests
 
 `RoonRemoteTests` is a logic-only bundle (no host app), so it covers the pure
-types rather than views or the store. Run it with the **Roon Remote** scheme:
+types and local photo storage. `RoonRemoteUITests` checks the adaptive Cinema setup
+on iPhone and iPad with deterministic demo content. Run the **Roon Remote** scheme:
 
 ```bash
 xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \

@@ -1,5 +1,33 @@
 # Cinema montage revision — validation
 
+## Adaptive setup (18 September 2026)
+
+- Full iOS logic suite: 158 tests passed, including legacy capsule decoding, request/option round trips,
+  per-mode preferences without stale dates/subjects, chosen photo pacing, and personal image storage/reload/order/cleanup.
+- Native iPhone and iPad interface tests exercise period/artist/work/photo mode changes, Beethoven's relaxed
+  default, Photos/album entry points and the disabled empty-selection action. The iPhone regression also checks
+  selecting artist photographs through More topics. Screenshots were exported and visually inspected.
+- Bridge: 60 tests passed across request validation, capabilities/paired access, cache identity, saved rebuilds,
+  archive handling and the new period/Django/Beethoven research handoffs. TypeScript checking passes.
+- iOS and tvOS simulator builds pass. The options schema also passes its focused ESLint check.
+- Research handoff tests use mocked source responses and stop before paid image generation. A live production
+  capsule and physical-device Photos permissions/iCloud album downloads have not been exercised for this change.
+  Source changes are local and have not been deployed to the running bridge or installed on physical devices.
+
+Screenshots: [iPhone](design/assets/cinema-setup-iphone.png),
+[Beethoven](design/assets/cinema-setup-beethoven.png),
+[personal photos](design/assets/cinema-setup-photos.png),
+[iPad](design/assets/cinema-setup-ipad.png).
+
+## Paris Subject Failure (17 September 2026)
+
+- The phone's `Top django Reinhardt hits 1939 to 1945` request lost its named subject after date resolution. It researched Britain and then failed a domestic/topic quota despite 21 photographs passing visual review. This was an intent-handling bug, not evidence that Paris lacked wartime photographs.
+- Subject-focused requests now retain their artist/place/theme through research, audit and compilation, without the generic chart montage's home-country or topic quotas. Versioned drafts prevent reuse of old off-topic research. Date, source, licence, minimum-photo and visual-review requirements remain.
+- A new request clarified the user's desired Paris/World War II context while preserving the original tracks and timestamp. Two image passes still failed (five and three accepted photos). Diagnostics showed generic subject searches exhausting the query budget and useful archive results below the first 20 entries. Targeted searches now get priority across all stories, use event years, and retrieve up to 50 results per query.
+- The final live run completed as **Paris in World War II and Django Reinhardt, 1939–1945**, with six accepted photos across six illustrated scenes. It searched 72 queries, retained 73 candidates, and accepted six of 12 reviewed images. This is a short montage, not complete illustration of the 25 researched scenes.
+- Visually inspected all six saved image files, including the occupation parade, Django portrait and liberation photographs. They show recognizable subjects with period grain/print wear. Simulator verification was blocked by the locked Mac; no claim of fresh simulator or Apple TV playback verification is made.
+- All 377 bridge tests across 32 suites and the production build passed. The rebuilt bridge is deployed; no native code or iPhone installation was changed.
+
 ## Main Integration (17 September 2026)
 
 - Integrated upstream iOS `895ae21` and bridge `6f32429` (shared bridge track matching and requested-artist verification) before committing the Time Capsule updates. No merge conflicts.

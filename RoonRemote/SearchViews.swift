@@ -105,14 +105,14 @@ struct AISearchView: View {
           .padding(.horizontal, 16)
       }
 
-      if !store.aiLoading {
+      if !store.aiLoading, !store.aiResults.isEmpty {
         Button("Play selected tracks") {
           queryFocused = false
           store.playAIResults()
         }
         .buttonStyle(GoldFillButton())
         .padding(.horizontal, 16)
-        .disabled(store.aiResults.isEmpty)
+        .disabled(store.aiResults.allSatisfy { $0.error != nil })
         CreateTimeCapsuleButton()
           .padding(.horizontal, 16)
       }

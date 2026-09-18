@@ -65,12 +65,30 @@ struct GoldFillButton: ButtonStyle {
   var minHeight: CGFloat = 50
 
   func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .font(.system(size: 17, weight: .semibold))
-      .foregroundStyle(Palette.onAccent)
-      .frame(maxWidth: .infinity, minHeight: minHeight)
-      .background(Palette.accent.opacity(configuration.isPressed ? 0.75 : 1))
-      .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    Fill(configuration: configuration, minHeight: minHeight)
+  }
+
+  /// A nested view reads the enabled state: a ButtonStyle is not part of the
+  /// view graph, so a disabled button would otherwise keep the full gold fill
+  /// of a live call to action.
+  private struct Fill: View {
+    let configuration: ButtonStyleConfiguration
+    let minHeight: CGFloat
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+      configuration.label
+        .font(.system(size: 17, weight: .semibold))
+        .foregroundStyle(Palette.onAccent.opacity(isEnabled ? 1 : 0.5))
+        .frame(maxWidth: .infinity, minHeight: minHeight)
+        .background(Palette.accent.opacity(fill))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var fill: Double {
+      guard isEnabled else { return 0.3 }
+      return configuration.isPressed ? 0.75 : 1
+    }
   }
 }
 

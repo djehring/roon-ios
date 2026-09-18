@@ -62,6 +62,16 @@
                ReferencedContainer = "container:RoonRemote.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2335ABCE3D1E56C50E3C9A8A"
+               BuildableName = "RoonRemoteUITests.xctest"
+               BlueprintName = "RoonRemoteUITests"
+               ReferencedContainer = "container:RoonRemote.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

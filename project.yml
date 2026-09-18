@@ -77,8 +77,8 @@ targets:
           House Remote records a short clip so the bridge can turn
           speech into an AI search.
         NSPhotoLibraryUsageDescription: >-
-          House Remote reads a cover photo from your library so the
-          bridge can match the album.
+          House Remote lets you choose a photo album for a personal
+          Cinema montage saved on this device.
         NSSupportsLiveActivities: true
         UIBackgroundModes:
           - audio
@@ -142,11 +142,25 @@ targets:
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/Cinema/TimeCapsule.swift
+      - path: RoonRemote/Cinema/CapsuleOptions.swift
+      - path: RoonRemote/Cinema/PersonalCinemaStore.swift
       - path: RoonRemote/Sidebar.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.tests
         GENERATE_INFOPLIST_FILE: YES
+  RoonRemoteUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: RoonRemoteUITests
+    dependencies:
+      - target: RoonRemote
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.djehring.roonremote.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: RoonRemote
   RoonRemoteIntents:
     type: app-extension
     platform: iOS
@@ -303,6 +317,7 @@ schemes:
       config: Debug
       targets:
         - RoonRemoteTests
+        - RoonRemoteUITests
     archive:
       config: Release
   RoonRemoteWatch:

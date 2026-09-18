@@ -10,6 +10,7 @@ struct CinemaView: View {
   @State private var playback = MontagePlayback()
   @State private var controlsVisible = true
   @State private var showingSources = false
+  @State private var photosHeld = false
   @State private var interaction = 0
   @State private var previousIdleTimerSetting = false
   @State private var failedPhotos: Set<String> = []
@@ -22,7 +23,10 @@ struct CinemaView: View {
   private var frame: MontageFrame? {
     frames.isEmpty ? nil : frames[playback.index % frames.count]
   }
-  private var running: Bool { !showingSources }
+  private var running: Bool { !showingSources && !photosHeld }
+  private var captions: CapsuleCaptions { capsule.request.options?.captions ?? .brief }
+  private var motion: CapsuleMotion { capsule.request.options?.motion ?? .gentle }
+  private var secondsPerPhoto: Double { capsule.request.options?.pace.seconds ?? 8 }
   private var awaitingMontage: Bool { store.cinema.preparation?.placeholder.id == capsule.id }
   private var playbackMessage: String? {
     let cinema = store.cinema
@@ -46,6 +50,7 @@ struct CinemaView: View {
         if let frame {
           MontagePhotograph(image: frame.image, client: store.client, loader: imageLoader, moving: running,
             reduceMotion: reduceMotion,
+            motion: motion, duration: secondsPerPhoto,
             loaded: { loadedPhoto = frame.id },
             failed: { failedPhotos.insert(frame.id) })
             .id(frame.id)
@@ -55,9 +60,11 @@ struct CinemaView: View {
         }
         VStack(alignment: .leading, spacing: 18) {
           HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 8) {
-              Text("TIME CAPSULE").font(.caption.weight(.semibold)).tracking(5).foregroundStyle(Palette.accent)
+            if captions != .none || controlsVisible {
+              VStack(alignment: .leading, spacing: 8) {
+              Text(capsule.request.options?.mode == .period || capsule.request.options == nil ? "TIME CAPSULE" : "CINEMA").font(.caption.weight(.semibold)).tracking(5).foregroundStyle(Palette.accent)
               Text(capsule.contextLabel).font(compact ? .subheadline : .title3)
+              }
             }
             Spacer()
             if controlsVisible {
@@ -73,15 +80,24 @@ struct CinemaView: View {
           Spacer()
           if let frame {
             VStack(alignment: .leading, spacing: 10) {
+              if captions != .none {
               Text([frame.scene.scope, frame.scene.dateLabel].filter { !$0.isEmpty }.joined(separator: " · "))
                 .font(.caption.weight(.semibold)).foregroundStyle(Palette.accent)
               Text(frame.scene.title)
                 .font(.system(size: compact ? 30 : 48, weight: .semibold))
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-              if frames.count < 3 {
+              if captions == .detailed && !frame.scene.body.isEmpty {
+                Text(frame.scene.body).font(compact ? .subheadline : .title3).lineLimit(4)
+              }
+              }
+              if frames.count < (capsule.isPersonal ? 1 : 3) {
                 Text("Only \(frames.count) photograph(s) available · rebuild this montage for more pictures")
                   .font(.caption).foregroundStyle(Palette.accent)
+              }
+              if photosHeld {
+                Label("Photograph held · the music continues", systemImage: "pause.fill")
+                  .font(.caption.weight(.semibold)).foregroundStyle(Palette.accent)
               }
               if let message = playbackMessage {
                 HStack(spacing: 8) {
@@ -89,8 +105,10 @@ struct CinemaView: View {
                   Text(message).font(.caption)
                 }
               }
-              Text("\(frame.image.credit) · \(frame.image.license) · Photo: \(frame.image.date)")
-                .font(.caption2).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+              if !capsule.isPersonal {
+                Text("\(frame.image.credit) · \(frame.image.license) · Image: \(frame.image.date)")
+                  .font(.caption2).foregroundStyle(.white.opacity(0.7)).lineLimit(2)
+              }
             }
             .frame(maxWidth: 1000, alignment: .leading)
           } else if awaitingMontage {
@@ -101,7 +119,7 @@ struct CinemaView: View {
                 Text(error).foregroundStyle(.secondary)
               } else {
                 ProgressView().tint(Palette.accent)
-                Text("Preparing Time Capsule").font(.title2.weight(.semibold))
+              Text("Preparing Cinema").font(.title2.weight(.semibold))
                 Text(store.cinema.preparationMessage).foregroundStyle(.secondary)
               }
               if let message = playbackMessage { Text(message).font(.subheadline) }
@@ -109,10 +127,12 @@ struct CinemaView: View {
             .frame(maxWidth: 650, alignment: .leading)
             Spacer()
           } else {
-            ContentUnavailableView("This montage needs photographs", systemImage: "photo.on.rectangle.angled",
-              description: Text(failedPhotos.isEmpty
-                ? "Rebuild this capsule from Time Capsules to prepare a photo montage."
-                : "The archive pictures could not be loaded. Check the bridge connection, then reopen the montage."))
+            ContentUnavailableView("This montage needs pictures", systemImage: "photo.on.rectangle.angled",
+              description: Text(capsule.isPersonal
+                ? "These saved photos could not be loaded. Create a new montage from your Photos library."
+                : failedPhotos.isEmpty
+                  ? "Rebuild this capsule from Cinema to prepare a montage."
+                  : "The archive pictures could not be loaded. Check the bridge connection, then reopen the montage."))
           }
           if controlsVisible { controls(compact: compact) }
         }
@@ -121,13 +141,19 @@ struct CinemaView: View {
       .clipped()
       .contentShape(Rectangle())
       .onTapGesture { revealControls() }
+      #if !os(tvOS)
+      .gesture(photoSwipe)
+      #endif
       .accessibilityAction(named: "Show montage controls") { revealControls() }
+      .accessibilityAction(named: "Next photograph") { movePhoto(1) }
+      .accessibilityAction(named: "Previous photograph") { movePhoto(-1) }
+      .accessibilityAction(named: photosHeld ? "Resume photographs" : "Hold photograph") { togglePhotoHold() }
     }
     .background(.black).foregroundStyle(.white).preferredColorScheme(.dark)
     #if os(iOS)
     .statusBarHidden()
     #endif
-    .animation(reduceMotion ? nil : .easeInOut(duration: 1.2), value: frame?.id)
+    .animation(reduceMotion || motion == .still ? nil : .easeInOut(duration: 1.2), value: frame?.id)
     .animation(.easeInOut(duration: 0.2), value: controlsVisible)
     .sheet(isPresented: $showingSources) {
       if let scene = sourceScene { CinemaSourcesView(scene: scene, query: capsule.request.query) }
@@ -141,8 +167,8 @@ struct CinemaView: View {
       guard running else { return }
       while !Task.isCancelled {
         do { try await Task.sleep(for: .seconds(1)) } catch { return }
-        // Start each eight-second hold only once the photograph has loaded.
-        playback.advance(seconds: 1, playing: loadedPhoto == frame?.id, count: frames.count)
+        // Give each picture its chosen hold time after it has loaded.
+        playback.advance(seconds: 1, playing: loadedPhoto == frame?.id, count: frames.count, secondsPerPhoto: secondsPerPhoto)
       }
     }
     .task(id: interaction) {
@@ -163,7 +189,13 @@ struct CinemaView: View {
     }
     #if os(tvOS)
     .onPlayPauseCommand { store.togglePlay(); revealControls() }
-    .onMoveCommand { _ in revealControls() }
+    .onMoveCommand { direction in
+      switch direction {
+      case .left: movePhoto(-1)
+      case .right: movePhoto(1)
+      default: revealControls()
+      }
+    }
     .onExitCommand { dismiss() }
     .focusable(!controlsVisible)
     #endif
@@ -181,7 +213,7 @@ struct CinemaView: View {
         Spacer(minLength: 0)
         if !compact { Text(store.selectedZone.name).font(.subheadline) }
       }
-      HStack(spacing: 16) {
+      transportRow("MUSIC") {
         Group {
           Button { store.previous(); revealControls() } label: {
             Image(systemName: "backward.end.fill").frame(width: 28, height: 28)
@@ -198,6 +230,29 @@ struct CinemaView: View {
         }
         .disabled(store.currentTrack == nil)
         Spacer(minLength: 0)
+      }
+      transportRow("PHOTOGRAPHS") {
+        Group {
+          Button { movePhoto(-1) } label: {
+            Image(systemName: "backward.frame.fill").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel("Previous photograph")
+          Button { togglePhotoHold() } label: {
+            Image(systemName: photosHeld ? "play.rectangle.fill" : "pause.rectangle.fill")
+              .frame(width: 28, height: 28)
+          }
+          .accessibilityLabel(photosHeld ? "Resume photographs" : "Hold photograph")
+          Button { movePhoto(1) } label: {
+            Image(systemName: "forward.frame.fill").frame(width: 28, height: 28)
+          }
+          .accessibilityLabel("Next photograph")
+        }
+        .disabled(frames.count < 2)
+        Spacer(minLength: 0)
+        if let position = photoPosition {
+          Text(position).font(.caption).foregroundStyle(.white.opacity(0.65))
+            .accessibilityLabel("Photograph \(position)")
+        }
         if frame != nil {
           Button { showingSources = true; revealControls() } label: {
             Image(systemName: "info.circle").frame(width: 28, height: 28)
@@ -205,8 +260,41 @@ struct CinemaView: View {
           .accessibilityLabel("Photo and headline sources")
         }
       }
-      .buttonStyle(.bordered)
     }
+  }
+
+  private func transportRow(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text(title).font(.caption2.weight(.semibold)).tracking(3).foregroundStyle(.white.opacity(0.5))
+      HStack(spacing: 16) { content() }.buttonStyle(.bordered)
+    }
+  }
+
+  private var photoPosition: String? {
+    guard frames.count > 1 else { return nil }
+    return "\(playback.index % frames.count + 1) of \(frames.count)"
+  }
+
+  #if !os(tvOS)
+  private var photoSwipe: some Gesture {
+    DragGesture(minimumDistance: 30).onEnded { value in
+      guard abs(value.translation.width) > abs(value.translation.height) else { return }
+      movePhoto(value.translation.width < 0 ? 1 : -1)
+    }
+  }
+  #endif
+
+  /// Manual navigation gives the chosen photograph a full hold, so a swipe
+  /// never lands on a picture that is about to change.
+  private func movePhoto(_ offset: Int) {
+    guard frames.count > 1 else { return }
+    playback.move(offset, count: frames.count)
+    revealControls()
+  }
+
+  private func togglePhotoHold() {
+    photosHeld.toggle()
+    revealControls()
   }
 
   private func revealControls() { controlsVisible = true; interaction += 1 }
@@ -224,6 +312,12 @@ private final class MontageImageLoader {
 
   func load(_ image: CapsuleImage, client: RoonAPIClient) async throws -> UIImage {
     if let cached = cache.object(forKey: image.file as NSString) { return cached }
+    if let local = image.localFile {
+      let data = try await PersonalCinemaStore.shared.imageData(local)
+      guard let result = UIImage(data: data) else { throw URLError(.cannotDecodeContentData) }
+      cache.setObject(result, forKey: image.file as NSString, cost: (result.cgImage?.bytesPerRow ?? 0) * (result.cgImage?.height ?? 0))
+      return result
+    }
     guard let url = client.timeCapsuleImageURL(image.file) else { throw URLError(.badURL) }
     var request = URLRequest(url: url)
     request.timeoutInterval = 12
@@ -245,10 +339,15 @@ private struct MontagePhotograph: View {
   let loader: MontageImageLoader
   let moving: Bool
   let reduceMotion: Bool
+  let motion: CapsuleMotion
+  let duration: Double
   let loaded: () -> Void
   let failed: () -> Void
   @State private var photograph: UIImage?
-  @State private var motionSeconds = 0
+  @State private var motionSeconds: Double = 0
+  private var animated: Bool { !reduceMotion && motion != .still }
+  private var fraction: Double { min(motionSeconds / max(1, duration), 1) }
+  private var direction: Double { image.file.utf8.reduce(0, { $0 + Int($1) }).isMultiple(of: 2) ? 1 : -1 }
 
   var body: some View {
     GeometryReader { geometry in
@@ -258,7 +357,9 @@ private struct MontagePhotograph: View {
         } else { ProgressView("Loading photograph…").tint(.white) }
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
-      .scaleEffect(reduceMotion ? 1 : 1 + Double(motionSeconds) * 0.002)
+      .scaleEffect(!animated ? 1 : 1 + fraction * (motion == .kenBurns ? 0.08 : 0.03))
+      .offset(x: animated && motion == .kenBurns ? direction * fraction * geometry.size.width * 0.015 : 0,
+        y: animated && motion == .kenBurns ? -direction * fraction * geometry.size.height * 0.01 : 0)
       .clipped()
     }
     .accessibilityHidden(true)
@@ -273,9 +374,9 @@ private struct MontagePhotograph: View {
         failed()
       }
     }
-    .task(id: moving && !reduceMotion) {
-      guard moving, !reduceMotion else { return }
-      while motionSeconds < 15 {
+    .task(id: moving && animated && photograph != nil) {
+      guard moving, animated, photograph != nil else { return }
+      while motionSeconds < duration {
         do { try await Task.sleep(for: .seconds(1)) } catch { return }
         withAnimation(.linear(duration: 1)) { motionSeconds += 1 }
       }
@@ -302,7 +403,7 @@ private struct CinemaSourcesView: View {
             Text("Photograph").font(.headline)
             Text(image.description)
             Text("\(image.credit) · \(image.date)")
-            sourceLink("View original · \(image.license)", url: image.sourceUrl)
+            if image.localFile == nil { sourceLink("View original · \(image.license)", url: image.sourceUrl) }
             if let license = URL(string: image.licenseUrl), license.scheme == "https" {
               sourceLink("Image licence", url: license)
             }
@@ -310,7 +411,7 @@ private struct CinemaSourcesView: View {
           Divider()
           Text("Original search").font(.headline)
           Text(query).foregroundStyle(.secondary)
-          Text("AI-written summary based on the linked sources.").font(.caption).foregroundStyle(.secondary)
+          Text(scene.image?.localFile == nil ? "AI-written summary based on the linked sources." : "Personal photo saved on this device. Not shared with AI or the bridge.").font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: 850, alignment: .leading)
         .padding(32)

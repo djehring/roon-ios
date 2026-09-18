@@ -25,10 +25,10 @@ Apple TV, iPad and iPhone show clear photographs fitted to the screen, with a sh
 3. The saved programme appears in **Cinema** with its subject, track count and photograph count.
 4. **Play with Cinema** starts the saved music in the selected room and opens the visuals. **Watch** opens visuals alone.
 5. A second device selects the same room and chooses **Join**. The native TV app can continue independently of the phone.
-6. Photos change every eight seconds while the music plays. An information button holds the current photograph and opens its sources; dismissing the sheet continues the montage.
+6. Photos change every eight seconds, whether or not music plays. A swipe or the photograph transport moves between pictures, and a hold button stops the montage without stopping the music. An information button holds the current photograph and opens its sources; dismissing the sheet continues the montage.
 7. **Rebuild montage** gathers new events and photos for the original request, including upgrading older story-based capsules.
 
-Photo navigation and music transport are separate controls. Closing the viewer never stops the music. Music pause holds the photo clock; song changes and seeks leave the montage flowing. A separate picture pause lets the listener hold a photo without stopping music.
+Photo navigation and music transport are separate controls. Closing the viewer never stops the music. The photo clock runs independently: music pauses, song changes and seeks leave the montage flowing. A separate picture pause lets the listener hold a photo without stopping music.
 
 ## Content rules
 
@@ -55,6 +55,13 @@ flowchart LR
 The bridge owns research credentials, shared saved programmes and room associations. Each native client renders the montage locally, pacing photos independently of song boundaries and following the room’s play/pause state. Joining does not guarantee identical frames on different screens. The result looks like video while retaining readable captions, live sources and responsive layouts.
 
 ## Current scope and future work
+
+The adaptive **Set up Cinema** sheet now offers period, artist, work and personal-photo
+modes with appropriate topics, caption density, motion, pace and order. The mode picker
+uses a compact native menu on iOS. Classical setup distinguishes work/composer context
+from the recording. My photos accepts individual selections or an album snapshot and
+keeps copied images on the device. See the adaptive setup section in the implementation
+guide for the saved request contract, bridge compatibility and Photos permissions.
 
 The implemented first version is dynamic research, Commons imagery, saved replay, room joining and native Cinema rendering. See [implementation, setup and validation](../time-capsule.md) for precise behaviour and limits.
 

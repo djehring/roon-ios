@@ -234,6 +234,21 @@ final class RoonAPIClient: @unchecked Sendable {
     return try decoder.decode(CapsuleJob.self, from: await capsuleResponse("", method: "POST", body: body))
   }
 
+  func requireCinemaOptionsSupport() async throws {
+    struct Capabilities: Decodable { var optionsVersion: Int }
+    do {
+      let capabilities = try decoder.decode(Capabilities.self, from: await capsuleResponse("capabilities"))
+      guard capabilities.optionsVersion >= 1 else {
+        throw PersonalCinemaError("Update the bridge to use Cinema's content and presentation options.")
+      }
+    } catch {
+      if case RoonAPIError.httpStatus(404, _) = error {
+        throw PersonalCinemaError("Update the bridge to use Cinema's content and presentation options.")
+      }
+      throw error
+    }
+  }
+
   func rebuildTimeCapsule(_ id: String) async throws -> CapsuleJob {
     try decoder.decode(CapsuleJob.self,
       from: await capsuleResponse("\(capsuleComponent(id))/rebuild", method: "POST"))

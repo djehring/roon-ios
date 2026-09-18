@@ -5,6 +5,11 @@ extension MockStore {
   /// A developer-supplied manifest exercises the real renderer without shipping
   /// any historical programme or fixed date in the app.
   func applyCinemaPreviewIfRequested() {
+    if let query = ProcessInfo.processInfo.environment["ROON_CINEMA_SETUP_QUERY"] {
+      aiSearchContext = CapsuleSearchContext(query: query)
+      cinema.setup = CapsuleSetup(request: CapsuleRequest(context: aiSearchContext!, tracks: aiResults))
+      return
+    }
     guard let path = ProcessInfo.processInfo.environment["ROON_CINEMA_PREVIEW_MANIFEST"],
           let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
           let capsule = try? JSONDecoder().decode(TimeCapsule.self, from: data),

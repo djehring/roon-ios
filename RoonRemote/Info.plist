@@ -57,7 +57,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>House Remote records a short clip so the bridge can turn speech into an AI search.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>House Remote reads a cover photo from your library so the bridge can match the album.</string>
+	<string>House Remote lets you choose a photo album for a personal Cinema montage saved on this device.</string>
 	<key>NSSiriUsageDescription</key>
 	<string>House Remote uses Siri so you can play, stop, skip, and change volume in a room.</string>
 	<key>NSSupportsLiveActivities</key>

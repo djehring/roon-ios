@@ -8,6 +8,9 @@ struct CinemaPresentation: ViewModifier {
   func body(content: Content) -> some View {
     @Bindable var cinema = store.cinema
     content
+      .sheet(item: $cinema.setup, onDismiss: { cinema.finishSetup(client: store.client) }) { setup in
+        CapsuleSetupView(setup: setup)
+      }
       .sheet(isPresented: $cinema.showingLibrary, onDismiss: {
         libraryIsActive = false
         viewer = cinema.presented
@@ -85,7 +88,7 @@ struct CinemaLibraryView: View {
             ProgressView("Loading programmes…")
           } else if store.cinema.capsules.isEmpty && !store.cinema.preparing {
             ContentUnavailableView("Your music, brought to life", systemImage: "sparkles.tv",
-              description: Text("Search for music, then choose Create Time Capsule."))
+              description: Text("Search for music, then choose Set up Cinema."))
           }
 
           ForEach(store.cinema.capsules) { capsule in
@@ -98,7 +101,7 @@ struct CinemaLibraryView: View {
         .frame(maxWidth: .infinity)
       }
       .background(Palette.background)
-      .navigationTitle("Time Capsules")
+      .navigationTitle("Cinema")
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done") { dismiss() }
@@ -118,9 +121,11 @@ struct CinemaLibraryView: View {
     VStack(alignment: .leading, spacing: 12) {
       Text(capsule.title).font(.title3.weight(.semibold))
       Text(capsule.contextLabel).foregroundStyle(.secondary)
-      Text("\(capsule.request.tracks.count) tracks · \(capsule.montageFrames.count) photographs")
+      Text("\(capsule.request.tracks.count) tracks · \(capsule.montageFrames.count) images")
         .font(.caption).foregroundStyle(.secondary)
-      if capsule.montageFrames.count < 3 {
+      if let options = capsule.request.options { Text(options.summary).font(.caption).foregroundStyle(.secondary) }
+      ForEach(capsule.notices ?? [], id: \.self) { notice in Text(notice).font(.footnote).foregroundStyle(.secondary) }
+      if !capsule.canWatch {
         Text("This capsule needs more photographs. Rebuild it to create a montage.")
           .font(.subheadline).foregroundStyle(Palette.accent)
       }
@@ -128,11 +133,13 @@ struct CinemaLibraryView: View {
         HStack(spacing: 16) { playbackButtons(capsule) }
         VStack(alignment: .leading, spacing: 12) { playbackButtons(capsule) }
       }
-      Button("Rebuild montage", systemImage: "arrow.clockwise") {
-        store.cinema.rebuild(capsule, client: store.client)
+      if !capsule.isPersonal {
+        Button("Rebuild montage", systemImage: "arrow.clockwise") {
+          store.cinema.rebuild(capsule, client: store.client)
+        }
+        .buttonStyle(.bordered)
+        .disabled(store.cinema.preparing)
       }
-      .buttonStyle(.bordered)
-      .disabled(store.cinema.preparing)
     }
     .padding(.vertical, 8)
   }
@@ -146,11 +153,11 @@ struct CinemaLibraryView: View {
     .buttonStyle(.borderedProminent)
     .tint(Palette.accent)
     .foregroundStyle(Palette.onAccent)
-    .disabled(store.cinema.playing || store.selectedZoneId.isEmpty || capsule.montageFrames.count < 3)
+    .disabled(store.cinema.playing || store.selectedZoneId.isEmpty || !capsule.canWatch)
 
     Button("Watch pictures", systemImage: "photo.on.rectangle") { store.cinema.watch(capsule) }
       .buttonStyle(.bordered)
-      .disabled(capsule.montageFrames.count < 3)
+      .disabled(!capsule.canWatch)
   }
 }
 
@@ -162,7 +169,7 @@ struct CreateTimeCapsuleButton: View {
       Button {
         store.cinema.create(context: context, tracks: store.aiResults, client: store.client)
       } label: {
-        Label(store.cinema.preparing ? "Preparing Time Capsule…" : "Create Time Capsule", systemImage: "sparkles.tv")
+        Label(store.cinema.preparing ? "Preparing Cinema…" : "Set up Cinema", systemImage: "sparkles.tv")
       }
       .foregroundStyle(Palette.accent)
       .disabled(store.aiResults.allSatisfy { $0.error != nil })

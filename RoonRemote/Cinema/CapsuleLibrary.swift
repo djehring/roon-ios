@@ -19,23 +19,54 @@ final class CapsuleLibrary {
   var preparationError: String?
   var preparation: CapsulePreparation?
   var error: String?
+  var setup: CapsuleSetup?
+  var pendingRequest: CapsuleRequest?
+  var pendingPersonal: TimeCapsule?
+  private var lastPersonalId: String?
   @ObservationIgnored private var generation: Task<Void, Never>?
 
   func load(client: RoonAPIClient) async {
     guard !loading else { return }
     loading = true
     defer { loading = false }
+    let personal = await PersonalCinemaStore.shared.load()
+    merge(personal + capsules.filter { !$0.isPersonal })
     do {
-      capsules = try await client.timeCapsules()
+      merge(personal + (try await client.timeCapsules()))
       error = nil
     } catch { self.error = message(for: error) }
   }
 
   func create(context: CapsuleSearchContext, tracks: [SuggestedTrack], client: RoonAPIClient) {
     guard !preparing else { showingLibrary = true; return }
-    let request = CapsuleRequest(context: context, tracks: tracks)
+    setup = CapsuleSetup(request: CapsuleRequest(context: context, tracks: tracks))
+  }
+
+  func finishSetup(client: RoonAPIClient) {
+    if let personal = pendingPersonal {
+      pendingPersonal = nil
+      preparationError = nil
+      preparation = nil
+      error = nil
+      merge([personal] + capsules)
+      showingLibrary = true
+    } else if let request = pendingRequest {
+      pendingRequest = nil
+      create(request: request, client: client)
+    }
+  }
+
+  private func merge(_ programmes: [TimeCapsule]) {
+    var seen = Set<String>()
+    capsules = programmes.filter { seen.insert($0.id).inserted }.sorted { $0.createdAt > $1.createdAt }
+  }
+
+  private func create(request: CapsuleRequest, client: RoonAPIClient) {
     guard !request.tracks.isEmpty else { return }
-    prepare(request: request, client: client) { try await client.createTimeCapsule(request) }
+    prepare(request: request, client: client) {
+      try await client.requireCinemaOptionsSupport()
+      return try await client.createTimeCapsule(request)
+    }
   }
 
   func rebuild(_ capsule: TimeCapsule, client: RoonAPIClient) {
@@ -49,7 +80,7 @@ final class CapsuleLibrary {
     preparationError = nil
     preparation = CapsulePreparation(request: request)
     error = nil
-    preparationMessage = "Finding the events behind your music…"
+    preparationMessage = "Preparing your visual companion…"
     generation = Task {
       defer { preparing = false }
       do {
@@ -57,7 +88,7 @@ final class CapsuleLibrary {
         let deadline = Date().addingTimeInterval(900)
         while job.status != "ready" && job.status != "failed" {
           guard Date() < deadline else { throw CapsuleFailure("Preparation is taking longer than expected. Reopen Time Capsules to check saved montages.") }
-          preparationMessage = job.status == "images" ? "Gathering photographs for the montage…" : "Researching the requested period…"
+          preparationMessage = job.status == "images" ? "Gathering images for the montage…" : "Researching your chosen subjects…"
           try await Task.sleep(for: .seconds(3))
           job = try await client.timeCapsuleJob(job.id)
         }
@@ -89,12 +120,19 @@ final class CapsuleLibrary {
     opening = true
     error = nil
     defer { opening = false }
+    let personal = await PersonalCinemaStore.shared.load()
+    merge(personal + capsules.filter { !$0.isPersonal })
+    if let local = CapsuleNowPlaying.select(preparing: false, current: current, queue: queue,
+      associated: nil, saved: personal.filter { $0.id == lastPersonalId }) {
+      watch(local)
+      return
+    }
     do {
       let associated = zoneId.isEmpty ? nil : try await client.zoneTimeCapsule(zoneId)
-      capsules = try await client.timeCapsules()
+      merge(personal + (try await client.timeCapsules()))
       guard preparationError == nil else { showingLibrary = true; return }
       if let capsule = CapsuleNowPlaying.select(preparing: preparing, current: current, queue: queue,
-        associated: associated, saved: capsules) {
+        associated: associated, saved: capsules.filter { !$0.isPersonal || $0.id == lastPersonalId }) {
         watch(capsule)
       } else {
         showingLibrary = true
@@ -133,7 +171,8 @@ final class CapsuleLibrary {
         ["artist": $0.artist, "track": $0.track, "album": $0.album]
       })
       // Retain the original programme and identity even if Roon cannot find every track.
-      if associate { try await client.setTimeCapsule(capsule.id, zoneId: zoneId) }
+      lastPersonalId = capsule.isPersonal ? capsule.id : nil
+      if associate && !capsule.isPersonal { try await client.setTimeCapsule(capsule.id, zoneId: zoneId) }
       playbackMessage = missing.isEmpty ? nil
         : "\(missing.count) of \(capsule.request.tracks.count) tracks unavailable. Pictures will continue."
     } catch {
