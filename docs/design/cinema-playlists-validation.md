@@ -27,7 +27,7 @@ in the existing SwiftUI app, with the matching playlist lifecycle in `roon-web-s
 | Native Swift unit tests | 174 passed across 22 suites |
 | iPhone UI tests | 4 playlist tests passed: edit/regenerate/watch/delete, failed update, immediate cover with unrelated music, cover with no current music; creation tests passed during initial implementation |
 | TV remote UI test | Passed: library → Edit → Save → Watch during generation → finished montage |
-| Companion bridge tests | 81 passed across 8 relevant suites |
+| Companion bridge tests | 92 passed across 11 relevant suites |
 | Bridge TypeScript and changed-file ESLint | Passed (existing-file formatting retained) |
 | Native simulator builds | iOS and tvOS Debug passed; iOS Release passed during initial implementation |
 
@@ -66,7 +66,10 @@ Bridge changes are limited to `src/ai-service/time-capsule.ts`,
 `src/route/time-capsule-route.test.ts`, `src/service/cinema-artwork.ts`,
 `src/service/cinema-artwork.test.ts`, `src/ai-service/cinema-responses.ts`,
 `src/ai-service/cinema-responses.test.ts`, `src/ai-service/cinema-portraits.test.ts`,
-`src/ai-service/capsule-options.ts` and `doc/time-capsule.md` in the companion repository.
+`src/ai-service/cinema-work.ts`, `src/ai-service/cinema-work.test.ts`,
+`src/ai-service/cinema-latency.test.ts`, `src/ai-service/cinema-gallery.ts`,
+`src/ai-service/cinema-gallery.test.ts`, `src/ai-service/cinema-research.test.ts`, `src/ai-service/capsule-options.ts`
+and `doc/time-capsule.md` in the companion repository.
 
 ## Timeout recovery follow-up
 
@@ -79,3 +82,11 @@ The live Bowie run reproduced the previous 150-second research limit on the care
 Resuming the saved draft with that fix completed successfully: 16 distinct downloaded pictures, including 7 artist portraits, 7 career pictures and 2 places. All files and attribution metadata were present. The resumed image phase took 4 minutes 42 seconds; this is not the duration of a fresh research run. The result stayed in the isolated test cache. Live Bowie album-art lookup also returned a 238,190-byte JPEG in 1.88 seconds.
 
 The reproduced timeout led to a 300-second initial budget for web research (structured outputs remain at 150 seconds). Both paths permit one bounded 300-second retry; the longer research budget prevents an unnecessary early restart.
+
+## Artist-gallery latency follow-up
+
+The next live Bowie build used 13 tracks and selected album covers, artist pictures and career photos. It took **14 minutes 32 seconds**: three serial topic calls consumed 6 minutes 11 seconds, followed by verification, scene compilation, archive search and image checks. Increasing timeout budgets did not address that workload.
+
+Simple artist galleries now bypass the biography pipeline entirely and use direct Commons lookup, source captions and photographic dates. A fresh isolated test with the exact same 13-track request finished in **40 seconds with nine accepted photographs**, with no saved research or image cache reused. Downloads began at two seconds and pixel review at six seconds. Attribution and licence metadata and every accepted image file were checked. No eligible album cover was found in that run; the montage reports this coverage gap, while the preparation screen's separate Roon album-art fallback remains available.
+
+Tests prove that this path makes no web-research, scene-conversion or search-planning AI calls; it only submits downloaded pictures for visual review. Additional coverage checks different-picture preference on rebuild, contextual/dated request routing, bounded concurrency, failure draining, ordered progress, batch-local photo approval and model compatibility. The API shape is unchanged, so existing iPhone clients receive the speed improvement from the bridge update.
