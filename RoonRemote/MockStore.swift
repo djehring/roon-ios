@@ -1553,6 +1553,8 @@ final class MockStore {
     PhoneWatchSync.shared.publish()
     NowPlayingBridge.shared.publish()
     LiveActivityBridge.shared.publish()
+    #elseif os(tvOS)
+    NowPlayingBridge.shared.publish()
     #endif
   }
 

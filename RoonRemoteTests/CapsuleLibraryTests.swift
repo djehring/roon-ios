@@ -229,6 +229,46 @@ struct CapsuleLibraryTests {
     #expect(library.preparationError?.contains("different preparation") == true)
   }
 
+  @Test func retryRecoversACompletedBuildWithoutPayingForAnotherUpdate() async throws {
+    let library = CapsuleLibrary(pollInterval: .milliseconds(1))
+    let client = CinemaStub()
+    let old = sample()
+    library.capsules = [old]
+    client.job = CapsuleJob(id: old.id, status: "images", generation: "django-build")
+    client.pollFailure = RoonAPIError.httpStatus(403, nil)
+    library.rebuild(old, client: client)
+    try await wait { !library.preparing }
+    #expect(library.preparationError != nil)
+    var ready = old
+    ready.generation = "django-build"
+    ready.createdAt = "2026-09-19T00:00:00Z"
+    client.pollFailure = nil
+    client.job = CapsuleJob(id: old.id, status: "ready", capsule: ready, generation: ready.generation)
+    library.retry(client: client)
+    try await wait { !library.preparing }
+    #expect(library.preparationError == nil)
+    #expect(library.preparation?.result == ready)
+    #expect(client.rebuildCount == 1)
+    #expect(client.updatedId == nil)
+  }
+
+  @Test func retryWithUnknownJobStatusDoesNotStartAnotherPaidBuild() async throws {
+    let library = CapsuleLibrary(pollInterval: .milliseconds(1))
+    let client = CinemaStub()
+    let old = sample()
+    client.job = CapsuleJob(id: old.id, status: "images", generation: "django-build")
+    client.pollFailure = RoonAPIError.httpStatus(403, nil)
+    library.rebuild(old, client: client)
+    try await wait { !library.preparing }
+    library.retry(client: client)
+    try await wait { !library.preparing }
+    #expect(library.preparationError != nil)
+    library.retry(client: client)
+    try await wait { !library.preparing }
+    #expect(client.rebuildCount == 1)
+    #expect(client.updatedId == nil)
+  }
+
   private func wait(until ready: () -> Bool) async throws {
     for _ in 0..<200 {
       if ready() { return }

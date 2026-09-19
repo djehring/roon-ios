@@ -28,6 +28,13 @@ struct TVRootView: View {
     .tint(Palette.accent)
     .modifier(BrowsePlaybackPresentation())
     .modifier(CinemaPresentation())
+    // The remote's play/pause belongs to the room, wherever the viewer is in
+    // the app. Cinema installs its own handler while it is on screen.
+    .onPlayPauseCommand {
+      guard case .main = store.session, store.currentTrack != nil else { return }
+      store.resumeSync()
+      store.togglePlay()
+    }
     .animation(Motion.sheet, value: store.sessionLabel)
     .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
   }

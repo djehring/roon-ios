@@ -188,10 +188,26 @@ final class CapsuleLibrary {
 
   func retry(client: any CinemaClient) {
     guard let preparation, !preparing else { return }
-    if let original = preparation.original, preparation.placeholder.request.options == nil {
-      rebuild(original, client: client)
-    } else {
-      regenerate(request: preparation.placeholder.request, original: preparation.original, client: client)
+    let client = service(client)
+    let request = preparation.placeholder.request
+    prepare(request: request, original: preparation.original, client: client) {
+      // A failed status check does not mean the paid build failed. Recover or
+      // resume that generation before submitting another update.
+      if let id = preparation.jobId, let expected = preparation.expectedGeneration {
+        self.preparation?.jobId = id
+        self.preparation?.expectedGeneration = expected
+        let existing = try await client.timeCapsuleJob(id, generation: expected)
+        if existing.status != "failed" { return existing }
+      }
+      if let original = preparation.original {
+        if let options = request.options {
+          try await client.requireCinemaManagementSupport()
+          return try await client.updateTimeCapsule(original.id, options: options)
+        }
+        return try await client.rebuildTimeCapsule(original.id)
+      }
+      try await client.requireCinemaOptionsSupport()
+      return try await client.createTimeCapsule(request)
     }
   }
 

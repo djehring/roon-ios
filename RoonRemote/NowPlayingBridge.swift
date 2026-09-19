@@ -7,6 +7,9 @@ import UIKit
 /// A `.playback` session is what makes iOS treat this as a live Now Playing
 /// target instead of a snapshot taken at lock. We do not play silent audio;
 /// Watch auto-launch still uses the Live Activity.
+///
+/// tvOS shares this: registering the commands is what routes the Siri Remote's
+/// play/pause button, Siri, and the iPhone Apple TV Remote to the Roon zone.
 @MainActor
 final class NowPlayingBridge {
   static let shared = NowPlayingBridge()
@@ -20,12 +23,21 @@ final class NowPlayingBridge {
   func attach(store: MockStore) {
     self.store = store
     registerCommandsIfNeeded()
+    #if os(iOS)
     NowPlayingLiveActions.playPause = { [weak self] in
       guard let store = self?.store else { return }
       store.resumeSync()
       store.togglePlay()
-      await LiveActivityBridge.shared.flush()
+      await Self.flushLiveActivity()
     }
+    #endif
+  }
+
+  /// Live Activities are an iPhone feature; tvOS has no Watch companion to feed.
+  private static func flushLiveActivity() async {
+    #if os(iOS)
+    await LiveActivityBridge.shared.flush()
+    #endif
   }
 
   func publish() {
@@ -127,7 +139,7 @@ final class NowPlayingBridge {
           guard !store.isPlaying else { return }
           store.togglePlay()
         }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }
@@ -137,35 +149,35 @@ final class NowPlayingBridge {
           guard store.isPlaying else { return }
           store.togglePlay()
         }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }
     center.togglePlayPauseCommand.addTarget { [weak self] _ in
       Task { @MainActor in
         self?.runRemote { $0.togglePlay() }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }
     center.nextTrackCommand.addTarget { [weak self] _ in
       Task { @MainActor in
         self?.runRemote { $0.skip() }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }
     center.previousTrackCommand.addTarget { [weak self] _ in
       Task { @MainActor in
         self?.runRemote { $0.previous() }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }
     center.stopCommand.addTarget { [weak self] _ in
       Task { @MainActor in
         self?.runRemote { $0.stop() }
-        await LiveActivityBridge.shared.flush()
+        await Self.flushLiveActivity()
       }
       return .success
     }

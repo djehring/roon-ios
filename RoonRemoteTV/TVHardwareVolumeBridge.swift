@@ -132,6 +132,9 @@ final class TVHardwareVolumeBridge {
 
   private func activateSessionIfNeeded() {
     let session = AVAudioSession.sharedInstance()
+    // Now Playing owns the category: downgrading it here would drop the app out
+    // of the system transport that routes the remote's play/pause button.
+    guard session.category != .playback else { return }
     do {
       try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
       try session.setActive(true)

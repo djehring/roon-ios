@@ -283,6 +283,7 @@ targets:
       - path: RoonRemote/MockStore.swift
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/BrowsePlaybackFeedback.swift
+      - path: RoonRemote/NowPlayingBridge.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/Cinema

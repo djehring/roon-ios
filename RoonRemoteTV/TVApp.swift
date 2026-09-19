@@ -15,11 +15,14 @@ struct RoonRemoteTVApp: App {
             .onAppear {
               TVHardwareVolumeBridge.shared.attach(store: store)
               TVHardwareVolumeBridge.shared.setActive(true)
+              NowPlayingBridge.shared.attach(store: store)
+              NowPlayingBridge.shared.publish()
             }
             .onChange(of: scenePhase) { _, phase in
               TVHardwareVolumeBridge.shared.setActive(phase == .active)
               if phase == .active {
                 store.resumeSync()
+                NowPlayingBridge.shared.publish()
               }
             }
         }
