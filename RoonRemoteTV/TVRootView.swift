@@ -26,6 +26,7 @@ struct TVRootView: View {
       }
     }
     .tint(Palette.accent)
+    .modifier(BrowsePlaybackPresentation())
     .modifier(CinemaPresentation())
     .animation(Motion.sheet, value: store.sessionLabel)
     .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
@@ -54,7 +55,11 @@ struct TVMainTabs: View {
         .focusSection()
       Group {
         switch store.selectedTab {
-        case .nowPlaying: TVNowPlayingView().prefersDefaultFocus(true, in: page)
+        case .nowPlaying:
+          TVNowPlayingView()
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("now-playing-screen")
+            .prefersDefaultFocus(true, in: page)
         case .library: TVLibraryView()
         case .search: TVSearchView()
         case .rooms: TVRoomsView()

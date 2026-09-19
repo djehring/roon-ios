@@ -67,6 +67,8 @@ struct RegularRootView: View {
       .playbackSheets()
       .onAppear {
         adaptColumns(to: geometry.size.width)
+        syncSelection(to: store.selectedTab)
+        consumeLaunchHierarchy()
       }
       .onChange(of: geometry.size.width) { _, width in
         adaptColumns(to: width)
@@ -84,10 +86,8 @@ struct RegularRootView: View {
       .onChange(of: store.selectedTab) { _, tab in
         syncSelection(to: tab)
       }
-      .onChange(of: store.libraryLaunchHierarchy) { _, hierarchy in
-        guard let hierarchy else { return }
-        selection = .library(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library).id)
-        store.libraryLaunchHierarchy = nil
+      .onChange(of: store.libraryLaunchHierarchy) { _, _ in
+        consumeLaunchHierarchy()
       }
     }
   }
@@ -165,6 +165,8 @@ struct RegularRootView: View {
     switch selection {
     case .nowPlaying:
       RegularNowPlayingView()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("now-playing-screen")
     case .rooms:
       RegularRoomsView()
     case .library:
@@ -210,6 +212,12 @@ struct RegularRootView: View {
       pendingLibraryHierarchy: store.libraryLaunchHierarchy
     ) else { return }
     selection = next
+  }
+
+  private func consumeLaunchHierarchy() {
+    guard let hierarchy = store.libraryLaunchHierarchy else { return }
+    selection = .library(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library).id)
+    store.libraryLaunchHierarchy = nil
   }
 
   private var miniPlayer: some View {

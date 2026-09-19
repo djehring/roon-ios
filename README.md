@@ -28,6 +28,11 @@ Simulator can pair if you type the bridge `host:port` during onboarding.
 
 `client_id` is stored in the Keychain. Unpair from Settings.
 
+Playing a track, album, or playlist from Library shows a playback confirmation
+with the selected room, then opens Now Playing on iPhone, iPad, and Apple TV.
+Queue and Play Next keep the browse screen open. Failed actions show an error
+without navigating away.
+
 ## Apple Watch
 
 Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon
@@ -120,5 +125,7 @@ queue, then skip to the main session:
 xcrun simctl launch <device> com.djehring.roonremote -roon-demo-store
 ```
 
-Nothing in demo content talks to the bridge, so browse pages and artwork stay
-empty. It is for checking shells, spacing, and adaptivity, not content.
+Demo content includes sample browse pages, artwork, and simulated playback;
+these actions do not control a real room. `BrowsePlaybackUITests` and
+`BrowsePlaybackRemoteUITests` exercise browse feedback and navigation with this
+content on iPhone/iPad and Apple TV respectively.

@@ -28,6 +28,8 @@ struct NowPlayingView: View {
       }
     }
     .playbackSheets(enabled: presentsSheets)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("now-playing-screen")
   }
 
   private var phoneColumn: some View {

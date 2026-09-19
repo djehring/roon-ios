@@ -182,7 +182,11 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
     )
     let (data, response) = try await data(for: request)
     try throwIfNeeded(response, data: data)
-    return try decoder.decode(BrowseResponse.self, from: data)
+    let result = try decoder.decode(BrowseResponse.self, from: data)
+    if result.isError == true {
+      throw RoonAPIError.browseAction(result.message ?? "Roon couldn't complete that action.")
+    }
+    return result
   }
 
   func load(_ options: [String: Any]) async throws -> LoadResponse {

@@ -17,8 +17,8 @@ extension MockStore {
   ///
   /// Layout work is otherwise invisible on a machine with no bridge on the
   /// network: with nothing to pair against, the app never leaves onboarding.
-  /// Nothing here talks to the bridge, so browse and artwork stay empty --
-  /// enough to check shells, spacing, and adaptivity, not content.
+  /// Sample browse pages, artwork and playback let the UI be exercised without
+  /// sending playback commands to a real room.
   func applyDemoContent() {
     let track = Track(
       id: "demo-track",
@@ -185,6 +185,29 @@ extension MockStore {
     session = .main
     isAwaitingServer = false
     isDiscovering = false
+    if let hierarchy = ProcessInfo.processInfo.environment["ROON_BROWSE_PREVIEW_HIERARCHY"] {
+      libraryLaunchHierarchy = hierarchy
+      selectedTab = .library
+    }
+  }
+
+  /// Exercises the same feedback/navigation path without controlling a real room.
+  func performDemoBrowseAction(itemKey: String, actionTitle: String, zoneId: String) async throws {
+    try await Task.sleep(for: .seconds(1))
+    if ProcessInfo.processInfo.environment["ROON_BROWSE_PREVIEW_FAIL"] == "1" {
+      throw RoonAPIError.browseAction("The room is unavailable. Please try again.")
+    }
+    guard BrowsePlayback.startsPlayback(actionTitle),
+          let index = zones.firstIndex(where: { $0.id == zoneId }) else { return }
+    let titles = ["So What", "Freddie Freeloader", "Blue in Green", "All Blues", "Flamenco Sketches"]
+    let trackIndex = itemKey.components(separatedBy: "-track-").last.flatMap(Int.init) ?? 0
+    let title = titles[min(trackIndex, titles.count - 1)]
+    zones[index].track = Track(
+      id: itemKey, title: title, artist: "Miles Davis", album: "Kind of Blue",
+      position: "0:00", remaining: "9:00", progress: 0, imageKey: "demo-cover"
+    )
+    zones[index].state = .playing
+    if selectedZoneId == zoneId { isPlaying = true }
   }
 
   /// Puts a real square image in the artwork cache.
@@ -258,6 +281,15 @@ extension MockStore {
     }
 
     if let itemKey {
+      if itemKey.contains("-track-") {
+        return BrowsePage(title: "Track actions", items: ["Play Now", "Queue", "Play Next"].map { title in
+          BrowseNode(
+            id: "\(itemKey)-\(title)", title: title, subtitle: nil, symbol: "play.circle",
+            actions: [], isPrompt: false, children: [], itemKey: "\(itemKey)-\(title)",
+            imageKey: nil, hierarchy: hierarchy, hint: "action"
+          )
+        })
+      }
       let tracks = [
         ("So What", "Miles Davis"),
         ("Freddie Freeloader", "Miles Davis"),
@@ -265,9 +297,16 @@ extension MockStore {
         ("All Blues", "Miles Davis"),
         ("Flamenco Sketches", "Miles Davis"),
       ]
+      let collectionActions: [BrowseNode] = hierarchy == "playlists" ? [] : [
+        BrowseNode(
+          id: "\(itemKey)-play", title: "Play Album", subtitle: nil, symbol: "play.circle",
+          actions: [], isPrompt: false, children: [], itemKey: itemKey,
+          imageKey: nil, hierarchy: hierarchy, hint: "action"
+        ),
+      ]
       return BrowsePage(
         title: itemKey.replacingOccurrences(of: "-", with: " ").capitalized,
-        items: tracks.enumerated().map { index, track in
+        items: collectionActions + tracks.enumerated().map { index, track in
           BrowseNode(
             id: "\(itemKey)-track-\(index)",
             title: track.0,

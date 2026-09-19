@@ -388,6 +388,7 @@ enum RoonAPIError: Error, LocalizedError {
   case decoding(Error)
   case unpaired
   case missingOpenAI
+  case browseAction(String)
 
   var errorDescription: String? {
     switch self {
@@ -399,6 +400,7 @@ enum RoonAPIError: Error, LocalizedError {
     case let .decoding(error): "Unexpected data from the bridge (\(error.localizedDescription))."
     case .unpaired: "This phone is not paired."
     case .missingOpenAI: "OpenAI API key is missing. Add yours in the web Settings."
+    case let .browseAction(message): message
     }
   }
 }

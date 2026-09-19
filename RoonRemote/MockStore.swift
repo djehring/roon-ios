@@ -7,6 +7,7 @@ import UIKit
 final class MockStore {
   var session: AppSession
   var selectedTab: AppTab = .nowPlaying
+  var browsePlayback = BrowsePlayback()
   var appearance: Appearance
   var pinDigits = ""
   var pinError = false
@@ -652,14 +653,8 @@ final class MockStore {
 
   func playRecognized(_ album: BrowseNode) {
     guard let key = album.itemKey else { return }
-    Task {
-      await withBrowseSession {
-        try? await self.client.playItem(
-          zoneId: self.selectedZoneId,
-          itemKey: key,
-          actionTitle: "Play Now"
-        )
-      }
+    performBrowsePlayback(itemKey: key, actionTitle: "Play Now") { zoneId in
+      try await self.client.playItem(zoneId: zoneId, itemKey: key, actionTitle: "Play Now")
     }
   }
 
@@ -832,20 +827,22 @@ final class MockStore {
   private func collectActions(
     hierarchy: String,
     itemKey: String,
-    depth: Int
+    depth: Int,
+    zoneId: String? = nil
   ) async -> [BrowseNode] {
     guard depth < 3 else { return [] }
     let page = await performLoadLibrary(
       hierarchy: hierarchy,
       itemKey: itemKey,
-      input: nil
+      input: nil,
+      zoneId: zoneId
     )
     let actions = page.items.filter { $0.hint == "action" && $0.itemKey != nil }
     if !actions.isEmpty { return actions }
     if let nested = page.items.first(where: { $0.hint == "action_list" }),
        let nestedKey = nested.itemKey
     {
-      return await collectActions(hierarchy: hierarchy, itemKey: nestedKey, depth: depth + 1)
+      return await collectActions(hierarchy: hierarchy, itemKey: nestedKey, depth: depth + 1, zoneId: zoneId)
     }
     return []
   }
@@ -856,94 +853,116 @@ final class MockStore {
     title: String,
     hint: String? = nil
   ) {
-    Task {
-      await withBrowseSession {
-        try? await self.executeLibraryAction(
-          hierarchy: hierarchy,
-          itemKey: itemKey,
-          actionTitle: title,
-          hint: hint
-        )
-      }
+    performBrowsePlayback(itemKey: itemKey, actionTitle: title) { zoneId in
+      try await self.executeLibraryAction(
+        hierarchy: hierarchy,
+        itemKey: itemKey,
+        actionTitle: title,
+        hint: hint,
+        zoneId: zoneId
+      )
     }
   }
 
   /// Plays a library item, preferring playlist "Play From Here" when present.
   func playLibraryItem(hierarchy: String, itemKey: String, hint: String? = nil) {
+    performBrowsePlayback(itemKey: itemKey, actionTitle: "Play") { zoneId in
+      try await self.performPlayLibraryItem(hierarchy: hierarchy, itemKey: itemKey, hint: hint, zoneId: zoneId)
+    }
+  }
+
+  private func performBrowsePlayback(
+    itemKey: String,
+    actionTitle: String,
+    operation: @escaping (String) async throws -> Void
+  ) {
+    // Pin the destination before waiting for the shared browse session. Changing
+    // rooms during a slow request must not send the music to the new room.
+    let zone = selectedZone
+    let originTab = selectedTab
     Task {
-      await withBrowseSession {
-        // Action rows execute directly.
-        if hint == "action" {
-          try? await self.executeLibraryAction(
-            hierarchy: hierarchy,
-            itemKey: itemKey,
-            actionTitle: "Play",
-            hint: hint
-          )
+      await browsePlayback.run(actionTitle: actionTitle, room: zone.name) {
+        guard !zone.id.isEmpty else { throw PlayInRoomError.noRoom("the selected room") }
+        #if DEBUG
+        if Self.wantsDemoContent {
+          try await self.performDemoBrowseAction(itemKey: itemKey, actionTitle: actionTitle, zoneId: zone.id)
           return
         }
-
-        // Prefer real actions Roon exposes for this item.
-        let actions = await self.collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0)
-        let preferredNames: [String]
-        if hierarchy == "playlists" {
-          preferredNames = ["Play From Here", "Play Playlist", "Play Now", "Play"]
-        } else {
-          preferredNames = ["Play Now", "Play Album", "Play From Here", "Play Playlist", "Play"]
-        }
-        for name in preferredNames {
-          if let action = actions.first(where: {
-            $0.title.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
-          }), let key = action.itemKey {
-            _ = try? await self.client.browse([
-              "hierarchy": hierarchy,
-              "item_key": key,
-              "zone_or_output_id": self.selectedZoneId,
-            ])
-            return
-          }
-        }
-        if let firstPlay = actions.first(where: { Self.isPlayAction($0.title) }),
-           let key = firstPlay.itemKey
-        {
-          _ = try? await self.client.browse([
-            "hierarchy": hierarchy,
-            "item_key": key,
-            "zone_or_output_id": self.selectedZoneId,
-          ])
-          return
-        }
-
-        // Last resort: named-action walk / bridge play-item.
-        for title in preferredNames {
+        #endif
+        let result: Result<Void, Error> = await self.withBrowseSession {
           do {
-            try await self.executeLibraryAction(
-              hierarchy: hierarchy,
-              itemKey: itemKey,
-              actionTitle: title,
-              hint: hint
-            )
-            return
+            try await operation(zone.id)
+            return .success(())
           } catch {
-            continue
+            return .failure(error)
           }
         }
+        try result.get()
+      } showNowPlaying: {
+        guard self.selectedZoneId == zone.id, self.selectedTab == originTab,
+              case .main = self.session else { return }
+        self.selectedTab = .nowPlaying
       }
     }
+  }
+
+  private func performPlayLibraryItem(
+    hierarchy: String,
+    itemKey: String,
+    hint: String?,
+    zoneId: String
+  ) async throws {
+    if hint == "action" {
+      try await executeLibraryAction(
+        hierarchy: hierarchy, itemKey: itemKey, actionTitle: "Play", hint: hint, zoneId: zoneId
+      )
+      return
+    }
+
+    let actions = await collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0, zoneId: zoneId)
+    let preferredNames = hierarchy == "playlists"
+      ? ["Play From Here", "Play Playlist", "Play Now", "Play"]
+      : ["Play Now", "Play Album", "Play From Here", "Play Playlist", "Play"]
+    let preferred = preferredNames.lazy.compactMap { name in
+      actions.first { $0.title.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }
+    }.first ?? actions.first { Self.isPlayAction($0.title) }
+    if let key = preferred?.itemKey {
+      _ = try await client.browse([
+        "hierarchy": hierarchy,
+        "item_key": key,
+        "zone_or_output_id": zoneId,
+      ])
+      return
+    }
+
+    // Only try another name when that action is absent. A rejected command
+    // should surface its error, rather than accidentally issuing another play.
+    for title in preferredNames {
+      do {
+        try await executeLibraryAction(
+          hierarchy: hierarchy, itemKey: itemKey, actionTitle: title, hint: hint, zoneId: zoneId
+        )
+        return
+      } catch PlayInRoomError.notFound {
+        continue
+      }
+    }
+    throw PlayInRoomError.notFound("a play action for this item")
   }
 
   private func executeLibraryAction(
     hierarchy: String,
     itemKey: String,
     actionTitle: String,
-    hint: String?
+    hint: String?,
+    zoneId: String
   ) async throws {
     // Roon action rows are executed by browsing their item_key — not via play-item.
     if hint == "action" {
       _ = try await client.browse([
         "hierarchy": hierarchy,
         "item_key": itemKey,
-        "zone_or_output_id": selectedZoneId,
+        "zone_or_output_id": zoneId,
       ])
       return
     }
@@ -952,7 +971,8 @@ final class MockStore {
       try await browseNamedAction(
         hierarchy: hierarchy,
         itemKey: itemKey,
-        actionTitle: actionTitle
+        actionTitle: actionTitle,
+        zoneId: zoneId
       )
       return
     }
@@ -962,18 +982,19 @@ final class MockStore {
       try await browseNamedAction(
         hierarchy: hierarchy,
         itemKey: itemKey,
-        actionTitle: actionTitle
+        actionTitle: actionTitle,
+        zoneId: zoneId
       )
-    } catch {
+    } catch PlayInRoomError.notFound {
       // Bridge play-item always uses hierarchy "browse"; fine for albums/search, not playlists.
       if hierarchy == "browse" || hierarchy == "albums" || hierarchy == "artists" {
         try await client.playItem(
-          zoneId: selectedZoneId,
+          zoneId: zoneId,
           itemKey: itemKey,
           actionTitle: actionTitle
         )
       } else {
-        throw error
+        throw PlayInRoomError.notFound(actionTitle)
       }
     }
   }
@@ -981,18 +1002,20 @@ final class MockStore {
   private func browseNamedAction(
     hierarchy: String,
     itemKey: String,
-    actionTitle: String
+    actionTitle: String,
+    zoneId: String
   ) async throws {
     let page = await performLoadLibrary(
       hierarchy: hierarchy,
       itemKey: itemKey,
-      input: nil
+      input: nil,
+      zoneId: zoneId
     )
     if let key = actionKey(named: actionTitle, in: page.items) {
       _ = try await client.browse([
         "hierarchy": hierarchy,
         "item_key": key,
-        "zone_or_output_id": selectedZoneId,
+        "zone_or_output_id": zoneId,
       ])
       return
     }
@@ -1003,13 +1026,14 @@ final class MockStore {
       let actions = await performLoadLibrary(
         hierarchy: hierarchy,
         itemKey: listKey,
-        input: nil
+        input: nil,
+        zoneId: zoneId
       )
       if let key = actionKey(named: actionTitle, in: actions.items) {
         _ = try await client.browse([
           "hierarchy": hierarchy,
           "item_key": key,
-          "zone_or_output_id": selectedZoneId,
+          "zone_or_output_id": zoneId,
         ])
         return
       }
@@ -1023,10 +1047,11 @@ final class MockStore {
       let nested = await performLoadLibrary(
         hierarchy: hierarchy,
         itemKey: firstKey,
-        input: nil
+        input: nil,
+        zoneId: zoneId
       )
       let nestedTitle =
-        actionTitle.lowercased().contains("play") && hierarchy == "playlists"
+        Self.isPlayAction(actionTitle) && actionTitle.lowercased().hasPrefix("play") && hierarchy == "playlists"
         ? "Play From Here"
         : actionTitle
       if let key = actionKey(named: nestedTitle, in: nested.items)
@@ -1035,7 +1060,7 @@ final class MockStore {
         _ = try await client.browse([
           "hierarchy": hierarchy,
           "item_key": key,
-          "zone_or_output_id": selectedZoneId,
+          "zone_or_output_id": zoneId,
         ])
         return
       }
@@ -1044,7 +1069,8 @@ final class MockStore {
         let actions = await performLoadLibrary(
           hierarchy: hierarchy,
           itemKey: listKey,
-          input: nil
+          input: nil,
+          zoneId: zoneId
         )
         if let key = actionKey(named: nestedTitle, in: actions.items)
           ?? actionKey(named: actionTitle, in: actions.items)
@@ -1052,7 +1078,7 @@ final class MockStore {
           _ = try await client.browse([
             "hierarchy": hierarchy,
             "item_key": key,
-            "zone_or_output_id": selectedZoneId,
+            "zone_or_output_id": zoneId,
           ])
           return
         }
@@ -1312,13 +1338,7 @@ final class MockStore {
   }
 
   private static func isPlayAction(_ title: String) -> Bool {
-    let value = title.lowercased()
-    return value == "play now"
-      || value == "play"
-      || value == "play playlist"
-      || value == "play from here"
-      || value.contains("play now")
-      || value.contains("play from here")
+    BrowsePlayback.startsPlayback(title)
   }
 
   private enum PlayInRoomError: LocalizedError {
