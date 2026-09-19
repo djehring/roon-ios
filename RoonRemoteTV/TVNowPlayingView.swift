@@ -57,9 +57,7 @@ struct TVNowPlayingView: View {
 
             TVTransportControls()
 
-            Button("Cinema", systemImage: "sparkles.tv") {
-              store.cinema.openLibrary()
-            }
+            cinemaButton
 
             Button {
               store.showQueue = true
@@ -80,9 +78,7 @@ struct TVNowPlayingView: View {
               .disabled(true)
               .opacity(0.45)
 
-            Button("Cinema", systemImage: "sparkles.tv") {
-              store.cinema.openLibrary()
-            }
+            cinemaButton
 
             HStack(spacing: 24) {
               Button {
@@ -116,6 +112,15 @@ struct TVNowPlayingView: View {
     .sheet(isPresented: $store.showQueue) {
       TVQueuePanel()
     }
+  }
+
+  private var cinemaButton: some View {
+    Button {
+      store.cinema.openLibrary()
+    } label: {
+      TVChipLabel(title: "Cinema", symbol: "sparkles.tv")
+    }
+    .tvUnplated()
   }
 
 
