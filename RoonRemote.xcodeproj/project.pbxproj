@@ -120,6 +120,7 @@
 		8B5F8B7E8B183EE369720DB7 /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */; };
 		8CB4229075787CC02B3FEBB1 /* RoonRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B895799574E60D21626345F2 /* RoonRemoteApp.swift */; };
 		8D41AF696B6304473C14FE3D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38E999F7921AA6BB8403FC7 /* RootView.swift */; };
+		8E7D6BCF737B0879F1B33BE1 /* CoverScreensaverRemoteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5082362BA96FA4FB4159235 /* CoverScreensaverRemoteUITests.swift */; };
 		8F9B62B61E0F1AD640ED0E0D /* TimeCapsuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C55126C4B0965F44DDAA49 /* TimeCapsuleTests.swift */; };
 		9262D55BAE78684F1435D1E3 /* BrowsePlaybackFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BECA40AE3015F2E3CF0D4FF /* BrowsePlaybackFeedback.swift */; };
 		93FA22C3B4CFDB2BDC758A31 /* BrowsePlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */; };
@@ -379,6 +380,7 @@
 		BC47CCD83FFF21271F44BF89 /* TVHardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVHardwareVolumeBridge.swift; sourceTree = "<group>"; };
 		C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonLiveActivity.swift; sourceTree = "<group>"; };
 		C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePageTests.swift; sourceTree = "<group>"; };
+		C5082362BA96FA4FB4159235 /* CoverScreensaverRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverScreensaverRemoteUITests.swift; sourceTree = "<group>"; };
 		C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardwareVolumeBridge.swift; sourceTree = "<group>"; };
 		C760BAAF70317F6F7A60074A /* TVCoverScreensaverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVCoverScreensaverView.swift; sourceTree = "<group>"; };
 		C82F953539BF55800236CA9A /* RoonRemoteWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RoonRemoteWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -445,6 +447,7 @@
 			children = (
 				32631C68B5069CAE68BEE9DC /* BrowsePlaybackRemoteUITests.swift */,
 				7CA6BFC453ED5F5AD29AEE1A /* CinemaRemoteUITests.swift */,
+				C5082362BA96FA4FB4159235 /* CoverScreensaverRemoteUITests.swift */,
 			);
 			path = RoonRemoteTVUITests;
 			sourceTree = "<group>";
@@ -1164,6 +1167,7 @@
 				0276AB5038FBD8B737418B70 /* BrowsePlaybackRemoteUITests.swift in Sources */,
 				5CC20155B6A0A4CEA71A8143 /* CinemaPlaylistFixture.swift in Sources */,
 				A5E669962E6FEF36B4868E83 /* CinemaRemoteUITests.swift in Sources */,
+				8E7D6BCF737B0879F1B33BE1 /* CoverScreensaverRemoteUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
