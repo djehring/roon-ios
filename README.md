@@ -72,8 +72,9 @@ Roon on Apple TV is an independent app (same pairing flow as iPhone). Tabs:
 layout inspired by Apple Music on TV. Camera / cover recognition is iPhone-only.
 
 Leave the remote alone on Now Playing for eight seconds while music plays and the
-cover art takes the whole screen with a slow Ken Burns drift, following each
-change of track. The remote's back button returns the controls; so does pausing.
+cover art takes the whole screen with a slow Ken Burns drift, naming the track and
+artist along the bottom and following each change of track. The remote's back
+button returns the controls; so does pausing.
 It waits for the full-size cover, stays away while the volume, queue, or Cinema
 is up, and holds still under Reduce Motion or VoiceOver.
 

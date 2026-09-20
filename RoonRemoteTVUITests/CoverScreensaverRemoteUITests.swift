@@ -18,6 +18,8 @@ final class CoverScreensaverRemoteUITests: XCTestCase {
     // gives the drift somewhere to go. Nothing of the screen is left uncovered.
     XCTAssertGreaterThanOrEqual(screensaver.frame.width, app.frame.width, "the cover should fill the screen")
     XCTAssertGreaterThanOrEqual(screensaver.frame.height, app.frame.height, "the cover should fill the screen")
+    XCTAssertTrue(screensaver.staticTexts["So What"].exists, "the track should be named over the cover")
+    XCTAssertTrue(screensaver.staticTexts["Miles Davis"].exists, "the artist should be named over the cover")
     capture("TV idle cover screensaver")
 
     XCUIRemote.shared.press(.menu)

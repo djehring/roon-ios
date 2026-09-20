@@ -98,12 +98,18 @@ struct TVCoverScreensaverView: View {
             .clipped()
             .id(imageKey)
             .transition(.opacity)
+            .accessibilityHidden(true)
+        }
+        if let track = store.currentTrack {
+          scrim
+          caption(track)
         }
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
     }
     .ignoresSafeArea()
     .animation(.easeInOut(duration: 1.2), value: imageKey)
+    .animation(.easeInOut(duration: 0.5), value: store.currentTrack?.id)
     .task(id: driftKey) {
       leg = 0
       guard !reduceMotion, imageKey != nil else { return }
@@ -119,18 +125,52 @@ struct TVCoverScreensaverView: View {
       store.resumeSync()
       store.togglePlay()
     }
-    .accessibilityElement(children: .ignore)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("cover-screensaver")
-    .accessibilityLabel(label)
-    .accessibilityAddTraits(.isImage)
     .accessibilityAction(named: "Show Now Playing") { dismiss() }
+  }
+
+  /// Only the foot of the picture is darkened, enough to carry white text over a
+  /// cover that happens to be pale down there, and no more.
+  ///
+  /// The stops ease the darkening in. A plain two-stop gradient turns on at a
+  /// constant rate from its first pixel, which draws a visible seam across the
+  /// artwork where it begins.
+  private var scrim: some View {
+    LinearGradient(
+      stops: [
+        .init(color: .clear, location: 0),
+        .init(color: .black.opacity(0.12), location: 0.45),
+        .init(color: .black.opacity(0.8), location: 1),
+      ],
+      startPoint: .top,
+      endPoint: .bottom
+    )
+    .frame(height: 480)
+    .frame(maxHeight: .infinity, alignment: .bottom)
+    .accessibilityHidden(true)
+  }
+
+  private func caption(_ track: Track) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(track.title)
+        .font(.system(size: 52, weight: .bold))
+        .lineLimit(2)
+      Text(track.artist)
+        .font(.system(size: 30, weight: .medium))
+        .foregroundStyle(.white.opacity(0.85))
+        .lineLimit(1)
+    }
+    .contentTransition(.opacity)
+    .foregroundStyle(.white)
+    .shadow(color: .black.opacity(0.55), radius: 12, y: 4)
+    .frame(maxWidth: 1100, alignment: .leading)
+    // The inset the rest of the Apple TV app uses, which keeps the words clear
+    // of a set that overscans.
+    .padding(64)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
   }
 
   /// A new track starts its own move, from the top of the loop.
   private var driftKey: String { "\(imageKey ?? "none")-\(reduceMotion)" }
-
-  private var label: String {
-    guard let track = store.currentTrack else { return "Album cover" }
-    return "Cover of \(track.album.isEmpty ? track.title : track.album) by \(track.artist)"
-  }
 }
