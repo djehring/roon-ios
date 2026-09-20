@@ -112,6 +112,9 @@ struct TVNowPlayingView: View {
     .sheet(isPresented: $store.showQueue) {
       TVQueuePanel()
     }
+    // Only on this tab: the modifier goes away with the view, so browsing the
+    // Library is never interrupted by the cover taking the screen.
+    .modifier(TVCoverScreensaverPresentation())
   }
 
   private var cinemaButton: some View {
