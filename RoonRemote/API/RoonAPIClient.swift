@@ -517,7 +517,19 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
         }
       } catch {
         if Task.isCancelled { return }
-        onEventsFailed?(error)
+        if case let RoonAPIError.httpStatus(code, _) = error, code == 403 {
+          // Bridge restarts wipe the in-memory client map. Regular API calls
+          // reregister on 403; the event stream has to do the same or it
+          // retries /events forever and floods the bridge logs.
+          do {
+            try await reregister()
+            return
+          } catch {
+            onEventsFailed?(error)
+          }
+        } else {
+          onEventsFailed?(error)
+        }
       }
       if Task.isCancelled { return }
       try? await Task.sleep(nanoseconds: 1_000_000_000)
