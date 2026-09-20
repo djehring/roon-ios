@@ -139,6 +139,7 @@ targets:
       - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/QueueTimeline.swift
       - path: RoonRemote/ZoneTrackSelection.swift
+      - path: RoonRemote/EventLiveness.swift
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
@@ -295,6 +296,8 @@ targets:
       - path: RoonRemote/LibraryIndex.swift
         type: file
       - path: RoonRemote/ZoneTrackSelection.swift
+        type: file
+      - path: RoonRemote/EventLiveness.swift
         type: file
       - path: RoonRemote/SearchSelection.swift
         type: file

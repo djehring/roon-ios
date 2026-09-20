@@ -1723,16 +1723,17 @@ final class MockStore {
   }
 
   /// A half-open SSE stream keeps the app looking connected while zone
-  /// ticks stop, so a skip from another client never arrives. Only
-  /// reconnect in the foreground: tearing the stream down in the
-  /// background is what froze the lock-screen card.
+  /// ticks stop, so a skip from another client never arrives. Reconnect
+  /// even when the phone is locked: Now Playing keep-alive holds the
+  /// process so a new stream can start. Do not call `refreshEvents` on
+  /// the lock transition itself — that tears down a healthy stream.
   private func refreshIfEventsWentQuiet() {
-    guard session == .main, client.isPaired, isPlaying else { return }
-    guard UIApplication.shared.applicationState == .active else { return }
-    guard let lastEventAt, Date().timeIntervalSince(lastEventAt) >= 10 else { return }
-    if let lastLivenessRefreshAt, Date().timeIntervalSince(lastLivenessRefreshAt) < 10 {
-      return
-    }
+    guard session == .main, client.isPaired else { return }
+    guard EventLiveness.shouldRefresh(
+      isPlaying: isPlaying,
+      lastEventAt: lastEventAt,
+      lastRefreshAt: lastLivenessRefreshAt
+    ) else { return }
     resumeSync()
   }
 
