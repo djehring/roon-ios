@@ -56,10 +56,8 @@ enum CoverScreensaver {
 
   /// Whether the cover may take over the screen.
   ///
-  /// Artwork is required because the placeholder gradient drifting across a
-  /// television says nothing about what is playing. Anything already presented
-  /// over Now Playing — volume, queue, Cinema, the first-paint overlay — keeps
-  /// its place, and VoiceOver users are left with the controls they are reading.
+  /// Artwork is required to start because the placeholder gradient drifting
+  /// across a television says nothing about what is playing.
   static func canShow(
     hasArtwork: Bool,
     isPlaying: Bool,
@@ -67,7 +65,31 @@ enum CoverScreensaver {
     isAwaitingServer: Bool,
     voiceOverEnabled: Bool
   ) -> Bool {
-    guard hasArtwork, isPlaying else { return false }
+    hasArtwork && canStay(
+      isPlaying: isPlaying,
+      isPresenting: isPresenting,
+      isAwaitingServer: isAwaitingServer,
+      voiceOverEnabled: voiceOverEnabled
+    )
+  }
+
+  /// Whether the cover, once it has the screen, may keep it.
+  ///
+  /// Artwork is deliberately not asked for again. The next track's cover reaches
+  /// the cache a moment after the track itself, and dropping back to the
+  /// controls for that moment, between every song, is the one thing a
+  /// screensaver must not do.
+  ///
+  /// Everything else still ends it: a room that stops, anything presented over
+  /// Now Playing — volume, queue, Cinema, the first-paint overlay — and
+  /// VoiceOver, whose users should keep the controls they are reading.
+  static func canStay(
+    isPlaying: Bool,
+    isPresenting: Bool,
+    isAwaitingServer: Bool,
+    voiceOverEnabled: Bool
+  ) -> Bool {
+    guard isPlaying else { return false }
     return !isPresenting && !isAwaitingServer && !voiceOverEnabled
   }
 }

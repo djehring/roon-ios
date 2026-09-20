@@ -16,33 +16,48 @@ struct TVCoverScreensaverPresentation: ViewModifier {
         TVRemoteActivity.shared.note()
       }) {
         TVCoverScreensaverView()
+          // Apple TV's own screen saver would otherwise appear over this one.
+          .screenStaysAwake()
       }
       .task(id: showing) {
         guard !showing else { return }
         while !Task.isCancelled {
           do { try await Task.sleep(for: .seconds(1)) } catch { return }
-          guard isAllowed,
+          guard canStart,
                 TVRemoteActivity.shared.idleSeconds >= CoverScreensaver.idleSeconds
           else { continue }
           showing = true
           return
         }
       }
-      .onChange(of: isAllowed) { _, stillAllowed in
+      .onChange(of: canStay) { _, stillAllowed in
         // A room that stops, or pausing with the remote's own play/pause button,
         // means the viewer wants the transport back.
         if !stillAllowed { showing = false }
       }
   }
 
-  private var isAllowed: Bool {
+  private var canStart: Bool {
     CoverScreensaver.canShow(
       hasArtwork: hasHeroArtwork,
       isPlaying: store.isPlaying,
-      isPresenting: store.showVolume || store.showQueue || isPresentingCinema,
+      isPresenting: isPresenting,
       isAwaitingServer: store.showsFindingServer,
       voiceOverEnabled: voiceOver
     )
+  }
+
+  private var canStay: Bool {
+    CoverScreensaver.canStay(
+      isPlaying: store.isPlaying,
+      isPresenting: isPresenting,
+      isAwaitingServer: store.showsFindingServer,
+      voiceOverEnabled: voiceOver
+    )
+  }
+
+  private var isPresenting: Bool {
+    store.showVolume || store.showQueue || isPresentingCinema
   }
 
   /// Read from the cache rather than through `imageData`, which would start a
@@ -66,7 +81,15 @@ struct TVCoverScreensaverView: View {
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var cover: Cover?
   @State private var leg = 0
+
+  /// The cover on screen, which is not always the playing track's: see
+  /// `followTrack()`.
+  private struct Cover {
+    let imageKey: String
+    let image: UIImage
+  }
 
   private var imageKey: String? { store.currentTrack?.imageKey }
   private var waypoint: CoverScreensaver.Waypoint {
@@ -80,10 +103,8 @@ struct TVCoverScreensaverView: View {
     GeometryReader { geometry in
       ZStack {
         Color.black
-        if let data = store.imageData(for: imageKey, pixels: ArtworkCache.heroPixels),
-           let ui = UIImage(data: data)
-        {
-          Image(uiImage: ui)
+        if let cover {
+          Image(uiImage: cover.image)
             .resizable()
             .scaledToFill()
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -96,7 +117,7 @@ struct TVCoverScreensaverView: View {
             // bottom, and the drift adds to it. Clip to the screen, not to the
             // moved picture.
             .clipped()
-            .id(imageKey)
+            .id(cover.imageKey)
             .transition(.opacity)
             .accessibilityHidden(true)
         }
@@ -108,11 +129,12 @@ struct TVCoverScreensaverView: View {
       .frame(width: geometry.size.width, height: geometry.size.height)
     }
     .ignoresSafeArea()
-    .animation(.easeInOut(duration: 1.2), value: imageKey)
     .animation(.easeInOut(duration: 0.5), value: store.currentTrack?.id)
-    .task(id: driftKey) {
-      leg = 0
-      guard !reduceMotion, imageKey != nil else { return }
+    .task(id: imageKey) { await followTrack() }
+    // One continuous move for the whole sitting. Restarting it with each song
+    // would jolt the camera in the middle of a cross-fade.
+    .task(id: reduceMotion) {
+      guard !reduceMotion else { return }
       while !Task.isCancelled {
         withAnimation(.easeInOut(duration: CoverScreensaver.legSeconds)) { leg += 1 }
         do { try await Task.sleep(for: .seconds(CoverScreensaver.legSeconds)) } catch { return }
@@ -128,6 +150,35 @@ struct TVCoverScreensaverView: View {
     .accessibilityElement(children: .contain)
     .accessibilityIdentifier("cover-screensaver")
     .accessibilityAction(named: "Show Now Playing") { dismiss() }
+  }
+
+  /// Keeps the cover that is on screen until the next one is fully in hand.
+  ///
+  /// A song's artwork reaches the cache a second or so after the song itself, so
+  /// swapping to whatever is cached the instant the track changes would blink to
+  /// black, or to a stretched list thumbnail, part way through a move.
+  private func followTrack() async {
+    guard let imageKey, imageKey != cover?.imageKey else { return }
+    while !Task.isCancelled {
+      if let image = heroCover(imageKey) {
+        withAnimation(.easeInOut(duration: 1.2)) {
+          cover = Cover(imageKey: imageKey, image: image)
+        }
+        return
+      }
+      // Asking is what starts the fetch when the store has not already.
+      _ = store.imageData(for: imageKey, pixels: ArtworkCache.heroPixels)
+      do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+    }
+  }
+
+  /// The cover at full size, or nothing. Unlike `imageData`, this never answers
+  /// with the list thumbnail, which would be far too soft for a whole screen.
+  private func heroCover(_ imageKey: String) -> UIImage? {
+    guard let data = store.artwork.data(
+      for: ArtworkCache.Key(imageKey: imageKey, pixels: ArtworkCache.heroPixels)
+    ) else { return nil }
+    return UIImage(data: data)
   }
 
   /// Only the foot of the picture is darkened, enough to carry white text over a
@@ -170,7 +221,4 @@ struct TVCoverScreensaverView: View {
     .padding(64)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
   }
-
-  /// A new track starts its own move, from the top of the loop.
-  private var driftKey: String { "\(imageKey ?? "none")-\(reduceMotion)" }
 }

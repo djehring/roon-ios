@@ -28,11 +28,70 @@ struct CoverScreensaverTests {
     )
   }
 
-  @Test("paused music keeps the transport on screen")
+  @Test("the next song's cover arriving late does not end the screensaver")
+  func trackChangeKeepsScreensaver() {
+    // The regression this guards: artwork reaches the cache a moment after the
+    // track, so asking for it again between songs dropped back to the controls
+    // every few minutes.
+    #expect(
+      CoverScreensaver.canStay(
+        isPlaying: true,
+        isPresenting: false,
+        isAwaitingServer: false,
+        voiceOverEnabled: false
+      )
+    )
+    #expect(
+      !CoverScreensaver.canShow(
+        hasArtwork: false,
+        isPlaying: true,
+        isPresenting: false,
+        isAwaitingServer: false,
+        voiceOverEnabled: false
+      ),
+      "starting still waits for the cover"
+    )
+  }
+
+  @Test("everything except the artwork that stops it starting also stops it staying")
+  func stayingAndStartingAgreeOtherwise() {
+    for isPlaying in [true, false] {
+      for isPresenting in [true, false] {
+        for isAwaitingServer in [true, false] {
+          for voiceOverEnabled in [true, false] {
+            #expect(
+              CoverScreensaver.canShow(
+                hasArtwork: true,
+                isPlaying: isPlaying,
+                isPresenting: isPresenting,
+                isAwaitingServer: isAwaitingServer,
+                voiceOverEnabled: voiceOverEnabled
+              ) == CoverScreensaver.canStay(
+                isPlaying: isPlaying,
+                isPresenting: isPresenting,
+                isAwaitingServer: isAwaitingServer,
+                voiceOverEnabled: voiceOverEnabled
+              )
+            )
+          }
+        }
+      }
+    }
+  }
+
+  @Test("paused music keeps the transport on screen, and gives it back")
   func pausedHidesScreensaver() {
     #expect(
       !CoverScreensaver.canShow(
         hasArtwork: true,
+        isPlaying: false,
+        isPresenting: false,
+        isAwaitingServer: false,
+        voiceOverEnabled: false
+      )
+    )
+    #expect(
+      !CoverScreensaver.canStay(
         isPlaying: false,
         isPresenting: false,
         isAwaitingServer: false,
