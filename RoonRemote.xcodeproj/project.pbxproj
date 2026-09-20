@@ -54,6 +54,7 @@
 		34ED9EF068E109B2FAB39C43 /* TimeCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3DB34DBD1710F387C9857E /* TimeCapsule.swift */; };
 		364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
 		39F920267E7A9A882EF012E3 /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
+		3D289F7B94B7BDA3977A94D8 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		3DC723974E3F895EE3B1E58E /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		417141281DBED14DEDC9BEE2 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
@@ -174,6 +175,7 @@
 		CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
+		D548CFDCA84BC47FEBEF7337 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		D6FF75819BBF7B47B3DF3FC7 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
 		D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */; };
 		DBBD2A9DBD27BEBB7909A3E6 /* CinemaComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA158638CB0BD426CE829118 /* CinemaComponents.swift */; };
@@ -188,6 +190,8 @@
 		EB56D814457DC8B16C90B057 /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		EB5921F82C85C33C5D77D348 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		EC1C627651E91A723880B3D1 /* RoonLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */; };
+		EEA15777265C80B307A97805 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
+		EF4291DF2BD93F0E3B7257D5 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97C1EA62154B94FECA419F8 /* WatchApp.swift */; };
 		EF9DBE33C7C5F304C471C96E /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
 		EFE3B78B14B83223A8FA371A /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
@@ -357,6 +361,7 @@
 		9585880B2ED0C7AD53C6493F /* CinemaPlaylistUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPlaylistUITests.swift; sourceTree = "<group>"; };
 		98E879B8733420F53D127642 /* RoonRemoteIntents.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = RoonRemoteIntents.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		98EC1B18319F044EE6619B3D /* QueueTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueTimeline.swift; sourceTree = "<group>"; };
+		9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleTimer.swift; sourceTree = "<group>"; };
 		99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIClient.swift; sourceTree = "<group>"; };
 		9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePlayback.swift; sourceTree = "<group>"; };
@@ -546,6 +551,7 @@
 				F043A2049FECB90E37FF482D /* CoverScreensaver.swift */,
 				DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */,
 				B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */,
+				9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */,
 				11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */,
 				53B537335978A7DE3589DC1C /* PlayRequest.swift */,
 				0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */,
@@ -978,6 +984,7 @@
 				7E49BAF649BF0680B737A327 /* EventLiveness.swift in Sources */,
 				10421A1E01521FB956D88355 /* FindingServerGate.swift in Sources */,
 				3DC723974E3F895EE3B1E58E /* FindingServerOverlay.swift in Sources */,
+				3D289F7B94B7BDA3977A94D8 /* IdleTimer.swift in Sources */,
 				47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */,
 				5AEA306D6C5BCC61A744C72D /* LibraryIndex.swift in Sources */,
 				4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */,
@@ -1070,6 +1077,7 @@
 				32ABE8F75094E97FBCA3E22F /* CoverScreensaver.swift in Sources */,
 				E9504FB481F049511CE34CAE /* FindingServerGate.swift in Sources */,
 				CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */,
+				D548CFDCA84BC47FEBEF7337 /* IdleTimer.swift in Sources */,
 				76DB31B8EF594C74123923C1 /* NowPlayingLiveIntents.swift in Sources */,
 				C2EC53A7AF04777341E9B36A /* PlayRequest.swift in Sources */,
 				B58B5E7477E02869E5847E49 /* RoonNowPlayingAttributes.swift in Sources */,
@@ -1115,6 +1123,7 @@
 				A1A6965851B819F4DF2962F0 /* FindingServerGate.swift in Sources */,
 				B42E798326E1348228942D07 /* FindingServerOverlay.swift in Sources */,
 				53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */,
+				EF4291DF2BD93F0E3B7257D5 /* IdleTimer.swift in Sources */,
 				9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */,
 				1350ACEB4796A64EA9D7F437 /* Layout.swift in Sources */,
 				755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */,
@@ -1190,6 +1199,7 @@
 				EF9DBE33C7C5F304C471C96E /* CoverScreensaver.swift in Sources */,
 				F27E0206D5B12518A8AC552B /* FindingServerGate.swift in Sources */,
 				F4FD0C74D35B64BB96EC769E /* FindingServerOverlay.swift in Sources */,
+				EEA15777265C80B307A97805 /* IdleTimer.swift in Sources */,
 				EB5921F82C85C33C5D77D348 /* NowPlayingLiveIntents.swift in Sources */,
 				BB77AA0406D64D6070E004E6 /* PlayRequest.swift in Sources */,
 				B83CFE0BA1E656B9BA119ECA /* RoonNowPlayingAttributes.swift in Sources */,

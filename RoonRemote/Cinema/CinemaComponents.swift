@@ -141,17 +141,6 @@ struct CinemaRoomButton: View {
 }
 
 
-struct CinemaIdleTimer: ViewModifier {
-  @State private var previous = false
-  func body(content: Content) -> some View {
-    content.onAppear {
-      previous = UIApplication.shared.isIdleTimerDisabled
-      UIApplication.shared.isIdleTimerDisabled = true
-    }.onDisappear { UIApplication.shared.isIdleTimerDisabled = previous }
-  }
-}
-
-
 extension View {
   @ViewBuilder func cinemaPlainButton() -> some View {
     #if os(tvOS)

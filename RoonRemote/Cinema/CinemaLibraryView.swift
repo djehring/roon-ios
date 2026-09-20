@@ -26,7 +26,7 @@ struct CinemaPresentation: ViewModifier {
       }) { capsule in
         let resolved = cinema.preparation?.resolve(capsule) ?? capsule
         CinemaView(capsule: resolved).id(resolved.id + resolved.createdAt)
-          .modifier(CinemaIdleTimer())
+          .screenStaysAwake()
       }
       .onAppear { viewer = cinema.presented }
       .onChange(of: cinema.presented?.id) { _, _ in
