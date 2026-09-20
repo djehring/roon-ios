@@ -9,7 +9,6 @@ struct TVCoverScreensaverPresentation: ViewModifier {
   @State private var showing = false
 
   func body(content: Content) -> some View {
-    let allowed = isAllowed
     content
       .fullScreenCover(isPresented: $showing, onDismiss: {
         // The back press that closed this is what starts the idle wait again,
@@ -29,9 +28,9 @@ struct TVCoverScreensaverPresentation: ViewModifier {
           return
         }
       }
-      .onChange(of: allowed) { _, stillAllowed in
-        // Pausing, or opening the queue from the screensaver's own play/pause
-        // handler, means the viewer is back: return the controls to them.
+      .onChange(of: isAllowed) { _, stillAllowed in
+        // A room that stops, or pausing with the remote's own play/pause button,
+        // means the viewer wants the transport back.
         if !stillAllowed { showing = false }
       }
   }
@@ -104,7 +103,6 @@ struct TVCoverScreensaverView: View {
       .frame(width: geometry.size.width, height: geometry.size.height)
     }
     .ignoresSafeArea()
-    .background(Color.black.ignoresSafeArea())
     .animation(.easeInOut(duration: 1.2), value: imageKey)
     .task(id: driftKey) {
       leg = 0
@@ -129,7 +127,7 @@ struct TVCoverScreensaverView: View {
   }
 
   /// A new track starts its own move, from the top of the loop.
-  private var driftKey: String { [imageKey ?? "", reduceMotion ? "still" : "drift"].joined(separator: "|") }
+  private var driftKey: String { "\(imageKey ?? "none")-\(reduceMotion)" }
 
   private var label: String {
     guard let track = store.currentTrack else { return "Album cover" }
