@@ -128,8 +128,8 @@ struct AISearchView: View {
               Image(systemName: "line.3.horizontal")
                 .foregroundStyle(Palette.tertiary)
               VStack(alignment: .leading, spacing: 4) {
-                Text(track.title)
-                Text("\(track.artist)  ·  \(track.album)")
+                Text(track.listedTitle)
+                Text("\(track.listedArtist)  ·  \(track.listedAlbum)")
                   .font(.footnote)
                   .foregroundStyle(Palette.secondary)
                 if track.corrected {
@@ -181,12 +181,12 @@ struct AISearchView: View {
             .shadow(color: .black.opacity(0.28), radius: 24, y: 12)
 
           VStack(alignment: .leading, spacing: 8) {
-            Text(track.title)
+            Text(track.listedTitle)
               .font(.largeTitle.bold())
-            Text(track.artist)
+            Text(track.listedArtist)
               .font(.title2)
               .foregroundStyle(Palette.secondary)
-            Text(track.album)
+            Text(track.listedAlbum)
               .font(.title3)
               .foregroundStyle(Palette.tertiary)
           }
@@ -508,10 +508,10 @@ struct CameraSearchView: View {
 
   private func albumText(_ album: BrowseNode) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text(album.title)
+      Text(album.listedTitle)
         .font(.headline)
         .foregroundStyle(Palette.primary)
-      Text(album.subtitle ?? "")
+      Text(album.listedSubtitle)
         .font(.subheadline)
         .foregroundStyle(Palette.secondary)
     }

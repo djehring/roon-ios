@@ -114,6 +114,22 @@ struct RoonDisplayTextTests {
     )
     #expect(RoonDisplayText.format("[[Eclogue]]") == "Eclogue")
     #expect(RoonDisplayText.format("English Music for Strings") == "English Music for Strings")
+    #expect(
+      RoonDisplayText.format(
+        "[[25460090|Peter Fisher]] / [[17380422|Peter Cigleris]] / [[44598394|Sarah Watts]] / [[44599066|Alexei Watkin]] / [[44598650|Michael Magee]]"
+      ) == "Peter Fisher / Peter Cigleris / Sarah Watts / Alexei Watkin / Michael Magee"
+    )
+    #expect(
+      BrowseNode(
+        id: "album",
+        title: "Eclogue",
+        subtitle: "[[25460090|Peter Fisher]] / Chamber Orchestra of London",
+        symbol: "opticaldisc",
+        actions: [],
+        isPrompt: false,
+        children: []
+      ).listedSubtitle == "Peter Fisher / Chamber Orchestra of London"
+    )
   }
 
   @Test func matchingIgnoresRoonCreditIds() {

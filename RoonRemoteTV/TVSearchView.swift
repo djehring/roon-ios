@@ -85,9 +85,9 @@ private struct TVSearchResultRow: View {
       CoverArt(title: item.album, corner: 8)
         .frame(width: 64, height: 64)
       VStack(alignment: .leading, spacing: 4) {
-        Text(item.title)
+        Text(item.listedTitle)
           .font(.title3.weight(.semibold))
-        Text("\(item.artist)  ·  \(item.album)")
+        Text("\(item.listedArtist)  ·  \(item.listedAlbum)")
           .font(.body)
           .foregroundStyle(Palette.secondary)
         if let error = item.error {

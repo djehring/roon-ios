@@ -96,6 +96,8 @@ struct BrowseNode: Identifiable, Hashable {
   let id: String
   var title: String
   var subtitle: String?
+  var listedTitle: String { RoonDisplayText.format(title) }
+  var listedSubtitle: String { RoonDisplayText.format(subtitle ?? "") }
   var symbol: String
   var actions: [String]
   var isPrompt: Bool
@@ -150,6 +152,10 @@ struct SuggestedTrack: Identifiable, Hashable {
   var album: String
   var error: String?
   var corrected: Bool
+
+  var listedTitle: String { RoonDisplayText.format(title) }
+  var listedArtist: String { RoonDisplayText.format(artist) }
+  var listedAlbum: String { RoonDisplayText.format(album) }
 }
 
 struct CustomAction: Identifiable, Hashable {
@@ -221,11 +227,26 @@ enum SearchSegment: String, CaseIterable {
 enum RoonDisplayText {
   /// Roon credits arrive as `[[25460090|Peter Fisher]] / Chamber Orchestra of London`.
   static func format(_ value: String) -> String {
-    value.replacingOccurrences(
-      of: #"\[\[(?:[^|\]]+\|)?([^\]]+)\]\]"#,
-      with: "$1",
-      options: .regularExpression
-    )
+    var output = ""
+    var remainder = value
+    while let start = remainder.range(of: "[[") {
+      output += remainder[..<start.lowerBound]
+      remainder = String(remainder[start.upperBound...])
+      guard let end = remainder.range(of: "]]") else {
+        output += "[["
+        output += remainder
+        return output
+      }
+      let inner = remainder[..<end.lowerBound]
+      if let pipe = inner.lastIndex(of: "|") {
+        output += inner[inner.index(after: pipe)...]
+      } else {
+        output += inner
+      }
+      remainder = String(remainder[end.upperBound...])
+    }
+    output += remainder
+    return output
   }
 }
 

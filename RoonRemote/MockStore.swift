@@ -629,8 +629,8 @@ final class MockStore {
         recognizedAlbums = result.libraryResults.map {
           BrowseNode(
             id: $0.itemKey,
-            title: $0.title,
-            subtitle: $0.subtitle,
+            title: RoonDisplayText.format($0.title),
+            subtitle: RoonDisplayText.format($0.subtitle ?? ""),
             symbol: "opticaldisc",
             actions: ["Play Now"],
             isPrompt: false,
