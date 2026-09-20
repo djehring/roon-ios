@@ -539,9 +539,9 @@ final class MockStore {
         aiResults = items.map {
           SuggestedTrack(
             id: $0.id,
-            title: $0.track,
-            artist: $0.artist,
-            album: $0.album,
+            title: RoonDisplayText.format($0.track),
+            artist: RoonDisplayText.format($0.artist),
+            album: RoonDisplayText.format($0.album),
             error: $0.error,
             corrected: $0.wasAutoCorrected ?? false
           )

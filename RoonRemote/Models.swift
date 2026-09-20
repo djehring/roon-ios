@@ -218,9 +218,20 @@ enum SearchSegment: String, CaseIterable {
   case camera
 }
 
+enum RoonDisplayText {
+  /// Roon credits arrive as `[[25460090|Peter Fisher]] / Chamber Orchestra of London`.
+  static func format(_ value: String) -> String {
+    value.replacingOccurrences(
+      of: #"\[\[(?:[^|\]]+\|)?([^\]]+)\]\]"#,
+      with: "$1",
+      options: .regularExpression
+    )
+  }
+}
+
 enum RoonVoiceMatch {
   static func normalize(_ value: String) -> String {
-    value
+    RoonDisplayText.format(value)
       .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
       .replacingOccurrences(of: "[^a-z0-9 ]+", with: " ", options: .regularExpression)
       .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)

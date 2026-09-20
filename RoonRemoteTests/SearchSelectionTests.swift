@@ -100,3 +100,28 @@ struct AISearchPlaybackTests {
     #expect(!AISearchPlayback.artistsAlign("The Muppets", "The Beatles"))
   }
 }
+
+@Suite("Roon display text")
+struct RoonDisplayTextTests {
+  @Test func stripsLinkedCreditsAndLeavesPlainNames() {
+    #expect(
+      RoonDisplayText.format("[[44398900|Alexei Watkin]] / [[44598650|Michael Magee]]")
+        == "Alexei Watkin / Michael Magee"
+    )
+    #expect(
+      RoonDisplayText.format("[[25460090|Peter Fisher]] / Chamber Orchestra of London")
+        == "Peter Fisher / Chamber Orchestra of London"
+    )
+    #expect(RoonDisplayText.format("[[Eclogue]]") == "Eclogue")
+    #expect(RoonDisplayText.format("English Music for Strings") == "English Music for Strings")
+  }
+
+  @Test func matchingIgnoresRoonCreditIds() {
+    #expect(
+      RoonVoiceMatch.titlesMatch(
+        "[[25460090|Peter Fisher]]",
+        "Peter Fisher"
+      )
+    )
+  }
+}
