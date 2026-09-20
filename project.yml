@@ -129,6 +129,7 @@ targets:
     sources:
       - path: RoonRemoteTests
       - path: Shared/ArtworkCache.swift
+      - path: Shared/CoverScreensaver.swift
       - path: Shared/FindingServerGate.swift
       - path: RoonRemote/Layout.swift
       - path: RoonRemote/LibraryIndex.swift

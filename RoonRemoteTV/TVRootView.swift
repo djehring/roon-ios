@@ -9,6 +9,12 @@ struct TVRootView: View {
         .frame(width: 0, height: 0)
         .accessibilityHidden(true)
         .allowsHitTesting(false)
+      // Installed for the whole app, not just Now Playing, so the idle clock is
+      // already warm when the viewer arrives on that tab.
+      TVRemoteActivityInstaller()
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
       Palette.background.ignoresSafeArea()
       switch store.session {
       case .onboarding:
