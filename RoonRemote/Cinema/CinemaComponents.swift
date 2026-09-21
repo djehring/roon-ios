@@ -86,7 +86,7 @@ struct CinemaArtwork: View {
       guard preferAlbum || capsule.montageFrames.isEmpty else { return }
       store.cinema.warmArtwork(tracks: capsule.request.tracks, zoneId: store.selectedZoneId, client: store.client)
     }
-    .task(id: preview?.file) {
+    .task(id: (preview?.file ?? "") + (store.cinema.downloadedIds.contains(capsule.id) ? ":synced" : "")) {
       photograph = nil
       guard let preview else { return }
       let result = try? await MontageImageLoader.previews.load(preview, client: store.client)

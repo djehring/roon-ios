@@ -161,7 +161,7 @@ struct CinemaPhotoControls: View {
       }
       if let message = selection.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
     } header: { Text("Your pictures") } footer: {
-      Text("Save up to 200 photos on this device. Photos are not sent to AI or shared with other screens. Albums are saved as they are today.")
+      Text("Save up to 200 photos and share them through your paired bridge with your other devices. Photos are not sent to AI. Albums are saved as they are today.")
     }
   }
 }

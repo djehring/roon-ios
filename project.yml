@@ -155,6 +155,7 @@ targets:
       - path: RoonRemote/Cinema/TimeCapsule.swift
       - path: RoonRemote/Cinema/CapsuleOptions.swift
       - path: RoonRemote/Cinema/PersonalCinemaStore.swift
+      - path: RoonRemote/Cinema/CinemaResourceStore.swift
       - path: RoonRemote/Cinema/CapsuleLibrary.swift
       - path: RoonRemote/Sidebar.swift
     settings:

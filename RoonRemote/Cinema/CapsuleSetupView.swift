@@ -479,7 +479,7 @@ struct CapsuleSetupView: View {
       #if os(iOS)
       return setup.original?.isPersonal == true || (photos.count > 0 && photos.count <= 200)
       #else
-      return false
+      return setup.original?.isPersonal == true
       #endif
     }
     return !options.topics.isEmpty && !options.subject.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -575,7 +575,6 @@ struct CapsuleSetupView: View {
       }
       return
     }
-    #if os(iOS)
     saving = true; failure = nil
     creation = Task {
       defer { saving = false }
@@ -584,7 +583,11 @@ struct CapsuleSetupView: View {
         if let original = setup.original {
           capsule = try await PersonalCinemaStore.shared.update(original, options: chosen, request: request)
         } else {
+          #if os(iOS)
           capsule = try await photos.create(request: request)
+          #else
+          throw PersonalCinemaError("Create photo cinemas on your iPhone or iPad, then sync them here.")
+          #endif
         }
         if Task.isCancelled {
           if setup.original == nil { try? await PersonalCinemaStore.shared.remove(capsule) }
@@ -596,7 +599,6 @@ struct CapsuleSetupView: View {
       } catch is CancellationError {
       } catch { failure = error.localizedDescription }
     }
-    #endif
   }
 }
 

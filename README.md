@@ -94,7 +94,7 @@ Each Cinema owns an independent soundtrack; saving never alters the source or
 starts room playback. Saved items use **Edit → Music** for the same controls.
 Albums, playlists and queues start with **Album artwork**, which needs no AI key.
 AI searches suggest a period, artist or musical-work companion with relevant topics. On iPhone and iPad,
-**My photos** also supports selected photos or an album snapshot kept on that device.
+**My photos** also supports selected photos or an album snapshot shared through your paired bridge.
 The album browser shows Photos album names, folder paths, cover thumbnails, and a
 photo preview before selection. Albums larger than 200 photos remain browsable;
 choose up to 200 pictures from the preview to save with the montage.
@@ -108,6 +108,14 @@ photograph controls to move between pictures, or hold the montage while the musi
 No historical programme is bundled.
 Open **Cinema** from Now Playing to replay saved programmes. On Apple TV, select
 the same Roon room and choose **Join** to follow its programme without restarting music.
+
+All cinemas appear on iPhone, iPad and Apple TV paired to the same bridge.
+Choose **Sync to this device** to download the saved pictures without rebuilding
+the cinema or choosing its music and settings again. Downloads resume after
+failures and remain available for offline picture playback. New and existing
+personal-photo cinemas upload when their source device opens Cinema; personal
+photo sharing requires the accompanying bridge update (`syncVersion: 1`).
+The library refreshes while open. Roon music playback still needs the bridge.
 
 Music importing and editing require the accompanying bridge update (`musicVersion: 1`).
 Research-based pictures require an OpenAI API key on the bridge; album artwork and

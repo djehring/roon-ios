@@ -125,7 +125,7 @@ struct CinemaView: View {
           } else {
             ContentUnavailableView("This montage needs pictures", systemImage: "photo.on.rectangle.angled",
               description: Text(capsule.isPersonal
-                ? "These saved photos could not be loaded. Create a new montage from your Photos library."
+                ? "These photos could not be loaded. Connect to your bridge and choose Sync to this device in Cinema."
                 : failedPhotos.isEmpty
                   ? "Rebuild this capsule from Cinema to prepare a montage."
                   : "The archive pictures could not be loaded. Check the bridge connection, then reopen the montage."))
@@ -319,9 +319,13 @@ final class MontageImageLoader {
 
   func load(_ image: CapsuleImage, client: RoonAPIClient) async throws -> UIImage {
     if let cached = cache.object(forKey: image.file as NSString) { return cached }
-    if let local = image.localFile {
-      let data = try await PersonalCinemaStore.shared.imageData(local)
+    if let local = image.localFile, let data = try? await PersonalCinemaStore.shared.imageData(local) {
       guard let result = UIImage(data: data) else { throw URLError(.cannotDecodeContentData) }
+      cache.setObject(result, forKey: image.file as NSString, cost: (result.cgImage?.bytesPerRow ?? 0) * (result.cgImage?.height ?? 0))
+      return result
+    }
+    if let data = await CinemaResourceStore.shared.imageData(image.file),
+      let result = UIImage(data: data)?.preparingThumbnail(of: CGSize(width: maximumDimension, height: maximumDimension)) {
       cache.setObject(result, forKey: image.file as NSString, cost: (result.cgImage?.bytesPerRow ?? 0) * (result.cgImage?.height ?? 0))
       return result
     }
@@ -334,6 +338,7 @@ final class MontageImageLoader {
       throw URLError(.cannotDecodeContentData)
     }
     try Task.checkCancellation()
+    try await CinemaResourceStore.shared.saveImage(data, file: image.file)
     let cost = (result.cgImage?.bytesPerRow ?? 0) * (result.cgImage?.height ?? 0)
     cache.setObject(result, forKey: image.file as NSString, cost: cost)
     return result
@@ -422,7 +427,7 @@ private struct CinemaSourcesView: View {
           Divider()
           Text("Original search").font(.headline)
           Text(query).foregroundStyle(.secondary)
-          Text(scene.image?.localFile == nil ? "AI-written summary based on the linked sources." : "Personal photo saved on this device. Not shared with AI or the bridge.").font(.caption).foregroundStyle(.secondary)
+          Text(scene.image?.localFile == nil ? "AI-written summary based on the linked sources." : "Personal photo shared through your paired bridge. Never sent to AI.").font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: 850, alignment: .leading)
         .padding(32)

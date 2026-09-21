@@ -38,6 +38,7 @@ struct CinemaPresentation: ViewModifier {
 struct CinemaLibraryView: View {
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.scenePhase) private var scenePhase
   @State private var editing: CapsuleSetup?
   @State private var deleting: TimeCapsule?
   @State private var collapsed = false
@@ -109,9 +110,15 @@ struct CinemaLibraryView: View {
       }
       Button("Cancel", role: .cancel) { }
     } message: { capsule in
-      Text("Delete “\(capsule.title)” and its saved playlist and pictures? Your original music and photos will remain.")
+      Text("Delete “\(capsule.title)” from the Cinema library on all devices? Your original music and photos will remain.")
     }
-    .task { await store.cinema.load(client: store.client) }
+    .task(id: scenePhase) {
+      guard scenePhase == .active else { return }
+      repeat {
+        await store.cinema.load(client: store.client)
+        do { try await Task.sleep(for: .seconds(30)) } catch { return }
+      } while !Task.isCancelled
+    }
     .onChange(of: store.cinema.selectedId) { _, _ in collapsed = false }
     #if os(tvOS)
     .onExitCommand { dismiss() }
@@ -123,7 +130,7 @@ struct CinemaLibraryView: View {
       VStack(alignment: .leading, spacing: 4) {
         Text("Cinema").font(.system(size: CinemaLayout.isTV ? 48 : 34, weight: .bold))
           .accessibilityAddTraits(.isHeader).foregroundStyle(Palette.primary)
-        Text("Your playlists, with pictures").font(CinemaLayout.isTV ? .title3 : .subheadline)
+        Text("Your cinemas, across your devices").font(CinemaLayout.isTV ? .title3 : .subheadline)
           .foregroundStyle(Palette.secondary)
       }
       Spacer(minLength: 8)
@@ -206,9 +213,8 @@ private struct CinemaPlaylistRow: View {
           .font(CinemaLayout.isTV ? .system(size: 19) : .caption)
           .foregroundStyle(focused ? Color.black.opacity(0.7) : Palette.secondary)
           .lineLimit(2).multilineTextAlignment(.leading)
-        if capsule.isPersonal {
-          Text("On this device").font(.caption2).foregroundStyle(Palette.secondary)
-        }
+        Text(store.cinema.downloadedIds.contains(capsule.id) ? "Pictures on this device" : "Available to sync")
+          .font(.caption2).foregroundStyle(Palette.secondary)
       }
       Spacer(minLength: 0)
       if store.cinema.isUpdating(capsule) { ProgressView().tint(focused ? .black : Palette.accent) }
@@ -282,9 +288,13 @@ private struct CinemaPlaylistActions: View {
 
   private var updating: Bool { store.cinema.isUpdating(capsule) }
   private var unsaved: Bool { store.cinema.preparation?.placeholder.id == capsule.id }
+  private var syncing: Bool { store.cinema.syncingIds.contains(capsule.id) }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
+      if !unsaved {
+        CinemaSyncControls(capsule: capsule)
+      }
       if let failure = store.cinema.failure(for: capsule) {
         Label(failure, systemImage: "exclamationmark.triangle")
           .font(.subheadline).foregroundStyle(Palette.accent)
@@ -301,11 +311,11 @@ private struct CinemaPlaylistActions: View {
       }
       HStack(spacing: 16) {
         Button("Edit", systemImage: "pencil", action: edit)
-          .buttonStyle(CinemaButtonStyle()).disabled(unsaved || store.cinema.deletingId != nil)
+          .buttonStyle(CinemaButtonStyle()).disabled(unsaved || syncing || store.cinema.loading || store.cinema.deletingId != nil)
           .accessibilityIdentifier("cinema-edit")
         Button("Delete", systemImage: "trash", action: delete)
           .buttonStyle(CinemaButtonStyle(destructive: true))
-          .disabled(updating || store.cinema.deletingId != nil)
+          .disabled(updating || syncing || store.cinema.deletingId != nil)
           .accessibilityIdentifier("cinema-delete")
       }
       if !capsule.canWatch && !updating && !unsaved {
@@ -337,6 +347,49 @@ private struct CinemaPlaylistActions: View {
         .accessibilityIdentifier("cinema-watch")
       Text("Leaves your music as it is.").font(.caption).foregroundStyle(Palette.secondary)
     }
+  }
+}
+
+private struct CinemaSyncControls: View {
+  let capsule: TimeCapsule
+  @Environment(MockStore.self) private var store
+  @State private var replacingDraft = false
+
+  var body: some View {
+    let cinema = store.cinema
+    VStack(alignment: .leading, spacing: 8) {
+      if let origin = capsule.originDeviceName {
+        Text("Created on \(origin)").font(.caption).foregroundStyle(Palette.secondary)
+      }
+      if cinema.syncingIds.contains(capsule.id) {
+        ProgressView(cinema.syncMessages[capsule.id] ?? "Syncing…")
+          .font(.subheadline).tint(Palette.accent)
+          .accessibilityIdentifier("cinema-sync-progress")
+      } else if !capsule.needsPublication && cinema.downloadedIds.contains(capsule.id) && cinema.syncErrors[capsule.id] == nil {
+        Label("Pictures synced to this device", systemImage: "checkmark.circle")
+          .font(.subheadline).foregroundStyle(Palette.secondary)
+      } else {
+        Button(capsule.needsPublication ? "Share with my devices" : "Sync to this device", systemImage: "arrow.down.circle") {
+          Task { await cinema.syncToDevice(capsule, client: store.client) }
+        }
+        .buttonStyle(CinemaButtonStyle())
+        .disabled(cinema.isUpdating(capsule) || cinema.deletingId == capsule.id)
+        .accessibilityIdentifier("cinema-sync")
+      }
+      if let error = cinema.syncErrors[capsule.id] {
+        Label(error, systemImage: "exclamationmark.triangle").font(.footnote).foregroundStyle(Palette.accent)
+      }
+      if cinema.syncConflicts.contains(capsule.id) {
+        Button("Use shared version") { replacingDraft = true }
+          .buttonStyle(CinemaButtonStyle())
+          .disabled(cinema.syncingIds.contains(capsule.id))
+      }
+    }
+    .confirmationDialog("Replace this device’s unsynced changes?", isPresented: $replacingDraft, titleVisibility: .visible) {
+      Button("Use shared version", role: .destructive) {
+        Task { await cinema.useSharedVersion(capsule, client: store.client) }
+      }
+    } message: { Text("The version saved by your other device will be used. If it was deleted there, it will be removed here too.") }
   }
 }
 

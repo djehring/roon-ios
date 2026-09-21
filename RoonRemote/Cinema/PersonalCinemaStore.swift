@@ -1,14 +1,15 @@
 import Foundation
 import ImageIO
 import UIKit
+import CryptoKit
 
-/// Personal montages never enter the bridge cache or shared room associations.
+/// Imported originals and personal manifests survive app restarts and failed syncs.
 actor PersonalCinemaStore {
   static let shared = PersonalCinemaStore()
   private let root: URL
   init(directory: URL = PersonalCinemaStore.directory) { root = directory }
   nonisolated static var directory: URL {
-    FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    CinemaStorage.directory
       .appendingPathComponent("PersonalCinema", isDirectory: true)
   }
   nonisolated static func imageURL(_ name: String, directory: URL = PersonalCinemaStore.directory) -> URL? {
@@ -33,7 +34,7 @@ actor PersonalCinemaStore {
     return CapsuleImage(file: name, sourceUrl: URL(string: "roon-photo://personal")!,
       credit: "Your photo", license: "Personal photo", licenseUrl: "",
       date: captured.map { ISO8601DateFormatter().string(from: $0) } ?? "",
-      description: "Saved on this device", localFile: name)
+      description: "Personal photo", localFile: name)
   }
 
   func save(request: CapsuleRequest, images: [CapsuleImage], title: String) throws -> TimeCapsule {
@@ -49,7 +50,7 @@ actor PersonalCinemaStore {
       }.map(\.element)
     } else if request.options?.order == .shuffled { ordered.shuffle() }
     let capsule = TimeCapsule(id: "personal-" + UUID().uuidString,
-      title: title.isEmpty ? "My photos" : title, contextLabel: "Personal montage · On this device",
+      title: title.isEmpty ? "My photos" : title, contextLabel: "Personal montage",
       request: request, createdAt: ISO8601DateFormatter().string(from: Date()),
       scenes: ordered.enumerated().map { index, image in
         CapsuleScene(id: image.file, title: ISO8601DateFormatter().date(from: image.date)?.formatted(date: .abbreviated, time: .omitted) ?? "Photo \(index + 1)", body: "", dateLabel: "",
@@ -62,6 +63,52 @@ actor PersonalCinemaStore {
       throw CancellationError()
     }
     return capsule
+  }
+
+  func hasImage(_ name: String) -> Bool {
+    guard let url = Self.imageURL(name, directory: root) else { return false }
+    return FileManager.default.fileExists(atPath: url.path)
+  }
+
+  func storeManifest(_ capsule: TimeCapsule) throws {
+    guard capsule.isPersonal, capsule.id.hasPrefix("personal-"),
+      UUID(uuidString: String(capsule.id.dropFirst(9))) != nil else { throw URLError(.badURL) }
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try JSONEncoder().encode(capsule).write(to: root.appendingPathComponent(capsule.id + ".json"), options: .atomic)
+  }
+
+  func manifest(_ id: String) throws -> TimeCapsule? {
+    guard id.hasPrefix("personal-"), UUID(uuidString: String(id.dropFirst(9))) != nil else { throw URLError(.badURL) }
+    let url = root.appendingPathComponent(id + ".json")
+    guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+    return try JSONDecoder().decode(TimeCapsule.self, from: Data(contentsOf: url))
+  }
+
+  /// Refresh must not overwrite a draft or restore a manifest deleted during its network request.
+  func reconcile(_ capsule: TimeCapsule, expected: TimeCapsule?, remove: Bool = false) throws -> Bool {
+    let current = try manifest(capsule.id)
+    guard current == expected else { return false }
+    if remove { try self.remove(capsule) } else { try storeManifest(capsule) }
+    return true
+  }
+
+  /// Content addresses let uploads resume without changing the saved picture order.
+  func publication(_ capsule: TimeCapsule) throws -> TimeCapsule {
+    var result = capsule
+    func address(_ image: CapsuleImage) throws -> CapsuleImage {
+      var image = image
+      if image.file.count == 64, image.file.allSatisfy({ $0.isHexDigit && !$0.isUppercase }) { return image }
+      guard let name = image.localFile else { throw URLError(.fileDoesNotExist) }
+      image.file = SHA256.hash(data: try imageData(name)).map { String(format: "%02x", $0) }.joined()
+      return image
+    }
+    for index in result.scenes.indices {
+      result.scenes[index].image = try result.scenes[index].image.map(address)
+      result.scenes[index].images = try result.scenes[index].images?.map(address)
+    }
+    result.contextImage = try result.contextImage.map(address)
+    result.contextLabel = "Personal montage"
+    return result
   }
 
   private static func captureDate(_ source: CGImageSource) -> Date? {

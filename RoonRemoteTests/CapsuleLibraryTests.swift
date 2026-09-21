@@ -371,7 +371,7 @@ struct CapsuleLibraryTests {
 }
 
 @MainActor
-private final class CinemaStub: CinemaClient {
+final class CinemaStub: CinemaClient {
   var job = CapsuleJob(id: "saved", status: "researching")
   var updatedId: String?
   var updatedOptions: CapsuleOptions?
@@ -383,6 +383,28 @@ private final class CinemaStub: CinemaClient {
   var associatedIds: [String] = []
   var delayLoad = false
   var saved: [TimeCapsule] = []
+  var supportsSync = false
+  var images: [String: Data] = [:]
+  var downloads: [String] = []
+  var publicationError: Error?
+  var loadError: Error?
+  var uploads: [String] = []
+  func supportsCinemaSync() async throws -> Bool { supportsSync }
+  func uploadCinemaImage(_ data: Data, file: String) async throws { images[file] = data; uploads.append(file) }
+  func cinemaImage(_ file: String) async throws -> Data {
+    downloads.append(file)
+    guard let bytes = images[file] else { throw URLError(.networkConnectionLost) }
+    return bytes
+  }
+  func publishPersonalCinema(_ capsule: TimeCapsule, mutationId: String) async throws -> TimeCapsule {
+    if let publicationError { throw publicationError }
+    var remote = capsule
+    remote.revision = (capsule.syncedRevision ?? 0) + 1
+    remote.syncedRevision = nil
+    remote.syncScope = nil
+    saved = [remote] + saved.filter { $0.id != remote.id }
+    return remote
+  }
   var loadContinuation: CheckedContinuation<[TimeCapsule], Never>?
   var artworkContinuation: CheckedContinuation<Data?, Never>?
   var artworkCalls = 0
@@ -391,6 +413,7 @@ private final class CinemaStub: CinemaClient {
   var rebuildCount = 0
   var contentRequest: CapsuleRequest?
   func timeCapsules() async throws -> [TimeCapsule] {
+    if let loadError { throw loadError }
     if delayLoad { return await withCheckedContinuation { loadContinuation = $0 } }
     return saved
   }

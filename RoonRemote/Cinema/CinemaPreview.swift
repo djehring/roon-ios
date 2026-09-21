@@ -73,6 +73,11 @@ private final class CinemaPreviewClient: CinemaClient {
     self.items = items; self.delay = delay; self.fail = fail; self.cover = cover
   }
   func timeCapsules() async throws -> [TimeCapsule] { items }
+  func cinemaImage(_ file: String) async throws -> Data {
+    guard let encoded = ProcessInfo.processInfo.environment["ROON_CINEMA_PREVIEW_SYNC_IMAGE"],
+      let bytes = Data(base64Encoded: encoded) else { throw URLError(.resourceUnavailable) }
+    return bytes
+  }
   func requireCinemaOptionsSupport() async throws { }
   func requireCinemaManagementSupport() async throws { }
   func requireCinemaMusicSupport() async throws { }

@@ -60,10 +60,20 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var periodEnd: String?
   var generation: String?
   var revision: Int?
+  var originDeviceName: String?
+  /// Local sync bookkeeping; the bridge owns the shared revision.
+  var syncedRevision: Int?
+  var syncScope: String?
 
   var isPersonal: Bool { request.options?.mode == .photos }
   var minimumPictures: Int { isPersonal || request.options?.topics == [.albumCovers] ? 1 : 3 }
   var canWatch: Bool { montageFrames.count >= minimumPictures }
+  var needsPublication: Bool { isPersonal && (syncedRevision == nil || syncedRevision != revision) }
+  var resourceImages: [CapsuleImage] {
+    var seen = Set<String>()
+    return (montageFrames.map(\.image) + [contextImage].compactMap { $0 })
+      .filter { seen.insert($0.file).inserted }
+  }
 
   /// Only real photographs enter the montage. Empty story cards and repeated
   /// context backgrounds must not masquerade as a changing photo sequence.

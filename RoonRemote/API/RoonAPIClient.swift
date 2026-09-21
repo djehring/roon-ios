@@ -242,6 +242,36 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
     try decoder.decode([TimeCapsule].self, from: await capsuleResponse(""))
   }
 
+  var cinemaSyncScope: String { "\(host.lowercased()):\(port)" }
+
+  func supportsCinemaSync() async throws -> Bool {
+    struct Capabilities: Decodable { var syncVersion: Int? }
+    do {
+      return try decoder.decode(Capabilities.self, from: await capsuleResponse("capabilities")).syncVersion ?? 0 >= 1
+    } catch RoonAPIError.httpStatus(404, _) { return false }
+  }
+
+  func uploadCinemaImage(_ bytes: Data, file: String) async throws {
+    var request = try capsuleRequest("personal/images/\(capsuleComponent(file))", method: "PUT")
+    request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+    request.httpBody = bytes
+    let (data, response) = try await data(for: request, using: cinemaSession)
+    try throwIfNeeded(response, data: data, ok: [204])
+  }
+
+  func publishPersonalCinema(_ capsule: TimeCapsule, mutationId: String) async throws -> TimeCapsule {
+    // JSONEncoder omits nil optionals; creation explicitly sends a null base revision.
+    var input: [String: Any] = ["capsule": try JSONSerialization.jsonObject(with: JSONEncoder().encode(capsule)),
+      "mutationId": mutationId]
+    input["baseRevision"] = capsule.syncedRevision.map { $0 as Any } ?? NSNull()
+    return try decoder.decode(TimeCapsule.self, from: await capsuleResponse("personal/\(capsuleComponent(capsule.id))",
+      method: "PUT", body: JSONSerialization.data(withJSONObject: input)))
+  }
+
+  func cinemaImage(_ file: String) async throws -> Data {
+    try await capsuleResponse("images/\(capsuleComponent(file))")
+  }
+
   func createTimeCapsule(_ input: CapsuleRequest) async throws -> CapsuleJob {
     let body = try JSONEncoder().encode(input)
     return try decoder.decode(CapsuleJob.self, from: await capsuleResponse("", method: "POST", body: body))

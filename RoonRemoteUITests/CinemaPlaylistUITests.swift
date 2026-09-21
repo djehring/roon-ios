@@ -2,6 +2,33 @@ import XCTest
 import UIKit
 
 final class CinemaPlaylistUITests: XCTestCase {
+  @MainActor func testSyncPicturesPersistsAcrossLaunches() throws {
+    let app = XCUIApplication()
+    let unique = UUID().uuidString
+    let image = UIGraphicsImageRenderer(size: CGSize(width: 80, height: 60)).jpegData(withCompressionQuality: 0.9) { context in
+      UIColor.systemTeal.setFill()
+      context.fill(CGRect(x: 0, y: 0, width: 80, height: 60))
+    }
+    app.launchArguments = ["-roon-demo-store"]
+    app.launchEnvironment["ROON_CINEMA_PREVIEW_JSON"] = CinemaPlaylistFixture.json.replacingOccurrences(of: "test-image-", with: unique)
+    app.launchEnvironment["ROON_CINEMA_PREVIEW_LIBRARY"] = "1"
+    app.launchEnvironment["ROON_CINEMA_PREVIEW_SYNC_IMAGE"] = image.base64EncodedString()
+    app.launch()
+    let sync = app.buttons["cinema-sync"]
+    XCTAssertTrue(sync.waitForExistence(timeout: 10))
+    reveal(sync, app: app)
+    sync.tap()
+    XCTAssertTrue(app.staticTexts["Pictures synced to this device"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.descendants(matching: .any)["cinema-artwork-image"].firstMatch.waitForExistence(timeout: 5))
+    capture("Cinema pictures synced")
+    app.terminate()
+    app.launchEnvironment["ROON_CINEMA_PREVIEW_SYNC_IMAGE"] = nil
+    app.launch()
+    XCTAssertTrue(app.staticTexts["Pictures synced to this device"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["cinema-watch"].isEnabled)
+    capture("Cinema sync survives reopening")
+  }
+
   @MainActor func testPresentationChoicesPersistAndTrackTitleOutlastsControls() throws {
     let app = launch(delay: "30", fail: true)
     XCTAssertTrue(app.buttons["cinema-edit"].waitForExistence(timeout: 10))

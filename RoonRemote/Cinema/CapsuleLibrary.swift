@@ -1,8 +1,14 @@
 import Foundation
 import Observation
+import UIKit
 
 /// The playlist lifecycle is independent of Roon's playback transport.
 protocol CinemaClient {
+  var cinemaSyncScope: String { get }
+  func supportsCinemaSync() async throws -> Bool
+  func uploadCinemaImage(_ data: Data, file: String) async throws
+  func publishPersonalCinema(_ capsule: TimeCapsule, mutationId: String) async throws -> TimeCapsule
+  func cinemaImage(_ file: String) async throws -> Data
   func timeCapsules() async throws -> [TimeCapsule]
   func requireCinemaOptionsSupport() async throws
   func requireCinemaManagementSupport() async throws
@@ -21,6 +27,13 @@ protocol CinemaClient {
 }
 
 extension CinemaClient {
+  var cinemaSyncScope: String { "preview" }
+  func supportsCinemaSync() async throws -> Bool { false }
+  func uploadCinemaImage(_ data: Data, file: String) async throws { throw PersonalCinemaError("Update the bridge to sync personal cinemas.") }
+  func publishPersonalCinema(_ capsule: TimeCapsule, mutationId: String) async throws -> TimeCapsule {
+    throw PersonalCinemaError("Update the bridge to sync personal cinemas.")
+  }
+  func cinemaImage(_ file: String) async throws -> Data { throw URLError(.resourceUnavailable) }
   func requireCinemaMusicSupport() async throws {
     throw PersonalCinemaError("Update the bridge to edit Cinema music.")
   }
@@ -57,12 +70,19 @@ final class CapsuleLibrary {
   var pendingJob: CapsuleJob?
   var savedMessage: String?
   var selectedId: String?
+  var syncingIds: Set<String> = []
+  var downloadedIds: Set<String> = []
+  var syncMessages: [String: String] = [:]
+  var syncErrors: [String: String] = [:]
+  var syncConflicts: Set<String> = []
   @ObservationIgnored private let personalStore: PersonalCinemaStore
+  @ObservationIgnored private let resourceStore: CinemaResourceStore
   @ObservationIgnored private let pollInterval: Duration
   @ObservationIgnored private let progressTimeout: TimeInterval
   @ObservationIgnored private let now: () -> Date
   @ObservationIgnored private var generation: Task<Void, Never>?
   @ObservationIgnored private var revision = 0
+  @ObservationIgnored private var loadedScope: String?
   private var albumCovers: [String: Data] = [:]
   @ObservationIgnored private var artworkRequests: [String: Task<Void, Never>] = [:]
   #if DEBUG
@@ -70,8 +90,10 @@ final class CapsuleLibrary {
   #endif
 
   init(personalStore: PersonalCinemaStore = .shared, pollInterval: Duration = .seconds(3),
-    progressTimeout: TimeInterval = 900, now: @escaping () -> Date = Date.init) {
+    progressTimeout: TimeInterval = 900, now: @escaping () -> Date = Date.init,
+    resourceStore: CinemaResourceStore = .shared) {
     self.personalStore = personalStore
+    self.resourceStore = resourceStore
     self.pollInterval = pollInterval
     self.progressTimeout = progressTimeout
     self.now = now
@@ -123,26 +145,179 @@ final class CapsuleLibrary {
   func load(client: any CinemaClient) async {
     guard !loading else { return }
     let client = service(client)
+    if let loadedScope, loadedScope != client.cinemaSyncScope {
+      capsules = []
+      downloadedIds = []
+      syncErrors = [:]
+      syncConflicts = []
+      revision += 1
+    }
+    loadedScope = client.cinemaSyncScope
     loading = true
     defer { loading = false }
     let snapshot = revision
-    let personal: [TimeCapsule]
+    var personal: [TimeCapsule]
     #if DEBUG
     if previewClient != nil { personal = [] }
     else { personal = await personalStore.load() }
     #else
     personal = await personalStore.load()
     #endif
-    if snapshot == revision { merge(personal + capsules.filter { !$0.isPersonal }) }
+    personal = personal.filter { $0.syncScope == nil || $0.syncScope == client.cinemaSyncScope }
+    let cached = await resourceStore.catalog(scope: client.cinemaSyncScope)
+    if snapshot == revision { merge(personal + capsules + cached) }
     do {
-      let shared = try await client.timeCapsules()
+      var shared = try await client.timeCapsules()
+      let supportsSync = try await client.supportsCinemaSync()
       // An older response must not resurrect a deletion or overwrite a completed edit.
       guard snapshot == revision else { return }
-      merge(personal + shared)
+      for index in shared.indices where shared[index].isPersonal {
+        shared[index].syncedRevision = shared[index].revision
+        shared[index].syncScope = client.cinemaSyncScope
+      }
+      let drafts = personal.filter { $0.needsPublication }
+      // A shared deletion must also remove the cached manifest, never re-upload it.
+      if supportsSync {
+        for local in personal where !local.needsPublication && !shared.contains(where: { $0.id == local.id }) {
+          guard snapshot == revision,
+            try await personalStore.reconcile(local, expected: local, remove: true) else { return }
+        }
+        for remote in shared where remote.isPersonal && !drafts.contains(where: { $0.id == remote.id }) {
+          guard snapshot == revision,
+            try await personalStore.reconcile(remote, expected: personal.first { $0.id == remote.id }) else { return }
+        }
+      }
+      guard snapshot == revision else { return }
+      merge(drafts + shared + (supportsSync ? [] : personal))
+      try await resourceStore.saveCatalog(shared, scope: client.cinemaSyncScope)
       recoverCompletedPreparation(from: shared)
       error = nil
+      for draft in drafts where !syncConflicts.contains(draft.id) {
+        if supportsSync { await publish(draft, client: client) }
+        else { syncErrors[draft.id] = "Update the bridge to share this Cinema with your other devices." }
+      }
     } catch is CancellationError {
     } catch { self.error = message(for: error) }
+    await refreshDownloads()
+  }
+
+  private func available(_ image: CapsuleImage) async -> Bool {
+    if let local = image.localFile, await personalStore.hasImage(local) { return true }
+    return await resourceStore.contains(image.file)
+  }
+
+  private func refreshDownloads() async {
+    downloadedIds.formIntersection(capsules.map(\.id))
+    for capsule in capsules {
+      var complete = !capsule.resourceImages.isEmpty
+      for image in capsule.resourceImages where !(await available(image)) { complete = false; break }
+      if complete { downloadedIds.insert(capsule.id) } else { downloadedIds.remove(capsule.id) }
+    }
+  }
+
+  /// Publish the snapshot last, so other devices never see a half-uploaded montage.
+  private func publish(_ capsule: TimeCapsule, client: any CinemaClient) async {
+    guard !syncingIds.contains(capsule.id), deletingId != capsule.id else { return }
+    syncingIds.insert(capsule.id)
+    syncErrors[capsule.id] = nil
+    defer { syncingIds.remove(capsule.id); syncMessages[capsule.id] = nil }
+    do {
+      var publication = try await personalStore.publication(capsule)
+      if publication.originDeviceName == nil { publication.originDeviceName = UIDevice.current.name }
+      let images = publication.resourceImages
+      for (index, image) in images.enumerated() {
+        try Task.checkCancellation()
+        syncMessages[capsule.id] = "Sharing picture \(index + 1) of \(images.count)…"
+        // Previously shared pictures are immutable and already on the bridge.
+        if capsule.syncedRevision != nil { continue }
+        guard let local = image.localFile else { throw URLError(.fileDoesNotExist) }
+        let bytes = try await personalStore.imageData(local)
+        try await client.uploadCinemaImage(bytes, file: image.file)
+      }
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = .sortedKeys
+      // Stable across an uncertain response/app restart; the bridge deduplicates retries.
+      let mutation = CinemaSyncIdentity.mutation(try encoder.encode(publication))
+      var saved = try await client.publishPersonalCinema(publication, mutationId: mutation)
+      saved.syncedRevision = saved.revision
+      saved.syncScope = client.cinemaSyncScope
+      // An editor may have saved a newer local draft while this upload was in flight.
+      if let current = try await personalStore.manifest(capsule.id), current != capsule {
+        var pending = current
+        pending.syncedRevision = saved.revision
+        pending.revision = (saved.revision ?? 0) + 1
+        pending.syncScope = saved.syncScope
+        pending.originDeviceName = saved.originDeviceName
+        saved = pending
+      }
+      try await personalStore.storeManifest(saved)
+      syncConflicts.remove(capsule.id)
+      revision += 1
+      merge([saved] + capsules.filter { $0.id != saved.id })
+      try await resourceStore.saveCatalog(capsules.filter { !$0.needsPublication }, scope: client.cinemaSyncScope)
+    } catch is CancellationError {
+    } catch {
+      syncErrors[capsule.id] = message(for: error)
+      if case RoonAPIError.httpStatus(409, _) = error { syncConflicts.insert(capsule.id) }
+    }
+  }
+
+  /// Explicitly chosen after a conflict; ordinary refresh always preserves the local draft.
+  func useSharedVersion(_ capsule: TimeCapsule, client: any CinemaClient) async {
+    let client = service(client)
+    guard !syncingIds.contains(capsule.id) else { return }
+    syncingIds.insert(capsule.id)
+    defer { syncingIds.remove(capsule.id) }
+    do {
+      let shared = try await client.timeCapsules()
+      if var remote = shared.first(where: { $0.id == capsule.id }) {
+        remote.syncedRevision = remote.revision
+        remote.syncScope = client.cinemaSyncScope
+        try await personalStore.storeManifest(remote)
+        merge([remote] + capsules.filter { $0.id != capsule.id })
+      } else {
+        try await personalStore.remove(capsule)
+        capsules.removeAll { $0.id == capsule.id }
+      }
+      revision += 1
+      syncConflicts.remove(capsule.id)
+      syncErrors[capsule.id] = nil
+      try await resourceStore.saveCatalog(capsules.filter { !$0.needsPublication }, scope: client.cinemaSyncScope)
+      await refreshDownloads()
+    } catch { syncErrors[capsule.id] = message(for: error) }
+  }
+
+  func syncToDevice(_ capsule: TimeCapsule, client: any CinemaClient) async {
+    let client = service(client)
+    guard !syncingIds.contains(capsule.id), deletingId != capsule.id, !isUpdating(capsule) else { return }
+    if capsule.needsPublication {
+      do {
+        guard try await client.supportsCinemaSync() else {
+          throw PersonalCinemaError("Update the bridge to share this Cinema with your other devices.")
+        }
+        await publish(capsule, client: client)
+      } catch { syncErrors[capsule.id] = message(for: error) }
+      await refreshDownloads()
+      return
+    }
+    syncingIds.insert(capsule.id)
+    syncErrors[capsule.id] = nil
+    defer { syncingIds.remove(capsule.id); syncMessages[capsule.id] = nil }
+    do {
+      let images = capsule.resourceImages
+      for (index, image) in images.enumerated() {
+        try Task.checkCancellation()
+        syncMessages[capsule.id] = "Syncing picture \(index + 1) of \(images.count)…"
+        if await available(image) { continue }
+        let bytes = try await client.cinemaImage(image.file)
+        try await resourceStore.saveImage(bytes, file: image.file)
+      }
+      try Task.checkCancellation()
+      if !images.isEmpty { downloadedIds.insert(capsule.id) }
+      try await resourceStore.saveCatalog(capsules.filter { !$0.needsPublication }, scope: client.cinemaSyncScope)
+      await refreshDownloads()
+    } catch is CancellationError {
+    } catch { syncErrors[capsule.id] = message(for: error) }
   }
 
   private func recoverCompletedPreparation(from saved: [TimeCapsule]) {
@@ -205,6 +380,9 @@ final class CapsuleLibrary {
       merge([personal] + capsules.filter { $0.id != personal.id })
       selectedId = personal.id
       showingLibrary = true
+      if personal.needsPublication {
+        Task { await syncToDevice(personal, client: client) }
+      }
     } else if let request = pendingRequest {
       let original = pendingOriginal
       pendingRequest = nil
@@ -217,6 +395,11 @@ final class CapsuleLibrary {
   }
 
   private func merge(_ programmes: [TimeCapsule]) {
+    for programme in programmes {
+      if let old = capsules.first(where: { $0.id == programme.id }), old.resourceImages != programme.resourceImages {
+        downloadedIds.remove(programme.id)
+      }
+    }
     var seen = Set<String>()
     capsules = programmes.filter { seen.insert($0.id).inserted }
       .sorted { $0.createdAt > $1.createdAt }
@@ -355,7 +538,7 @@ final class CapsuleLibrary {
   }
 
   func remove(_ capsule: TimeCapsule, client: any CinemaClient) async -> Bool {
-    guard deletingId == nil, !isUpdating(capsule) else { return false }
+    guard deletingId == nil, !isUpdating(capsule), !syncingIds.contains(capsule.id) else { return false }
     deletingId = capsule.id
     error = nil
     defer { deletingId = nil }
@@ -363,6 +546,9 @@ final class CapsuleLibrary {
       if capsule.id == preparation?.placeholder.id, preparation?.original == nil {
         // A failed, unsaved request has no shared manifest to delete.
       } else if capsule.isPersonal {
+        if capsule.syncedRevision != nil {
+          try await service(client).deleteTimeCapsule(capsule.id)
+        }
         try await personalStore.remove(capsule)
       } else {
         let client = service(client)
@@ -371,6 +557,9 @@ final class CapsuleLibrary {
       }
       revision += 1
       capsules.removeAll { $0.id == capsule.id }
+      downloadedIds.remove(capsule.id)
+      syncErrors[capsule.id] = nil
+      try await resourceStore.saveCatalog(capsules.filter { !$0.needsPublication }, scope: service(client).cinemaSyncScope)
       if preparation?.contains(capsule) == true || preparation?.result?.id == capsule.id {
         preparation = nil
         preparationError = nil

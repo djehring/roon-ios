@@ -52,8 +52,8 @@ missing topics are reported in the saved library while available material can pl
 genuine artwork and manuscripts; no synthetic archive imagery is generated. Caption-free viewing retains credits.
 
 Personal montages bypass the bridge and AI entirely, save in Application Support/PersonalCinema, and merge
-into the on-device Cinema library. They support a single photo, offline picture playback and normal Roon music
-controls, but are not associated with shared rooms or sent to Apple TV. Photo downloads may require iCloud
+into the Cinema library and uploaded to the paired bridge for discovery on other devices. They support a single photo, offline picture playback and normal Roon music
+controls. Personal photos are not sent to AI and are not associated with shared rooms. Photo downloads may require iCloud
 connectivity during import. Partial imports are cleaned up after errors/cancellation.
 
 The earlier behavior below describes capsules created without setup options, except for the renamed entry point.
@@ -91,8 +91,17 @@ a soundtrack, visual options and saved photographs.
 
 All devices paired to a bridge share the saved library; refresh discovers changes made on
 another device. To watch on TV while music plays elsewhere, select the same Roon room and
-use **Watch pictures**. TV has its own remote focus controls and editor. Personal photos
-remain on their source device.
+use **Watch pictures**. TV has its own remote focus controls and editor. **Sync to this device**
+copies the saved pictures for offline viewing, with progress and resumable retries. Personal
+cinemas share the imported photo copies, soundtrack, picture order and presentation settings.
+Open Cinema on the source device once to migrate existing personal montages. The library
+refreshes every 30 seconds while active and on returning to the foreground. Conflicting edits
+keep the local draft and offer **Use shared version** after confirmation; shared deletions
+remove cached manifests without uploading them again.
+
+Apple TV stores downloaded pictures and manifests in its Caches directory. tvOS may
+reclaim those downloads when storage is low; the shared setup stays on the bridge and
+can be synced again without recreating it. See [Apple's tvOS storage guidance](https://developer.apple.com/library/archive/documentation/General/Conceptual/AppleTV_PG/index.html).
 
 Completed builds compare topics as a selection, independent of the bridge's canonical
 ordering. A refresh can recover a completed generation after a polling failure, but only
@@ -138,8 +147,8 @@ All paths begin `/api/:client_id/time-capsules`; the existing registered-client 
 
 | Method / suffix | Result |
 | --- | --- |
-| GET `/` | Up to 50 saved manifests, newest first |
-| GET `/capabilities` | `{optionsVersion:2, managementVersion:1}` |
+| GET `/` | All saved manifests (including personal cinemas), newest first |
+| GET `/capabilities` | `{optionsVersion:2, managementVersion:1, musicVersion:1, syncVersion:1}` |
 | POST `/` | Request snapshot → 202 preparation job, or 200 cached result |
 | GET `/jobs/:id?generation=…` | Status for this build; interrupted/superseded builds fail instead of returning an old manifest |
 | POST `/artwork` | `{zoneId,tracks}` → `{imageKey}` for a playlist album, using an isolated browse session |
@@ -148,6 +157,8 @@ All paths begin `/api/:client_id/time-capsules`; the existing registered-client 
 | PUT `/:id` | `{options}` → 202 job; preserve ID and soundtrack; 409 if already updating |
 | DELETE `/:id` | 204, idempotent; remove manifest/draft/associations; 409 if updating |
 | GET `/images/:hash` | Cached JPEG, PNG or WebP |
+| PUT `/personal/images/:hash` | JPEG upload, bounded to 12 MiB and verified against its SHA-256 hash |
+| PUT `/personal/:id` | `{capsule, baseRevision, mutationId}` publishes a personal manifest after every picture exists; null revision creates, stale revision returns 409 |
 | GET `/zone/:zoneId` | Associated manifest, or 204 |
 | PUT `/zone/:zoneId` | `{capsuleId}` associates a saved manifest; 204 |
 
@@ -161,7 +172,7 @@ The viewer has an independent eight-second photo clock. Music playback, pauses, 
 
 Watching a saved item on another device does not restart its soundtrack. Screens share the content and room’s music state but do not have frame-exact synchronisation: each starts its own montage clock. Music remains entirely in the selected Roon zone; this does not make Apple TV a Roon audio endpoint. In-progress preparation is tracked by the app that started it; other clients can discover the saved result after completion.
 
-Native iPhone, iPad and tvOS viewers, content preferences and optional exact date ranges are included. AirPlay video rendering, remote TV wake/launch, exported movies, licensed newspaper providers and personal-photo sharing to Apple TV are not included.
+Native iPhone, iPad and tvOS viewers, content preferences and optional exact date ranges are included. AirPlay video rendering, remote TV wake/launch, exported movies, licensed newspaper providers are not included.
 
 ## Verification
 
