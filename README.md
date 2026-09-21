@@ -90,6 +90,9 @@ key is set on the sidecar.
 After an AI Search, choose **Set up Cinema**. The setup suggests a period, artist,
 or musical-work companion with relevant topic choices. On iPhone and iPad,
 **My photos** also supports selected photos or an album snapshot kept on that device.
+The album browser shows Photos album names, folder paths, cover thumbnails, and a
+photo preview before selection. Albums larger than 200 photos remain browsable;
+choose up to 200 pictures from the preview to save with the montage.
 Choose captions, still/gentle/Ken Burns movement, order, and a 5-, 8- or 16-second pace.
 The selected tracks remain the soundtrack. Pictures continue across songs. Swipe or use the
 photograph controls to move between pictures, or hold the montage while the music keeps playing.
@@ -118,6 +121,11 @@ on iPhone and iPad with deterministic demo content. Run the **Roon Remote** sche
 xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \
   -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
+
+`CinemaPhotoAlbumUITests` creates real sample albums in the simulator's Photos
+library and checks permission handling, album previews, folder search, cancellation,
+large-album subsets, saving, playback, and reopening after launch. These tests need
+no bridge or iCloud account; Photos authorization is handled by the UI test.
 
 Files under test are listed explicitly in the target's `sources`, so add new
 ones there when they need coverage.

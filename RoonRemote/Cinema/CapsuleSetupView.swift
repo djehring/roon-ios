@@ -50,6 +50,12 @@ struct CapsuleSetupView: View {
     .tint(Palette.accent)
     .preferredColorScheme(.dark)
     .interactiveDismissDisabled(saving)
+    #if os(iOS)
+    // Present from a stable container, not the Form's changing Section rows.
+    .sheet(isPresented: $photos.showingAlbums) {
+      CinemaPhotoAlbumPicker(selection: photos)
+    }
+    #endif
     .task(id: setup.id) {
       store.cinema.warmArtwork(tracks: setup.request.tracks, zoneId: store.selectedZoneId, client: store.client)
     }

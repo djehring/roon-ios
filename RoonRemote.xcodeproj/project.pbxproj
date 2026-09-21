@@ -29,6 +29,7 @@
 		14D20892A4BD928CB792959E /* RoonRemoteWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C82F953539BF55800236CA9A /* RoonRemoteWatch.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		15A0209C94904D5DC0E1F71A /* RoonCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E5D62E10B64D53BD824441 /* RoonCommands.swift */; };
+		16481E31D9BB50F8FB1AD7D3 /* CinemaPhotoAlbumUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */; };
 		1755C4BD6560BD9C09296AF0 /* CinemaEditorComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54CE8112E30D9F178FFF1DB /* CinemaEditorComponents.swift */; };
 		17858EEBB9810763E535AE3B /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
 		18A0F30157FD224984261465 /* EventLivenessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */; };
@@ -116,6 +117,7 @@
 		851A49DC0E10625DD5CEFDAF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */; };
 		859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */; };
 		867E0B42E0EF2E763764F30D /* CinemaPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4730C65A21687CD821A8A9EE /* CinemaPreview.swift */; };
+		8889F59A515B52BC26AC9F75 /* CinemaPhotoAlbums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */; };
 		89A6DE0734A6A74BC9767916 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A9EB4011F2593A9D9504F023 /* PrivacyInfo.xcprivacy */; };
 		89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		8B5F8B7E8B183EE369720DB7 /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */; };
@@ -175,6 +177,7 @@
 		CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
+		D535B0A2A487FE46D15885D0 /* CinemaPhotoAlbums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */; };
 		D548CFDCA84BC47FEBEF7337 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		D6FF75819BBF7B47B3DF3FC7 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
 		D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */; };
@@ -298,6 +301,7 @@
 		11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingLiveIntents.swift; sourceTree = "<group>"; };
 		12F02C3B294AFD9980DEE669 /* TVPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVPrimaryButton.swift; sourceTree = "<group>"; };
 		13C78ADDBB2A3F66E2B9CCE0 /* TVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSettingsView.swift; sourceTree = "<group>"; };
+		1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPhotoAlbumUITests.swift; sourceTree = "<group>"; };
 		18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryDragItem.swift; sourceTree = "<group>"; };
 		18C4188F78E2B9DA6F26D946 /* TVRemoteActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRemoteActivity.swift; sourceTree = "<group>"; };
 		1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLivenessTests.swift; sourceTree = "<group>"; };
@@ -351,6 +355,7 @@
 		7CA6BFC453ED5F5AD29AEE1A /* CinemaRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaRemoteUITests.swift; sourceTree = "<group>"; };
 		7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentHandler.swift; sourceTree = "<group>"; };
 		80506818538B2F6597E20D61 /* LibraryIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryIndexTests.swift; sourceTree = "<group>"; };
+		80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPhotoAlbums.swift; sourceTree = "<group>"; };
 		81ABBEBFDA50D54CA6680BE2 /* CinemaPreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPreparationView.swift; sourceTree = "<group>"; };
 		827EBF13E8DFB957EFA65453 /* RoonRemoteWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatchWidgets.entitlements; sourceTree = "<group>"; };
 		82B2CC55BE424A41335C8BAD /* TVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRootView.swift; sourceTree = "<group>"; };
@@ -641,6 +646,7 @@
 			isa = PBXGroup;
 			children = (
 				AB7FB10AA3436137661FCA2D /* BrowsePlaybackUITests.swift */,
+				1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */,
 				22E0985147F993FCA13B3969 /* CinemaPlaylistFixture.swift */,
 				9585880B2ED0C7AD53C6493F /* CinemaPlaylistUITests.swift */,
 				FD62BBBF081BF089615AA1B0 /* CinemaSetupUITests.swift */,
@@ -657,6 +663,7 @@
 				DA158638CB0BD426CE829118 /* CinemaComponents.swift */,
 				F54CE8112E30D9F178FFF1DB /* CinemaEditorComponents.swift */,
 				65BD1ED893EC759573BCD8EA /* CinemaLibraryView.swift */,
+				80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */,
 				0D8610898FE4D40197628B10 /* CinemaPhotoSelection.swift */,
 				81ABBEBFDA50D54CA6680BE2 /* CinemaPreparationView.swift */,
 				4730C65A21687CD821A8A9EE /* CinemaPreview.swift */,
@@ -975,6 +982,7 @@
 				DBBD2A9DBD27BEBB7909A3E6 /* CinemaComponents.swift in Sources */,
 				F0FEEA180794DD9EDBC9D724 /* CinemaEditorComponents.swift in Sources */,
 				97A56C85CC4134510FEA1DD1 /* CinemaLibraryView.swift in Sources */,
+				D535B0A2A487FE46D15885D0 /* CinemaPhotoAlbums.swift in Sources */,
 				4452E6EEDACA86751427F579 /* CinemaPhotoSelection.swift in Sources */,
 				E3F56630620F517D1A50CE8B /* CinemaPreparationView.swift in Sources */,
 				867E0B42E0EF2E763764F30D /* CinemaPreview.swift in Sources */,
@@ -1093,6 +1101,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F01EF5A0DE7E28F0EFF9448E /* BrowsePlaybackUITests.swift in Sources */,
+				16481E31D9BB50F8FB1AD7D3 /* CinemaPhotoAlbumUITests.swift in Sources */,
 				F4D0F265CFD5A91BB81F23E9 /* CinemaPlaylistFixture.swift in Sources */,
 				65676D93E85A2F1BA9145029 /* CinemaPlaylistUITests.swift in Sources */,
 				99AA0E200E7E7AC29EE7200A /* CinemaSetupUITests.swift in Sources */,
@@ -1113,6 +1122,7 @@
 				9C27AD376AC9850A2A338774 /* CinemaComponents.swift in Sources */,
 				1755C4BD6560BD9C09296AF0 /* CinemaEditorComponents.swift in Sources */,
 				C3801A863FDC5115C92215FB /* CinemaLibraryView.swift in Sources */,
+				8889F59A515B52BC26AC9F75 /* CinemaPhotoAlbums.swift in Sources */,
 				452F516B8E9BEC54F2DF1DC5 /* CinemaPhotoSelection.swift in Sources */,
 				848FBDCF0BB7D4B7FBB38824 /* CinemaPreparationView.swift in Sources */,
 				5ED7D2550EDA55C4E0D42456 /* CinemaPreview.swift in Sources */,
