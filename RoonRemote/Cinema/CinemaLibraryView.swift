@@ -9,7 +9,7 @@ struct CinemaPresentation: ViewModifier {
     @Bindable var cinema = store.cinema
     content
       .sheet(item: $cinema.setup, onDismiss: { cinema.finishSetup(client: store.client) }) { setup in
-        CapsuleSetupView(setup: setup)
+        CapsuleSetupView(setup: setup).id(setup.id)
       }
       .fullScreenCover(isPresented: $cinema.showingLibrary, onDismiss: {
         libraryIsActive = false
@@ -57,7 +57,7 @@ struct CinemaLibraryView: View {
           if store.cinema.loading { ProgressView("Loading playlists…").frame(maxWidth: .infinity, maxHeight: .infinity) }
           else {
             ContentUnavailableView("Your playlists, with pictures", systemImage: "photo.on.rectangle.angled",
-              description: Text("Search for music, then choose Set up Cinema to save a playlist with pictures."))
+              description: Text("Choose New Cinema, or create one from an album, playlist or your queue."))
           }
         } else if wide {
           HStack(spacing: 0) {
@@ -79,6 +79,13 @@ struct CinemaLibraryView: View {
           Divider()
           CinemaRoomButton().padding(.horizontal, 20)
         }
+        if let message = store.cinema.savedMessage {
+          HStack {
+            Label(message, systemImage: "checkmark.circle")
+            Spacer()
+            Button("Dismiss") { store.cinema.savedMessage = nil }
+          }.font(.footnote).padding(16)
+        }
         if let error = store.cinema.error {
           HStack {
             Image(systemName: "exclamationmark.triangle")
@@ -93,7 +100,7 @@ struct CinemaLibraryView: View {
     .background(Palette.background).foregroundStyle(Palette.primary).preferredColorScheme(.dark)
     .tint(Palette.accent)
     .fullScreenCover(item: $editing, onDismiss: { store.cinema.finishSetup(client: store.client) }) { setup in
-      CapsuleSetupView(setup: setup)
+      CapsuleSetupView(setup: setup).id(setup.id)
     }
     .alert("Delete Cinema item?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
       presenting: deleting) { capsule in
@@ -120,6 +127,14 @@ struct CinemaLibraryView: View {
           .foregroundStyle(Palette.secondary)
       }
       Spacer(minLength: 8)
+      Button {
+        editing = CapsuleSetup(request: CapsuleRequest(title: "New Cinema", tracks: [], sourceLabel: "Your music"))
+      } label: {
+        if wide { Label("New Cinema", systemImage: "plus") }
+        else { Image(systemName: "plus").frame(minWidth: 44, minHeight: 44) }
+      }
+      .accessibilityLabel("New Cinema").accessibilityIdentifier("cinema-new")
+      .disabled(store.cinema.preparing)
       if wide { CinemaRoomButton() }
       Button { Task { await store.cinema.load(client: store.client) } } label: {
         Image(systemName: "arrow.clockwise").frame(minWidth: 44, minHeight: 44)
@@ -286,7 +301,7 @@ private struct CinemaPlaylistActions: View {
       }
       HStack(spacing: 16) {
         Button("Edit", systemImage: "pencil", action: edit)
-          .buttonStyle(CinemaButtonStyle()).disabled(store.cinema.preparing || unsaved || store.cinema.deletingId != nil)
+          .buttonStyle(CinemaButtonStyle()).disabled(unsaved || store.cinema.deletingId != nil)
           .accessibilityIdentifier("cinema-edit")
         Button("Delete", systemImage: "trash", action: delete)
           .buttonStyle(CinemaButtonStyle(destructive: true))
@@ -333,7 +348,7 @@ struct CreateTimeCapsuleButton: View {
       Button {
         store.cinema.create(context: context, tracks: store.aiResults, client: store.client)
       } label: {
-        Label(store.cinema.preparing ? "Preparing Cinema…" : "Set up Cinema", systemImage: "sparkles.tv")
+        Label(store.cinema.preparing ? "Preparing Cinema…" : "Create Cinema", systemImage: "sparkles.tv")
       }
       .foregroundStyle(Palette.accent)
       .disabled(store.aiResults.allSatisfy { $0.error != nil })

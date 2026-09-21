@@ -59,7 +59,8 @@ struct PersonalCinemaTests {
     let importedBytes = try await store.imageData(earlier.localFile!)
     var options = try #require(request.options)
     options.order = .chronological
-    options.motion = .still
+    options.motion = .kenBurns
+    options.showsTrackTitle = true
     options.pace = .relaxed
     let updated = try await store.update(original, options: options)
     let reloaded = await PersonalCinemaStore(directory: directory).load()
@@ -70,5 +71,13 @@ struct PersonalCinemaTests {
     #expect(updated.montageFrames.map(\.image.file) == [earlier.file, later.file])
     #expect(try await store.imageData(earlier.localFile!) == importedBytes)
     #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).count == 3)
+    var soundtrack = updated.request
+    soundtrack.title = "A new soundtrack"
+    soundtrack.tracks.append(CapsuleTrack(artist: "Artist", track: "Extra", album: "Album", entryId: "extra"))
+    let musicEdit = try await store.update(updated, options: options, request: soundtrack)
+    #expect(musicEdit.scenes == updated.scenes)
+    #expect(musicEdit.createdAt == updated.createdAt)
+    #expect(musicEdit.title == "A new soundtrack")
+    #expect(await PersonalCinemaStore(directory: directory).load() == [musicEdit])
   }
 }

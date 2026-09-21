@@ -85,7 +85,7 @@ final class CinemaPhotoSelection {
           images.append(try await PersonalCinemaStore.shared.importImage(data))
         }
       }
-      return try await PersonalCinemaStore.shared.save(request: request, images: images, title: album?.title ?? "My photos")
+      return try await PersonalCinemaStore.shared.save(request: request, images: images, title: request.title ?? album?.title ?? "My photos")
     } catch {
       await PersonalCinemaStore.shared.discard(images)
       throw error

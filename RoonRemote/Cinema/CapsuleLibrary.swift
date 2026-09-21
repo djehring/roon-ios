@@ -6,6 +6,9 @@ protocol CinemaClient {
   func timeCapsules() async throws -> [TimeCapsule]
   func requireCinemaOptionsSupport() async throws
   func requireCinemaManagementSupport() async throws
+  func requireCinemaMusicSupport() async throws
+  func saveCinemaContent(_ id: String, request: CapsuleRequest, baseRevision: Int, mutationId: String) async throws -> CapsuleJob
+  func playCinemaTracks(zoneId: String, tracks: [CapsuleTrack]) async throws -> [SuggestedTrackPayload]
   func createTimeCapsule(_ request: CapsuleRequest) async throws -> CapsuleJob
   func rebuildTimeCapsule(_ id: String) async throws -> CapsuleJob
   func updateTimeCapsule(_ id: String, options: CapsuleOptions) async throws -> CapsuleJob
@@ -15,6 +18,18 @@ protocol CinemaClient {
   func setTimeCapsule(_ id: String, zoneId: String) async throws
   func playTracks(zoneId: String, tracks: [[String: String]]) async throws -> [SuggestedTrackPayload]
   func command(_ payload: [String: Any]) async throws
+}
+
+extension CinemaClient {
+  func requireCinemaMusicSupport() async throws {
+    throw PersonalCinemaError("Update the bridge to edit Cinema music.")
+  }
+  func saveCinemaContent(_ id: String, request: CapsuleRequest, baseRevision: Int, mutationId: String) async throws -> CapsuleJob {
+    throw PersonalCinemaError("Update the bridge to edit Cinema music.")
+  }
+  func playCinemaTracks(zoneId: String, tracks: [CapsuleTrack]) async throws -> [SuggestedTrackPayload] {
+    try await playTracks(zoneId: zoneId, tracks: tracks.map { ["artist": $0.artist, "track": $0.track, "album": $0.album] })
+  }
 }
 
 @MainActor
@@ -39,6 +54,8 @@ final class CapsuleLibrary {
   var pendingRequest: CapsuleRequest?
   var pendingOriginal: TimeCapsule?
   var pendingPersonal: TimeCapsule?
+  var pendingJob: CapsuleJob?
+  var savedMessage: String?
   var selectedId: String?
   @ObservationIgnored private let personalStore: PersonalCinemaStore
   @ObservationIgnored private let pollInterval: Duration
@@ -109,7 +126,13 @@ final class CapsuleLibrary {
     loading = true
     defer { loading = false }
     let snapshot = revision
-    let personal = await personalStore.load()
+    let personal: [TimeCapsule]
+    #if DEBUG
+    if previewClient != nil { personal = [] }
+    else { personal = await personalStore.load() }
+    #else
+    personal = await personalStore.load()
+    #endif
     if snapshot == revision { merge(personal + capsules.filter { !$0.isPersonal }) }
     do {
       let shared = try await client.timeCapsules()
@@ -141,6 +164,37 @@ final class CapsuleLibrary {
     setup = CapsuleSetup(request: CapsuleRequest(context: context, tracks: tracks))
   }
 
+  func save(request: CapsuleRequest, original: TimeCapsule?, mutationId: String, client: any CinemaClient) async throws {
+    let client = service(client)
+    try await client.requireCinemaMusicSupport()
+    let unchangedPictures = original.map { saved in
+      request.options == saved.request.options || request.options?.hasSamePictureContent(
+        as: saved.request.options ?? CapsuleSetup(request: saved.request).initialOptions) == true
+    } ?? false
+    if preparing && !unchangedPictures {
+      throw PersonalCinemaError("Pictures are updating. You can save music changes now, or wait before creating another montage.")
+    }
+    let job: CapsuleJob
+    if let original {
+      job = try await client.saveCinemaContent(original.id, request: request,
+        baseRevision: original.revision ?? 0, mutationId: mutationId)
+    } else { job = try await client.createTimeCapsule(request) }
+    if job.status == "failed" { throw PersonalCinemaError(job.error ?? "Cinema could not be saved. Please retry.") }
+    if let saved = job.capsule, job.status == "ready" {
+      pendingPersonal = saved
+      if preparation?.original?.id == saved.id {
+        preparation?.placeholder.request.tracks = saved.request.tracks
+        preparation?.placeholder.request.title = saved.title
+        preparation?.placeholder.title = saved.title
+      }
+      savedMessage = original == nil ? "Cinema saved." : "Saved. Your changes will play next time."
+    } else {
+      pendingRequest = request
+      pendingOriginal = original
+      pendingJob = job
+    }
+  }
+
   func finishSetup(client: any CinemaClient) {
     if let personal = pendingPersonal {
       pendingPersonal = nil
@@ -155,7 +209,10 @@ final class CapsuleLibrary {
       let original = pendingOriginal
       pendingRequest = nil
       pendingOriginal = nil
-      regenerate(request: request, original: original, client: client)
+      if let job = pendingJob {
+        pendingJob = nil
+        prepare(request: request, original: original, client: service(client)) { job }
+      } else { regenerate(request: request, original: original, client: client) }
     }
   }
 
@@ -200,6 +257,12 @@ final class CapsuleLibrary {
         if existing.status != "failed" { return existing }
       }
       if let original = preparation.original {
+        if request.clientRequestId != nil {
+          try await client.requireCinemaMusicSupport()
+          let latest = self.capsules.first { $0.id == original.id } ?? original
+          return try await client.saveCinemaContent(original.id, request: request,
+            baseRevision: latest.revision ?? 0, mutationId: UUID().uuidString)
+        }
         if let options = request.options {
           try await client.requireCinemaManagementSupport()
           return try await client.updateTimeCapsule(original.id, options: options)
@@ -219,7 +282,7 @@ final class CapsuleLibrary {
     preparation = CapsulePreparation(request: request, original: original)
     selectedId = original?.id ?? preparation?.placeholder.id
     error = nil
-    preparationMessage = "Researching your chosen subjects…"
+    preparationMessage = request.options?.mode == .artwork ? "Collecting album artwork…" : "Researching your chosen subjects…"
     generation = Task {
       defer { preparing = false; generation = nil }
       do {
@@ -248,8 +311,13 @@ final class CapsuleLibrary {
         if let expectedGeneration, capsule.generation != expectedGeneration {
           throw PersonalCinemaError("The bridge returned a different preparation. Please retry; your saved montage is unchanged.")
         }
-        if let original, (capsule.createdAt == original.createdAt && capsule.generation == original.generation)
-          || capsule.request.options != request.options {
+        let matchingPictures = request.options.map { expected in
+          capsule.request.options?.hasSamePictureContent(as: expected) == true
+        } ?? (capsule.request.options == nil)
+        let unchangedGeneration = original.map {
+          capsule.createdAt == $0.createdAt && capsule.generation == $0.generation
+        } ?? false
+        if unchangedGeneration || !matchingPictures {
           throw PersonalCinemaError("The rebuild did not finish. Please retry; your saved montage is unchanged.")
         }
         revision += 1
@@ -346,9 +414,7 @@ final class CapsuleLibrary {
     watch(target)
     defer { playing = false }
     do {
-      let missing = try await client.playTracks(zoneId: zoneId, tracks: target.request.tracks.map {
-        ["artist": $0.artist, "track": $0.track, "album": $0.album]
-      })
+      let missing = try await client.playCinemaTracks(zoneId: zoneId, tracks: target.request.tracks)
       if associate && !capsule.isPersonal && !waiting {
         try await client.setTimeCapsule(capsule.id, zoneId: zoneId)
       }

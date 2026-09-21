@@ -68,6 +68,11 @@ struct RegularBrowseView: View {
     .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")") {
       await reload()
     }
+    .safeAreaInset(edge: .top) {
+      if let source = page.musicSource {
+        CreateCinemaFromMusicButton(path: source, title: page.title).padding(12).background(Palette.background)
+      }
+    }
     .safeAreaInset(edge: .bottom) {
       if store.isRecordingAction {
         recordingBar

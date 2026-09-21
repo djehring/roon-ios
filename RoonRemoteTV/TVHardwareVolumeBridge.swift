@@ -18,6 +18,7 @@ final class TVHardwareVolumeBridge {
   private var observation: NSKeyValueObservation?
   private var lastSystemVolume: Float = 0.5
   private var isRunning = false
+  private var activationTask: Task<Void, Never>?
   private var pressRecognizer: VolumePressRecognizer?
   private var controllerObservers: [NSObjectProtocol] = []
   private var repeatTask: Task<Void, Never>?
@@ -39,11 +40,19 @@ final class TVHardwareVolumeBridge {
 
   func start() {
     if isRunning {
-      activateSessionIfNeeded()
+      AudioSessionController.shared.setVolumeEnabled(true)
       return
     }
     isRunning = true
-    activateSessionIfNeeded()
+    AudioSessionController.shared.setVolumeEnabled(true)
+    activationTask = Task { [weak self] in
+      await AudioSessionController.shared.flush()
+      guard !Task.isCancelled, let self, self.isRunning else { return }
+      self.observeVolume()
+    }
+  }
+
+  private func observeVolume() {
     lastSystemVolume = AVAudioSession.sharedInstance().outputVolume
     observation = AVAudioSession.sharedInstance().observe(
       \.outputVolume,
@@ -59,6 +68,8 @@ final class TVHardwareVolumeBridge {
   }
 
   func stop() {
+    activationTask?.cancel()
+    activationTask = nil
     observation?.invalidate()
     observation = nil
     controllerObservers.forEach(NotificationCenter.default.removeObserver)
@@ -66,6 +77,7 @@ final class TVHardwareVolumeBridge {
     repeatTask?.cancel()
     repeatTask = nil
     isRunning = false
+    AudioSessionController.shared.setVolumeEnabled(false)
   }
 
   func install(in window: UIWindow?) {
@@ -128,19 +140,6 @@ final class TVHardwareVolumeBridge {
     let span = max(output.max - output.min, 1)
     let step = max(1, span / 20)
     store.adjustVolume(by: up ? step : -step)
-  }
-
-  private func activateSessionIfNeeded() {
-    let session = AVAudioSession.sharedInstance()
-    // Now Playing owns the category: downgrading it here would drop the app out
-    // of the system transport that routes the remote's play/pause button.
-    guard session.category != .playback else { return }
-    do {
-      try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-      try session.setActive(true)
-    } catch {
-      // Volume bridging is best-effort; leave buttons alone if session fails.
-    }
   }
 
   private func listenForControllers() {

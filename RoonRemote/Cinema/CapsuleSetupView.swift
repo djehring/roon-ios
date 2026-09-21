@@ -5,6 +5,17 @@ struct CapsuleSetupView: View {
   @Environment(MockStore.self) private var store
   @Environment(\.dismiss) private var dismiss
   @State private var presentationCategory = false
+  #if os(tvOS)
+  @FocusState private var trackTitleFocused: Bool
+  #endif
+  @State private var editingMusic = false
+  @State private var music: CinemaMusicDraft
+  @State private var title: String
+  @State private var discardChanges = false
+  @State private var mutationId = UUID().uuidString
+  @State private var requestId: String
+  @State private var conflict = false
+  @State private var lastSubmittedRequest: CapsuleRequest?
   @State private var options: CapsuleOptions
   @State private var drafts: [CapsuleMode: CapsuleOptions] = [:]
   @State private var customDates = false
@@ -19,6 +30,9 @@ struct CapsuleSetupView: View {
 
   init(setup: CapsuleSetup) {
     self.setup = setup
+    _music = State(initialValue: CinemaMusicDraft(tracks: setup.request.tracks))
+    _title = State(initialValue: setup.original?.title ?? setup.request.title ?? setup.request.query)
+    _requestId = State(initialValue: setup.request.clientRequestId ?? UUID().uuidString)
     let chosen = setup.initialOptions
     _options = State(initialValue: chosen)
     let anchor = ISO8601DateFormatter().date(from: setup.request.requestedAt) ?? Date()
@@ -34,22 +48,35 @@ struct CapsuleSetupView: View {
         if setup.isEditing { editor }
         else {
           creationForm
-            .navigationTitle("Set up Cinema")
+            .navigationTitle("Create Cinema")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
               ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { creation?.cancel(); dismiss() }
+                Button("Cancel", action: cancel)
               }
             }
         }
       }
       .background(Palette.background)
+      .navigationDestination(isPresented: $editingMusic) {
+        CinemaMusicEditor(draft: music, title: title,
+          currentTrack: setup.request.tracks.first { $0.entryId == setup.currentTrackId })
+      }
+      #if os(tvOS)
+      .onChange(of: presentationCategory) { _, selected in
+        if selected { trackTitleFocused = true }
+      }
+      #endif
     }
     .tint(Palette.accent)
     .preferredColorScheme(.dark)
-    .interactiveDismissDisabled(saving)
+    .interactiveDismissDisabled(saving || hasChanges)
+    .confirmationDialog("Discard changes?", isPresented: $discardChanges, titleVisibility: .visible) {
+      Button("Discard changes", role: .destructive) { creation?.cancel(); dismiss() }
+      Button("Keep editing", role: .cancel) { }
+    }
     #if os(iOS)
     // Present from a stable container, not the Form's changing Section rows.
     .sheet(isPresented: $photos.showingAlbums) {
@@ -65,11 +92,12 @@ struct CapsuleSetupView: View {
   private var creationForm: some View {
     Form {
         Section {
-          Text(setup.request.query).font(.headline)
-          Text("\(setup.request.tracks.count) selected tracks · your soundtrack stays the same")
-            .font(.subheadline).foregroundStyle(.secondary)
+          nameField
+          if let source = setup.request.sourceLabel { Text(source).font(.caption).foregroundStyle(.secondary) }
+          musicLink
+          Text("Your Cinema copy can be edited separately.").font(.footnote).foregroundStyle(.secondary)
         }
-        Section("What would you like to see?") {
+        Section("Pictures") {
           Picker("Visual companion", selection: Binding(get: { options.mode }, set: changeMode)) {
             ForEach(availableModes) { mode in Label(mode.title, systemImage: mode.symbol).tag(mode) }
           }
@@ -82,6 +110,8 @@ struct CapsuleSetupView: View {
           #if os(iOS)
           CinemaPhotoControls(selection: photos)
           #endif
+        } else if options.mode == .artwork {
+          Section { Text("Covers from your selected music. No picture research needed.").font(.subheadline) }
         } else {
           contextSection
           Section {
@@ -122,7 +152,8 @@ struct CapsuleSetupView: View {
             ProgressView("Preparing…")
             #endif
           }
-          Button(options.mode == .photos ? "Save montage" : "Create montage", action: create)
+          Button(saveLabel, action: create)
+            .accessibilityIdentifier("cinema-save")
             .buttonStyle(.borderedProminent).tint(Palette.accent).foregroundStyle(Palette.onAccent)
             .disabled(!canCreate || saving)
         }
@@ -140,7 +171,7 @@ struct CapsuleSetupView: View {
         HStack {
           Text("Edit Cinema").font(.system(size: CinemaLayout.isTV ? 42 : wide ? 28 : 22, weight: .bold))
           Spacer()
-          Button("Cancel") { creation?.cancel(); dismiss() }
+          Button("Cancel", action: cancel)
             #if os(tvOS)
             .buttonStyle(CinemaButtonStyle()).frame(width: 160)
             #else
@@ -162,7 +193,7 @@ struct CapsuleSetupView: View {
     }
     .foregroundStyle(Palette.primary)
     #if os(tvOS)
-    .onExitCommand { dismiss() }
+    .onExitCommand(perform: cancel)
     #endif
   }
 
@@ -177,31 +208,31 @@ struct CapsuleSetupView: View {
             CinemaArtwork(capsule: original).aspectRatio(1.7, contentMode: .fit)
               .clipShape(RoundedRectangle(cornerRadius: 8))
           }
-          Text(original.title).font(CinemaLayout.isTV ? .system(size: 38, weight: .bold) : .title.bold())
-            .lineLimit(CinemaLayout.isTV ? 2 : nil)
-          Text("\(setup.request.tracks.count) tracks · soundtrack unchanged")
+          nameField
+          Text(music.summary)
             .font(.subheadline).foregroundStyle(Palette.secondary)
         } else {
           HStack(spacing: 14) {
             CinemaArtwork(capsule: original).frame(width: 56, height: 56)
               .clipShape(RoundedRectangle(cornerRadius: 6))
             VStack(alignment: .leading, spacing: 4) {
-              Text(original.title).font(.headline)
-              Text("\(setup.request.tracks.count) tracks · soundtrack unchanged")
+              nameField
+              Text(music.summary)
                 .font(.caption).foregroundStyle(Palette.secondary)
             }
           }
         }
       }
+      musicLink
       if CinemaLayout.isTV {
         Button { presentationCategory = false } label: {
           CinemaSettingLabel(title: "Pictures")
             .background(!presentationCategory ? Palette.surface : .clear)
         }.cinemaPlainButton()
         Button { presentationCategory = true } label: {
-          CinemaSettingLabel(title: "Presentation", detail: "Captions, motion, pace & order")
+          CinemaSettingLabel(title: "Presentation", detail: "Track title, captions & picture motion")
             .background(presentationCategory ? Palette.surface : .clear)
-        }.cinemaPlainButton()
+        }.cinemaPlainButton().accessibilityIdentifier("cinema-presentation")
       }
       if wide {
         Divider()
@@ -220,35 +251,39 @@ struct CapsuleSetupView: View {
             if options.mode != .photos {
               sectionHeading("Pictures")
               CinemaOptionRow(title: "Visual companion", selection: Binding(get: { options.mode }, set: changeMode),
-                choices: availableModes.map { CinemaOption(value: $0, title: $0.title) })
-                .accessibilityIdentifier("cinema-mode")
+                choices: availableModes.map { CinemaOption(value: $0, title: $0.title) }, identifier: "cinema-mode")
               Divider()
-              NavigationLink {
-                Form { contextSection }
-                  .navigationTitle("Context")
-                  .tint(Palette.accent)
-              } label: {
-                CinemaSettingLabel(title: "Context", value: options.subject,
-                  detail: options.mode == .period ? Locale.current.localizedString(forRegionCode: options.region) : nil)
-              }.cinemaPlainButton()
-              sectionHeading("Include")
-              VStack(spacing: 0) {
-                ForEach(options.mode.topics) { topic in
-                  CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
-                  Divider()
-                }
-                CinemaTopicRow(title: CapsuleTopic.albumCovers.title, selected: topicBinding(.albumCovers))
-                Divider()
+              if options.mode != .artwork {
                 NavigationLink {
-                  ScrollView {
-                    VStack(spacing: 0) {
-                      ForEach(additionalTopics) { topic in
-                        CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
-                        Divider()
-                      }
-                    }.padding(CinemaLayout.inset)
-                  }.navigationTitle("More topics")
-                } label: { CinemaSettingLabel(title: "More topics") }.cinemaPlainButton()
+                  Form { contextSection }
+                    .navigationTitle("Context")
+                    .tint(Palette.accent)
+                } label: {
+                  CinemaSettingLabel(title: "Context", value: options.subject,
+                    detail: options.mode == .period ? Locale.current.localizedString(forRegionCode: options.region) : nil)
+                }.cinemaPlainButton()
+                sectionHeading("Include")
+                VStack(spacing: 0) {
+                  ForEach(options.mode.topics) { topic in
+                    CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
+                    Divider()
+                  }
+                  CinemaTopicRow(title: CapsuleTopic.albumCovers.title, selected: topicBinding(.albumCovers))
+                  Divider()
+                  NavigationLink {
+                    ScrollView {
+                      VStack(spacing: 0) {
+                        ForEach(additionalTopics) { topic in
+                          CinemaTopicRow(title: topic.title, selected: topicBinding(topic))
+                          Divider()
+                        }
+                      }.padding(CinemaLayout.inset)
+                    }.navigationTitle("More topics")
+                  } label: { CinemaSettingLabel(title: "More topics") }.cinemaPlainButton()
+                }
+              } else {
+                Text("Covers from your selected music. No picture research needed.")
+                  .font(.subheadline).foregroundStyle(Palette.secondary)
               }
             } else {
               Label("Your saved photos", systemImage: "photo.on.rectangle")
@@ -263,9 +298,8 @@ struct CapsuleSetupView: View {
               NavigationLink {
                 ScrollView { editorPresentation.padding(24) }.navigationTitle("Presentation")
               } label: {
-                CinemaSettingLabel(title: "\(options.captions.title) · \(options.motion.title)",
-                  detail: "\(Int(options.pace.seconds)) seconds · \(options.order.title)")
-              }.cinemaPlainButton()
+                CinemaSettingLabel(title: "Presentation", detail: options.presentationSummary)
+              }.cinemaPlainButton().accessibilityIdentifier("cinema-presentation")
             }
           }
           if !wide {
@@ -273,6 +307,9 @@ struct CapsuleSetupView: View {
               .font(.footnote).foregroundStyle(Palette.secondary)
           }
           if let failure { Text(failure).foregroundStyle(.red).font(.subheadline) }
+          if conflict {
+            Button("Save as new Cinema") { create(copy: true) }
+          }
         }
         .padding(CinemaLayout.inset)
         .disabled(saving)
@@ -283,7 +320,7 @@ struct CapsuleSetupView: View {
           HStack {
             if saving { ProgressView().tint(Palette.onAccent) }
             else { Image(systemName: "arrow.clockwise") }
-            Text("Save & regenerate")
+            Text(saveLabel)
           }
         }
         .buttonStyle(CinemaButtonStyle(prominent: true))
@@ -297,18 +334,35 @@ struct CapsuleSetupView: View {
 
   private var editorPresentation: some View {
     VStack(spacing: 0) {
+      trackTitleControl
+      Divider()
       CinemaOptionRow(title: "Captions", selection: $options.captions,
         choices: CapsuleCaptions.allCases.filter { options.mode != .photos || $0 != .detailed }.map { CinemaOption(value: $0, title: $0.title) })
       Divider()
-      CinemaOptionRow(title: "Movement", selection: $options.motion,
-        choices: CapsuleMotion.allCases.map { CinemaOption(value: $0, title: $0.title) })
+      CinemaOptionRow(title: "Picture motion", selection: $options.motion,
+        choices: CapsuleMotion.allCases.map { CinemaOption(value: $0, title: $0.title) }, identifier: "cinema-picture-motion")
       Divider()
       CinemaOptionRow(title: "Pace", selection: $options.pace,
         choices: CapsulePace.allCases.map { CinemaOption(value: $0, title: "\(Int($0.seconds)) seconds") })
       Divider()
-      CinemaOptionRow(title: "Order", selection: $options.order,
+      CinemaOptionRow(title: "Picture order", selection: $options.order,
         choices: CapsuleOrder.allCases.map { CinemaOption(value: $0, title: $0.title) })
+      presentationHelp
     }
+  }
+
+  private var trackTitleControl: some View {
+    CinemaTopicRow(title: "Show track title", selected: $options.showsTrackTitle)
+      .accessibilityIdentifier("cinema-show-track-title")
+      #if os(tvOS)
+      .focused($trackTitleFocused)
+      #endif
+  }
+
+  private var presentationHelp: some View {
+    Text("Track title and artist stay visible as the music changes. Ken Burns slowly pans and zooms each picture. Reduce Motion keeps pictures still.")
+      .font(.footnote).foregroundStyle(Palette.secondary)
+      .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 12)
   }
 
   private func sectionHeading(_ title: String) -> some View {
@@ -377,22 +431,25 @@ struct CapsuleSetupView: View {
 
   private var presentationSection: some View {
     Section("Presentation") {
+      trackTitleControl
       Picker("Captions", selection: $options.captions) {
         ForEach(CapsuleCaptions.allCases.filter { options.mode != .photos || $0 != .detailed }) { Text($0.title).tag($0) }
       }
-      Picker("Movement", selection: $options.motion) {
+      Picker("Picture motion", selection: $options.motion) {
         ForEach(CapsuleMotion.allCases) { Text($0.title).tag($0) }
       }
+      .accessibilityIdentifier("cinema-picture-motion")
       Picker("Pace", selection: $options.pace) {
         ForEach(CapsulePace.allCases) { Text("\($0.title) · \(Int($0.seconds)) seconds").tag($0) }
       }
-      Picker("Order", selection: $options.order) {
+      Picker("Picture order", selection: $options.order) {
         ForEach(CapsuleOrder.allCases) { Text($0.title).tag($0) }
       }
       if options.mode == .photos {
         Text("Captions show the photo date when available. Undated photos keep their selected order in a chronological montage.")
           .font(.footnote).foregroundStyle(.secondary)
       }
+      presentationHelp
     }
   }
 
@@ -416,6 +473,8 @@ struct CapsuleSetupView: View {
   }
 
   private var canCreate: Bool {
+    guard !music.tracks.isEmpty, music.tracks.count <= CinemaMusicDraft.trackLimit,
+      !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
     if options.mode == .photos {
       #if os(iOS)
       return setup.original?.isPersonal == true || (photos.count > 0 && photos.count <= 200)
@@ -433,7 +492,7 @@ struct CapsuleSetupView: View {
     else {
       options = CapsuleOptions(
         mode: mode,
-        subject: mode.suggestedSubject(query: setup.request.query, tracks: setup.request.tracks),
+        subject: mode.suggestedSubject(query: setup.request.query, tracks: music.tracks),
         locale: setup.request.locale
       )
       options.restorePreferences()
@@ -442,8 +501,45 @@ struct CapsuleSetupView: View {
     failure = nil
   }
 
-  private func create() {
+  private var nameField: some View {
+    TextField("Cinema name", text: $title).font(.headline)
+      .accessibilityIdentifier("cinema-name")
+  }
+
+  private var musicLink: some View {
+    Button { editingMusic = true } label: {
+      CinemaSettingLabel(title: "Music", value: music.summary,
+        detail: music.tracks.isEmpty ? "Choose music" : "Reorder, add or remove tracks")
+    }.cinemaPlainButton().accessibilityIdentifier("cinema-edit-music")
+  }
+
+  private var hasChanges: Bool {
+    let originalTracks = setup.request.tracks.map { track in var copy = track; copy.entryId = nil; return copy }
+    let editedTracks = music.tracks.map { track in var copy = track; copy.entryId = nil; return copy }
+    return title != (setup.original?.title ?? setup.request.title ?? setup.request.query)
+      || originalTracks != editedTracks || options != setup.initialOptions
+      || customDates != (setup.initialOptions.periodStart != nil && setup.initialOptions.periodEnd != nil)
+      || (customDates && (Self.dateFormatter.string(from: startDate) != setup.initialOptions.periodStart
+        || Self.dateFormatter.string(from: endDate) != setup.initialOptions.periodEnd))
+  }
+
+  private var saveLabel: String {
+    guard setup.isEditing else { return "Save Cinema" }
+    return options.hasSamePictureContent(as: setup.initialOptions) ? "Save changes" : "Save & update pictures"
+  }
+
+  private func cancel() {
+    if hasChanges { discardChanges = true }
+    else { creation?.cancel(); dismiss() }
+  }
+
+  private func create() { create(copy: false) }
+
+  private func create(copy: Bool) {
     var request = setup.request
+    request.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    request.tracks = music.tracks
+    request.clientRequestId = copy ? UUID().uuidString : requestId
     var chosen = options
     chosen.periodStart = nil
     chosen.periodEnd = nil
@@ -455,12 +551,28 @@ struct CapsuleSetupView: View {
       chosen.periodStart = formatter.string(from: startDate)
       chosen.periodEnd = formatter.string(from: endDate)
     }
-    request.options = chosen
+    chosen.subjectIsExplicit = true
+    request.options = setup.isEditing && chosen == setup.initialOptions
+      && setup.request.options == nil ? nil : chosen
+    if lastSubmittedRequest != request {
+      mutationId = UUID().uuidString
+      lastSubmittedRequest = request
+    }
     if options.mode != .photos {
-      chosen.rememberPreferences()
-      store.cinema.pendingRequest = request
-      store.cinema.pendingOriginal = setup.original
-      dismiss()
+      saving = true; failure = nil; conflict = false
+      creation = Task {
+        defer { saving = false }
+        do {
+          try await store.cinema.save(request: request, original: copy ? nil : setup.original,
+            mutationId: mutationId, client: store.client)
+          chosen.rememberPreferences()
+          dismiss()
+        } catch is CancellationError { }
+        catch {
+          failure = error.localizedDescription
+          if case RoonAPIError.httpStatus(409, _) = error { conflict = true }
+        }
+      }
       return
     }
     #if os(iOS)
@@ -470,7 +582,7 @@ struct CapsuleSetupView: View {
       do {
         let capsule: TimeCapsule
         if let original = setup.original {
-          capsule = try await PersonalCinemaStore.shared.update(original, options: chosen)
+          capsule = try await PersonalCinemaStore.shared.update(original, options: chosen, request: request)
         } else {
           capsule = try await photos.create(request: request)
         }

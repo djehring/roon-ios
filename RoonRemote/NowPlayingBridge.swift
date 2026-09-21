@@ -1,4 +1,3 @@
-import AVFoundation
 import MediaPlayer
 import UIKit
 
@@ -20,11 +19,6 @@ final class NowPlayingBridge {
   private weak var store: MockStore?
   private var commandsReady = false
   private var lastSignature: String?
-  #if os(iOS)
-  private var silencePlayer: AVAudioPlayer?
-  private var wantsKeepAlive = false
-  private var observingInterruptions = false
-  #endif
 
   private init() {}
 
@@ -61,18 +55,8 @@ final class NowPlayingBridge {
     apply(track: track, playing: store.isPlaying, store: store)
   }
 
-  /// Stops the keep-alive buffer so AI search can take the mic session.
-  func yieldAudioSession() {
-    #if os(iOS)
-    stopKeepAlive()
-    #endif
-  }
-
   private func apply(track: Track, playing: Bool, store: MockStore) {
-    activatePlaybackSession()
-    #if os(iOS)
-    setKeepAlivePlaying(playing)
-    #endif
+    AudioSessionController.shared.setPlayback(playing)
     var info: [String: Any] = [
       MPMediaItemPropertyTitle: track.title,
       MPMediaItemPropertyArtist: track.artist,
@@ -112,110 +96,8 @@ final class NowPlayingBridge {
     return nil
   }
 
-  private func activatePlaybackSession() {
-    let session = AVAudioSession.sharedInstance()
-    guard session.category != .playAndRecord else { return }
-    do {
-      try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-      try session.setActive(true)
-    } catch {
-      // Lock-screen Now Playing is best-effort if the session is in use.
-    }
-  }
-
-  #if os(iOS)
-  private func setKeepAlivePlaying(_ playing: Bool) {
-    wantsKeepAlive = playing
-    if playing {
-      startKeepAliveIfNeeded()
-    } else {
-      stopKeepAlive()
-    }
-  }
-
-  private func startKeepAliveIfNeeded() {
-    observeInterruptionsIfNeeded()
-    if AVAudioSession.sharedInstance().category == .playAndRecord { return }
-    if let player = silencePlayer, player.isPlaying { return }
-    activatePlaybackSession()
-    do {
-      let player = try AVAudioPlayer(data: Self.silenceWAV)
-      player.numberOfLoops = -1
-      player.volume = 1
-      player.prepareToPlay()
-      guard player.play() else { return }
-      silencePlayer = player
-    } catch {
-      // Keep-alive is best-effort; lock-screen updates resume on the next tick.
-    }
-  }
-
-  private func stopKeepAlive() {
-    wantsKeepAlive = false
-    silencePlayer?.stop()
-    silencePlayer = nil
-  }
-
-  private func observeInterruptionsIfNeeded() {
-    guard !observingInterruptions else { return }
-    observingInterruptions = true
-    NotificationCenter.default.addObserver(
-      forName: AVAudioSession.interruptionNotification,
-      object: AVAudioSession.sharedInstance(),
-      queue: .main
-    ) { [weak self] notification in
-      Task { @MainActor in
-        self?.handleInterruption(notification)
-      }
-    }
-  }
-
-  private func handleInterruption(_ notification: Notification) {
-    guard wantsKeepAlive else { return }
-    let raw = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
-    guard raw == AVAudioSession.InterruptionType.ended.rawValue else { return }
-    startKeepAliveIfNeeded()
-  }
-
-  /// Digital silence at full volume. A muted player does not hold the
-  /// `audio` background assertion, so the samples themselves are zeros.
-  private static let silenceWAV: Data = {
-    let sampleRate = 8_000
-    let frames = sampleRate * 2
-    let dataSize = frames * 2
-    var data = Data()
-    data.reserveCapacity(44 + dataSize)
-    func ascii(_ value: String) { data.append(contentsOf: value.utf8) }
-    func u16(_ value: UInt16) {
-      var little = value.littleEndian
-      data.append(Data(bytes: &little, count: 2))
-    }
-    func u32(_ value: UInt32) {
-      var little = value.littleEndian
-      data.append(Data(bytes: &little, count: 4))
-    }
-    ascii("RIFF")
-    u32(UInt32(36 + dataSize))
-    ascii("WAVE")
-    ascii("fmt ")
-    u32(16)
-    u16(1)
-    u16(1)
-    u32(UInt32(sampleRate))
-    u32(UInt32(sampleRate * 2))
-    u16(2)
-    u16(16)
-    ascii("data")
-    u32(UInt32(dataSize))
-    data.append(Data(count: dataSize))
-    return data
-  }()
-  #endif
-
   private func clear() {
-    #if os(iOS)
-    stopKeepAlive()
-    #endif
+    AudioSessionController.shared.setPlayback(nil)
     guard lastSignature != nil || MPNowPlayingInfoCenter.default().nowPlayingInfo != nil else {
       return
     }

@@ -10,6 +10,7 @@ struct CinemaOptionRow<Value: Hashable>: View {
   let title: String
   @Binding var selection: Value
   let choices: [CinemaOption<Value>]
+  var identifier: String? = nil
 
   var body: some View {
     #if os(tvOS)
@@ -17,14 +18,19 @@ struct CinemaOptionRow<Value: Hashable>: View {
       CinemaOptionChoices(title: title, selection: $selection, choices: choices)
     } label: {
       CinemaSettingLabel(title: title, value: choices.first { $0.value == selection }?.title ?? "")
-    }.cinemaPlainButton()
+    }.cinemaPlainButton().accessibilityIdentifier(identifier ?? title)
     #else
-    Picker(selection: $selection) {
-      ForEach(choices) { Text($0.title).tag($0.value) }
-    } label: { Text(title).foregroundStyle(Palette.primary) }
-      .pickerStyle(.menu)
-      .font(.body)
-      .frame(minHeight: 48)
+    HStack {
+      Text(title).foregroundStyle(Palette.primary)
+      Spacer(minLength: 12)
+      Picker(title, selection: $selection) {
+        ForEach(choices) { Text($0.title).tag($0.value) }
+      }
+      .pickerStyle(.menu).labelsHidden()
+      .accessibilityIdentifier(identifier ?? title)
+    }
+    .font(.body)
+    .frame(minHeight: 48)
     #endif
   }
 }

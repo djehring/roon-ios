@@ -98,6 +98,9 @@ struct TVBrowsePageView: View {
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       } else {
         VStack(spacing: 0) {
+          if let source = page.musicSource {
+            CreateCinemaFromMusicButton(path: source, title: page.title).padding(20)
+          }
           if let promptNode {
             searchBar(promptNode)
               .focusSection()

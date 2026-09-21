@@ -1,5 +1,6 @@
 name: RoonRemote
 options:
+  xcodeVersion: "27.0"
   bundleIdPrefix: com.djehring
   deploymentTarget:
     iOS: "18.0"
@@ -7,6 +8,9 @@ options:
     tvOS: "18.0"
   createIntermediateGroups: true
 settings:
+  DEAD_CODE_STRIPPING: YES
+  ENABLE_USER_SCRIPT_SANDBOXING: YES
+  STRING_CATALOG_GENERATE_SYMBOLS: YES
   SWIFT_VERSION: "5.0"
   MARKETING_VERSION: "1.0.0"
   CURRENT_PROJECT_VERSION: 4
@@ -136,6 +140,7 @@ targets:
       - path: RoonRemote/Models.swift
       - path: RoonRemote/LibraryDragItem.swift
       - path: RoonRemote/PlaybackAdjustment.swift
+      - path: RoonRemote/AudioSessionController.swift
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/QueueTimeline.swift
@@ -144,6 +149,7 @@ targets:
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
+      - path: RoonRemote/Cinema/CinemaMusic.swift
       - path: RoonRemote/Cinema/TimeCapsule.swift
       - path: RoonRemote/Cinema/CapsuleOptions.swift
       - path: RoonRemote/Cinema/PersonalCinemaStore.swift
@@ -286,6 +292,7 @@ targets:
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/BrowsePlaybackFeedback.swift
       - path: RoonRemote/NowPlayingBridge.swift
+      - path: RoonRemote/AudioSessionController.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/Cinema

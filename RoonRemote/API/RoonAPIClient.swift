@@ -281,6 +281,49 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
     }
   }
 
+  func requireCinemaMusicSupport() async throws {
+    struct Capabilities: Decodable { var musicVersion: Int? }
+    let capabilities = try decoder.decode(Capabilities.self, from: await capsuleResponse("capabilities"))
+    guard (capabilities.musicVersion ?? 0) >= 1 else {
+      throw PersonalCinemaError("Update the bridge to create Cinema from your library and edit its music.")
+    }
+  }
+
+  func browseCinemaMusic(_ path: CinemaMusicPath, zoneId: String) async throws -> CinemaMusicPage {
+    struct Input: Encodable { let path: CinemaMusicPath; let zoneId: String }
+    return try decoder.decode(CinemaMusicPage.self, from: await capsuleResponse("music/browse", method: "POST",
+      body: JSONEncoder().encode(Input(path: path, zoneId: zoneId))))
+  }
+
+  func importCinemaMusic(_ path: CinemaMusicPath, zoneId: String) async throws -> [CapsuleTrack] {
+    struct Input: Encodable { let path: CinemaMusicPath; let zoneId: String }
+    struct Output: Decodable { let tracks: [CapsuleTrack] }
+    return try decoder.decode(Output.self, from: await capsuleResponse("music/import", method: "POST",
+      body: JSONEncoder().encode(Input(path: path, zoneId: zoneId)))).tracks
+  }
+
+  func captureCinemaQueue(zoneId: String) async throws -> CinemaQueueSnapshot {
+    try decoder.decode(CinemaQueueSnapshot.self, from: await capsuleResponse("music/queue", method: "POST",
+      body: JSONEncoder().encode(["zoneId": zoneId])))
+  }
+
+  func saveCinemaContent(_ id: String, request: CapsuleRequest, baseRevision: Int, mutationId: String) async throws -> CapsuleJob {
+    struct Input: Encodable { let request: CapsuleRequest; let baseRevision: Int; let mutationId: String }
+    return try decoder.decode(CapsuleJob.self, from: await capsuleResponse("\(capsuleComponent(id))/content", method: "PUT",
+      body: JSONEncoder().encode(Input(request: request, baseRevision: baseRevision, mutationId: mutationId))))
+  }
+
+  func playCinemaTracks(zoneId: String, tracks: [CapsuleTrack]) async throws -> [SuggestedTrackPayload] {
+    struct Input: Encodable { let zoneId: String; let tracks: [CapsuleTrack]; let cinema = true }
+    let clientId = try requireClient()
+    var request = try rawRequest(path: "/api/\(clientId)/play-tracks", method: "POST")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = try JSONEncoder().encode(Input(zoneId: zoneId, tracks: tracks))
+    let (bytes, response) = try await data(for: request)
+    try throwIfNeeded(response, data: bytes)
+    return try decoder.decode([SuggestedTrackPayload].self, from: bytes)
+  }
+
   func updateTimeCapsule(_ id: String, options: CapsuleOptions) async throws -> CapsuleJob {
     let body = try JSONEncoder().encode(["options": options])
     return try decoder.decode(CapsuleJob.self,

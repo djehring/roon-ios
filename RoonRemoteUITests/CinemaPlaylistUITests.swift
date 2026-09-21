@@ -2,6 +2,63 @@ import XCTest
 import UIKit
 
 final class CinemaPlaylistUITests: XCTestCase {
+  @MainActor func testPresentationChoicesPersistAndTrackTitleOutlastsControls() throws {
+    let app = launch(delay: "30", fail: true)
+    XCTAssertTrue(app.buttons["cinema-edit"].waitForExistence(timeout: 10))
+    app.buttons["cinema-edit"].tap()
+    openPresentation(app)
+    let title = app.switches["cinema-show-track-title"]
+    XCTAssertEqual(title.value as? String, "0")
+    title.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+    app.buttons["cinema-picture-motion"].tap()
+    app.buttons["Ken Burns"].tap()
+    app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Captions'")).firstMatch.tap()
+    app.buttons["No picture captions"].tap()
+    capture("Cinema track title and Ken Burns options")
+    closePresentation(app)
+    XCTAssertEqual(app.buttons["cinema-save"].label, "Save changes")
+    app.buttons["cinema-save"].tap()
+    XCTAssertTrue(app.buttons["cinema-watch"].waitForExistence(timeout: 5))
+    app.buttons["cinema-watch"].tap()
+    XCTAssertTrue(app.buttons["Close montage"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["Close montage"].waitForNonExistence(timeout: 10))
+    XCTAssertEqual(app.staticTexts["cinema-track-title"].label, "Dancing Queen")
+    XCTAssertEqual(app.staticTexts["cinema-track-artist"].label, "ABBA")
+    capture("Cinema persistent track title")
+    app.tap()
+    app.buttons["Cinema playlists"].tap()
+    XCTAssertTrue(app.buttons["cinema-edit"].waitForExistence(timeout: 5))
+    app.buttons["cinema-edit"].tap()
+    openPresentation(app)
+    XCTAssertEqual(title.value as? String, "1")
+    XCTAssertTrue(app.buttons["cinema-picture-motion"].label.contains("Ken Burns"))
+    title.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+    closePresentation(app)
+    app.buttons["cinema-save"].tap()
+    XCTAssertTrue(app.buttons["cinema-watch"].waitForExistence(timeout: 5))
+    app.buttons["cinema-watch"].tap()
+    XCTAssertTrue(app.buttons["Close montage"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["Close montage"].waitForNonExistence(timeout: 10))
+    XCTAssertFalse(app.staticTexts["cinema-track-title"].exists)
+  }
+
+  @MainActor private func openPresentation(_ app: XCUIApplication) {
+    XCTAssertTrue(app.staticTexts["Edit Cinema"].waitForExistence(timeout: 5))
+    if UIDevice.current.userInterfaceIdiom == .phone {
+      let presentation = app.buttons["cinema-presentation"]
+      reveal(presentation, app: app)
+      presentation.tap()
+    }
+    reveal(app.switches["cinema-show-track-title"], app: app)
+    XCTAssertTrue(app.switches["cinema-show-track-title"].waitForExistence(timeout: 5))
+  }
+
+  @MainActor private func closePresentation(_ app: XCUIApplication) {
+    if UIDevice.current.userInterfaceIdiom == .phone {
+      app.navigationBars["Presentation"].buttons.firstMatch.tap()
+    }
+  }
+
   @MainActor func testNewMontageImmediatelyShowsLoadedCoverEvenForUnrelatedMusic() throws {
     let app = launchNewMontage(coverSource: "current")
     XCTAssertTrue(app.staticTexts["Updating pictures…"].waitForExistence(timeout: 5))
@@ -78,6 +135,8 @@ final class CinemaPlaylistUITests: XCTestCase {
     let app = launch(delay: "0", fail: true)
     XCTAssertTrue(app.buttons["cinema-edit"].waitForExistence(timeout: 10))
     app.buttons["cinema-edit"].tap()
+    reveal(app.switches["Headlines"], app: app)
+    app.switches["Headlines"].coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
     app.buttons["cinema-save"].tap()
     XCTAssertTrue(app.staticTexts["Preview: picture service unavailable"].waitForExistence(timeout: 10))
     XCTAssertTrue(app.buttons["cinema-item-preview-a"].exists)

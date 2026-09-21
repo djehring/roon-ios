@@ -60,6 +60,7 @@ struct CapsuleOptionsTests {
     first.topics = [.headlines]
     first.periodStart = "1978-01-01"; first.periodEnd = "1978-12-31"
     first.pace = .lively; first.region = "US"
+    first.showsTrackTitle = true; first.motion = .kenBurns
     first.rememberPreferences(in: defaults)
     var later = CapsuleOptions(mode: .period, subject: "1984", locale: "fr_FR")
     later.restorePreferences(from: defaults)
@@ -68,6 +69,8 @@ struct CapsuleOptionsTests {
     #expect(later.periodStart == nil)
     #expect(later.topics == [.headlines])
     #expect(later.pace == .lively)
+    #expect(later.showsTrackTitle)
+    #expect(later.motion == .kenBurns)
     var classical = CapsuleOptions(mode: .work, subject: "Beethoven")
     classical.restorePreferences(from: defaults)
     #expect(classical.pace == .relaxed)
@@ -86,6 +89,23 @@ struct CapsuleOptionsTests {
     let data = Data(#"{"query":"1984","requestedAt":"2026-09-18T00:00:00Z","locale":"en_GB","timeZone":"Europe/London","tracks":[]}"#.utf8)
     let restored = try JSONDecoder().decode(CapsuleRequest.self, from: data)
     #expect(restored.options == nil)
+  }
+  @Test func trackTitleIsBackwardCompatibleAndDoesNotChangePictureContent() throws {
+    let original = CapsuleOptions(mode: .artwork, subject: "Evening music")
+    let legacy = try JSONDecoder().decode(CapsuleOptions.self, from: JSONEncoder().encode(original))
+    #expect(legacy.showTrackTitle == nil)
+    #expect(!legacy.showsTrackTitle)
+    var selected = legacy
+    selected.showsTrackTitle = false
+    #expect(selected == legacy)
+    selected.showsTrackTitle = true
+    selected.motion = .kenBurns
+    #expect(selected != legacy)
+    #expect(selected.hasSamePictureContent(as: legacy))
+    let saved = try JSONDecoder().decode(CapsuleOptions.self, from: JSONEncoder().encode(selected))
+    #expect(saved.showsTrackTitle)
+    #expect(saved.motion == .kenBurns)
+    #expect(saved.captions == .none)
   }
   @Test func relaxedAndLivelyPacingPreservePauseAndManualNavigation() {
     var clock = MontagePlayback()

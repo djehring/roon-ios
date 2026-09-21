@@ -335,6 +335,27 @@ struct CapsuleLibraryTests {
     #expect(client.rebuildCount == 1)
   }
 
+  @Test func musicSaveKeepsPicturesAndNeverTouchesPlayback() async throws {
+    let library = CapsuleLibrary()
+    let client = CinemaStub()
+    let old = sample()
+    library.capsules = [old]
+    var request = old.request
+    request.title = "My evening"
+    request.tracks.append(CapsuleTrack(artist: "Bowie", track: "Heroes", album: "Heroes"))
+    var saved = old
+    saved.request = request; saved.title = "My evening"; saved.revision = 1
+    client.job = CapsuleJob(id: old.id, status: "ready", capsule: saved)
+    try await library.save(request: request, original: old, mutationId: "save-1", client: client)
+    library.finishSetup(client: client)
+    #expect(library.capsules.first?.request.tracks == request.tracks)
+    #expect(library.capsules.first?.scenes == old.scenes)
+    #expect(client.contentRequest == request)
+    #expect(client.updatedId == nil)
+    #expect(client.playCount == 0 && client.commandCount == 0)
+    #expect(!library.preparing)
+  }
+
   private func sample(id: String = "saved") -> TimeCapsule {
     var request = CapsuleRequest(context: CapsuleSearchContext(query: "September 1976"), tracks: [
       SuggestedTrack(id: "song", title: "Dancing Queen", artist: "ABBA", album: "Arrival", corrected: false)
@@ -368,12 +389,18 @@ private final class CinemaStub: CinemaClient {
   var requestedGeneration: String?
   var pollFailure: Error?
   var rebuildCount = 0
+  var contentRequest: CapsuleRequest?
   func timeCapsules() async throws -> [TimeCapsule] {
     if delayLoad { return await withCheckedContinuation { loadContinuation = $0 } }
     return saved
   }
   func requireCinemaOptionsSupport() async throws { }
   func requireCinemaManagementSupport() async throws { }
+  func requireCinemaMusicSupport() async throws { }
+  func saveCinemaContent(_ id: String, request: CapsuleRequest, baseRevision: Int, mutationId: String) async throws -> CapsuleJob {
+    contentRequest = request
+    return job
+  }
   func createTimeCapsule(_ request: CapsuleRequest) async throws -> CapsuleJob { job }
   func rebuildTimeCapsule(_ id: String) async throws -> CapsuleJob { rebuildCount += 1; return job }
   func updateTimeCapsule(_ id: String, options: CapsuleOptions) async throws -> CapsuleJob {
