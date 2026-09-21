@@ -19,21 +19,12 @@ final class LiveActivityBridge {
   private static let maxEncodedBytes = 3200
   private static let endDelay: Duration = .seconds(2)
 
-  private struct Fingerprint: Equatable {
-    var zoneName: String
-    var title: String
-    var artist: String
-    var isPlaying: Bool
-    var imageKey: String?
-    var hasArt: Bool
-  }
-
-  private var lastFingerprint: Fingerprint?
   private var lastArtworkKey: String?
   private var lastArtworkJPEG: Data?
   private var wantsPublish = false
   private var worker: Task<Void, Never>?
   private var endTask: Task<Void, Never>?
+  private var wantsEnd = false
 
   func publish() {
     wantsPublish = true
@@ -64,30 +55,24 @@ final class LiveActivityBridge {
       await endImmediately()
       return
     }
-    let zone = store.selectedZone
-    if zone.state == .stopped {
-      scheduleEnd()
-      return
-    }
-    // Radio can play with no now-playing row. Ending the activity there left
-    // an empty tappable island. Publish the room name so the pill stays alive
-    // without last night's album.
-    guard zone.track != nil || store.isPlaying else {
-      scheduleEnd()
+    guard let snapshot = NowPlayingSnapshot(zone: store.selectedZone, isPlaying: store.isPlaying) else {
+      if wantsEnd {
+        await endImmediately()
+      } else {
+        scheduleEnd()
+      }
       return
     }
     endTask?.cancel()
     endTask = nil
-    let track = zone.track
-    let title = {
-      if let track, !track.title.isEmpty { return track.title }
-      return zone.name
-    }()
+    wantsEnd = false
+    let track = snapshot.track
     var state = RoonNowPlayingAttributes.ContentState(
-      zoneName: zone.name,
-      title: title,
-      artist: track?.artist ?? "",
-      isPlaying: store.isPlaying
+      zoneName: snapshot.zoneName,
+      title: snapshot.title,
+      artist: snapshot.artist,
+      isPlaying: snapshot.isPlaying,
+      zoneID: snapshot.zoneID
     )
     if let track {
       state.artworkJPEG = artworkJPEG(for: track, store: store, base: state)
@@ -95,20 +80,7 @@ final class LiveActivityBridge {
       lastArtworkKey = nil
       lastArtworkJPEG = nil
     }
-    let fingerprint = Fingerprint(
-      zoneName: zone.name,
-      title: title,
-      artist: track?.artist ?? "",
-      isPlaying: store.isPlaying,
-      imageKey: track?.imageKey,
-      hasArt: state.artworkJPEG != nil
-    )
-    if fingerprint == lastFingerprint {
-      return
-    }
-    if await upsert(zoneId: zone.id, state: state) {
-      lastFingerprint = fingerprint
-    }
+    await upsert(zoneId: snapshot.zoneID, state: state.fittingBudget())
   }
 
   private func artworkJPEG(
@@ -166,35 +138,30 @@ final class LiveActivityBridge {
   private func upsert(
     zoneId: String,
     state: RoonNowPlayingAttributes.ContentState
-  ) async -> Bool {
+  ) async {
     let content = ActivityContent(state: state, staleDate: nil, relevanceScore: 100)
-    let active = Activity<RoonNowPlayingAttributes>.activities.filter {
-      $0.activityState == .active
-    }
-    // end(nil) on a track change left a tappable empty island: the dying
-    // activity stayed in the list, so we updated it instead of starting one.
-    let zombies = active.filter { $0.content.state.title.isEmpty }
-    if !zombies.isEmpty {
-      for activity in zombies {
-        await activity.end(content, dismissalPolicy: .immediate)
-      }
-    }
     let live = Activity<RoonNowPlayingAttributes>.activities.filter {
-      $0.activityState == .active && !$0.content.state.title.isEmpty
+      $0.activityState == .active || $0.activityState == .stale
     }
-    if !live.isEmpty {
-      for activity in live {
+    if let activity = live.first {
+      // Compare with ActivityKit, not a process-local fingerprint. The system
+      // can end/reset an activity without the selected track changing.
+      if activity.content.state != state || activity.activityState == .stale {
         await activity.update(content)
       }
-      return true
+      for duplicate in live.dropFirst() {
+        await duplicate.end(nil, dismissalPolicy: .immediate)
+      }
+      return
     }
+    // ActivityKit only permits starting an activity in the foreground. Retry
+    // on activation rather than logging a failed request for every zone tick.
+    guard UIApplication.shared.applicationState == .active else { return }
     do {
       let attributes = RoonNowPlayingAttributes(zoneId: zoneId)
       _ = try Activity.request(attributes: attributes, content: content, pushType: nil)
-      return true
     } catch {
       Self.log.error("live activity failed: \(error.localizedDescription, privacy: .public)")
-      return false
     }
   }
 
@@ -203,14 +170,17 @@ final class LiveActivityBridge {
     endTask = Task {
       try? await Task.sleep(for: Self.endDelay)
       guard !Task.isCancelled else { return }
-      await self.endImmediately()
+      // Serialize ending with updates. A separate async end can otherwise
+      // finish after a new track has already been published.
+      self.wantsEnd = true
+      self.publish()
     }
   }
 
   private func endImmediately() async {
     endTask?.cancel()
     endTask = nil
-    lastFingerprint = nil
+    wantsEnd = false
     lastArtworkKey = nil
     lastArtworkJPEG = nil
     for activity in Activity<RoonNowPlayingAttributes>.activities {

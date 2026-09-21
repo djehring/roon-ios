@@ -9,15 +9,19 @@ import Foundation
 enum EventLiveness {
   static let quietInterval: TimeInterval = 10
   static let refreshCooldown: TimeInterval = 10
+  // The bridge sends a ping every 45 seconds, including while rooms are paused.
+  static let idleQuietInterval: TimeInterval = 65
 
   static func shouldRefresh(
     isPlaying: Bool,
     lastEventAt: Date?,
+    lastZoneEventAt: Date? = nil,
     lastRefreshAt: Date?,
     now: Date = Date()
   ) -> Bool {
-    guard isPlaying else { return false }
-    guard let lastEventAt, now.timeIntervalSince(lastEventAt) >= quietInterval else {
+    let lastUpdate = (isPlaying ? lastZoneEventAt : nil) ?? lastEventAt ?? lastRefreshAt
+    let timeout = isPlaying ? quietInterval : idleQuietInterval
+    guard let lastUpdate, now.timeIntervalSince(lastUpdate) >= timeout else {
       return false
     }
     if let lastRefreshAt, now.timeIntervalSince(lastRefreshAt) < refreshCooldown {

@@ -18,7 +18,14 @@ final class NowPlayingBridge {
 
   private weak var store: MockStore?
   private var commandsReady = false
-  private var lastSignature: String?
+  private struct Publication: Equatable {
+    var snapshot: NowPlayingSnapshot
+    var artwork: Data?
+  }
+
+  private var lastPublication: Publication?
+  private var wantsPublish = false
+  private var worker: Task<Void, Never>?
 
   private init() {}
 
@@ -37,71 +44,95 @@ final class NowPlayingBridge {
 
   /// Live Activities are an iPhone feature; tvOS has no Watch companion to feed.
   private static func flushLiveActivity() async {
+    await shared.flush()
     #if os(iOS)
     await LiveActivityBridge.shared.flush()
     #endif
   }
 
   func publish() {
-    guard let store, case .main = store.session, store.client.isPaired else {
-      clear()
-      return
+    wantsPublish = true
+    if worker == nil {
+      worker = Task { await self.drain() }
     }
-    let zone = store.selectedZone
-    guard let track = zone.track, zone.state != .stopped else {
-      clear()
-      return
-    }
-    apply(track: track, playing: store.isPlaying, store: store)
   }
 
-  private func apply(track: Track, playing: Bool, store: MockStore) {
-    AudioSessionController.shared.setPlayback(playing)
+  private func flush() async {
+    publish()
+    await worker?.value
+  }
+
+  private func drain() async {
+    while wantsPublish {
+      wantsPublish = false
+      let snapshot = currentSnapshot()
+      AudioSessionController.shared.setPlayback(snapshot?.isPlaying)
+      // Session activation runs off the main thread. Publishing before it
+      // finishes can leave the system holding the previous session's card.
+      await AudioSessionController.shared.flush()
+      guard !wantsPublish else { continue }
+      if let snapshot, let store {
+        apply(snapshot: snapshot, store: store)
+      } else {
+        clear()
+      }
+    }
+    worker = nil
+  }
+
+  private func currentSnapshot() -> NowPlayingSnapshot? {
+    guard let store, case .main = store.session, store.client.isPaired else {
+      return nil
+    }
+    return NowPlayingSnapshot(zone: store.selectedZone, isPlaying: store.isPlaying)
+  }
+
+  private func apply(snapshot: NowPlayingSnapshot, store: MockStore) {
+    let track = snapshot.track
+    let art = artworkData(for: track, store: store)
+    let publication = Publication(snapshot: snapshot, artwork: art)
     var info: [String: Any] = [
-      MPMediaItemPropertyTitle: track.title,
-      MPMediaItemPropertyArtist: track.artist,
-      MPMediaItemPropertyAlbumTitle: track.album,
-      MPNowPlayingInfoPropertyPlaybackRate: playing ? 1.0 : 0.0,
+      MPMediaItemPropertyTitle: snapshot.title,
+      MPMediaItemPropertyArtist: snapshot.artist,
+      MPMediaItemPropertyAlbumTitle: track?.album ?? "",
+      MPNowPlayingInfoPropertyPlaybackRate: snapshot.isPlaying ? 1.0 : 0.0,
+      MPNowPlayingInfoPropertyIsLiveStream: track?.durationSeconds == nil,
     ]
-    if let elapsed = TimeCode.seconds(from: track.position) {
+    if let position = track?.position, let elapsed = TimeCode.seconds(from: position) {
       info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
     }
-    if let duration = track.durationSeconds, duration > 0 {
+    if let duration = track?.durationSeconds, duration > 0 {
       info[MPMediaItemPropertyPlaybackDuration] = duration
     }
-    if let image = artworkImage(for: track, store: store) {
+    if let art, let image = UIImage(data: art) {
       info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
     }
 
-    let signature = "\(track.id)|\(playing)|\(track.position)|\(track.imageKey ?? "")|\(info[MPMediaItemPropertyArtwork] != nil)"
     let center = MPNowPlayingInfoCenter.default()
-    if signature != lastSignature {
+    if publication != lastPublication || center.nowPlayingInfo == nil {
       center.nowPlayingInfo = info
-      lastSignature = signature
+      lastPublication = publication
     }
-    center.playbackState = playing ? .playing : .paused
-    MPRemoteCommandCenter.shared().changePlaybackPositionCommand.isEnabled = track.isSeekable
+    center.playbackState = snapshot.isPlaying ? .playing : .paused
+    MPRemoteCommandCenter.shared().changePlaybackPositionCommand.isEnabled = track?.isSeekable == true
   }
 
-  private func artworkImage(for track: Track, store: MockStore) -> UIImage? {
-    guard let key = track.imageKey else { return nil }
+  private func artworkData(for track: Track?, store: MockStore) -> Data? {
+    guard let key = track?.imageKey else { return nil }
     let sizes = [ArtworkCache.heroPixels, ArtworkCache.gridPixels, ArtworkCache.thumbnailPixels]
     for pixels in sizes {
-      if let data = store.artwork.data(for: ArtworkCache.Key(imageKey: key, pixels: pixels)),
-         let image = UIImage(data: data)
-      {
-        return image
+      if let data = store.artwork.data(for: ArtworkCache.Key(imageKey: key, pixels: pixels)) {
+        return data
       }
     }
     return nil
   }
 
   private func clear() {
-    AudioSessionController.shared.setPlayback(nil)
-    guard lastSignature != nil || MPNowPlayingInfoCenter.default().nowPlayingInfo != nil else {
+    guard lastPublication != nil || MPNowPlayingInfoCenter.default().nowPlayingInfo != nil else {
       return
     }
-    lastSignature = nil
+    lastPublication = nil
     let center = MPNowPlayingInfoCenter.default()
     center.nowPlayingInfo = nil
     center.playbackState = .stopped

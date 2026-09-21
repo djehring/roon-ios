@@ -81,6 +81,7 @@
 		5169A1B5EE68EC06A6131287 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D6D1A4B3345575AB35B24DEB /* LaunchScreen.storyboard */; };
 		53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */; };
 		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
+		556B986E2EB2EB7F7B0DC323 /* NowPlayingSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */; };
 		56E793975247D2ED5ED285F0 /* BrowsePageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */; };
 		57CBE797AB5C9E17FE44BCD7 /* BrowsePlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC65859253E32AC8CEA8B12 /* BrowsePlaybackTests.swift */; };
 		596941B788CE6631746A7E0E /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
@@ -135,6 +136,7 @@
 		8E7D6BCF737B0879F1B33BE1 /* CoverScreensaverRemoteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5082362BA96FA4FB4159235 /* CoverScreensaverRemoteUITests.swift */; };
 		8F9B62B61E0F1AD640ED0E0D /* TimeCapsuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C55126C4B0965F44DDAA49 /* TimeCapsuleTests.swift */; };
 		9262D55BAE78684F1435D1E3 /* BrowsePlaybackFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BECA40AE3015F2E3CF0D4FF /* BrowsePlaybackFeedback.swift */; };
+		939519D57F30A574356F0F40 /* NowPlayingSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A233D509C55899DAC117D27B /* NowPlayingSyncTests.swift */; };
 		93FA22C3B4CFDB2BDC758A31 /* BrowsePlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */; };
 		97A56C85CC4134510FEA1DD1 /* CinemaLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BD1ED893EC759573BCD8EA /* CinemaLibraryView.swift */; };
 		999E76D4D7ECEF3059060247 /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
@@ -170,12 +172,14 @@
 		BC18A253105F54C86884786A /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
 		BC7DF3FF790105D42FE01E72 /* PersonalCinemaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D0575FC7ADE206485431D /* PersonalCinemaStore.swift */; };
 		BC98B19DB64B2ECF2BBDEB66 /* PersonalCinemaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D0575FC7ADE206485431D /* PersonalCinemaStore.swift */; };
+		BCDD283C0007778008119258 /* NowPlayingSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */; };
 		BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC17B2323BEB8BE438F3955A /* SettingsView.swift */; };
 		BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */; };
 		C12732E1D8796D80B726A673 /* CinemaMusicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164F759935633686683D6DF1 /* CinemaMusicTests.swift */; };
 		C1FD1582D39E817F5B87C42F /* RegularRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */; };
 		C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		C2EC53A7AF04777341E9B36A /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
+		C2F6DC24AF6249A97CD7BE8E /* NowPlayingSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */; };
 		C3801A863FDC5115C92215FB /* CinemaLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65BD1ED893EC759573BCD8EA /* CinemaLibraryView.swift */; };
 		C3D764182510F527C23A1BD3 /* ZoneTrackSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */; };
 		C59E170BB27ADEAA8413A98C /* WatchStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1283D159767D98835D1EB6 /* WatchStore.swift */; };
@@ -225,6 +229,7 @@
 		F4FD0C74D35B64BB96EC769E /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		F5CF3720E59D06B5C8FAD58D /* PlayMediaHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E0AC78E36F1CC66A4BB1E1 /* PlayMediaHandler.swift */; };
 		F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
+		F93BB67BAF92BF868B82159D /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
 		FA1E67A016B91BF7EEEA24A1 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23BEADFB2D74AE470C4AE825 /* Layout.swift */; };
 		FBF67225AB0CC91ED99F9D98 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
 		FCF90EE4B200686F0912144B /* RoonRemoteWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 30ABB364B1542E468D9C63B0 /* RoonRemoteWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -323,6 +328,7 @@
 		18C4188F78E2B9DA6F26D946 /* TVRemoteActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRemoteActivity.swift; sourceTree = "<group>"; };
 		1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLivenessTests.swift; sourceTree = "<group>"; };
 		1BECA40AE3015F2E3CF0D4FF /* BrowsePlaybackFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePlaybackFeedback.swift; sourceTree = "<group>"; };
+		1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSnapshot.swift; sourceTree = "<group>"; };
 		223D0575FC7ADE206485431D /* PersonalCinemaStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalCinemaStore.swift; sourceTree = "<group>"; };
 		2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularBrowseView.swift; sourceTree = "<group>"; };
 		22E0985147F993FCA13B3969 /* CinemaPlaylistFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPlaylistFixture.swift; sourceTree = "<group>"; };
@@ -393,6 +399,7 @@
 		9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIModels.swift; sourceTree = "<group>"; };
 		A111F24DBFE4E98B06B0E140 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A233D509C55899DAC117D27B /* NowPlayingSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSyncTests.swift; sourceTree = "<group>"; };
 		A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryDragItemTests.swift; sourceTree = "<group>"; };
 		A8301FD882C4D88D26DBC910 /* DemoStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoStore.swift; sourceTree = "<group>"; };
 		A97C1EA62154B94FECA419F8 /* WatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchApp.swift; sourceTree = "<group>"; };
@@ -514,6 +521,7 @@
 				F4CD925CA7A704A07C1A93F4 /* Models.swift */,
 				356074E80454A0C488C908E2 /* NowPlayingBridge.swift */,
 				9040857289F79EBCF894FFDE /* NowPlayingSheets.swift */,
+				1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */,
 				0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */,
 				99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */,
 				794CD25D854C7A16C017574F /* PhoneWatchSync.swift */,
@@ -561,6 +569,7 @@
 				396F1AFB5A590F40AC95AAA0 /* LayoutTests.swift */,
 				A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */,
 				80506818538B2F6597E20D61 /* LibraryIndexTests.swift */,
+				A233D509C55899DAC117D27B /* NowPlayingSyncTests.swift */,
 				71F7C02FF1B04C5F3B6C1A5A /* PersonalCinemaTests.swift */,
 				5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */,
 				2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */,
@@ -1035,6 +1044,7 @@
 				A6D77AD78F7BAAF57A83B899 /* Models.swift in Sources */,
 				474EA2128DFCF94763C2D252 /* NowPlayingBridge.swift in Sources */,
 				32737B75707A9F7774D25CBE /* NowPlayingLiveIntents.swift in Sources */,
+				556B986E2EB2EB7F7B0DC323 /* NowPlayingSnapshot.swift in Sources */,
 				A8BEB48D5E20372B0C2DFA14 /* PersonalCinemaStore.swift in Sources */,
 				EFE3B78B14B83223A8FA371A /* PlayRequest.swift in Sources */,
 				89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */,
@@ -1094,6 +1104,8 @@
 				CBD14282548AC084A533174D /* LibraryIndex.swift in Sources */,
 				50220EBCA240F22C39952FFF /* LibraryIndexTests.swift in Sources */,
 				76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */,
+				C2F6DC24AF6249A97CD7BE8E /* NowPlayingSnapshot.swift in Sources */,
+				939519D57F30A574356F0F40 /* NowPlayingSyncTests.swift in Sources */,
 				BC7DF3FF790105D42FE01E72 /* PersonalCinemaStore.swift in Sources */,
 				056DD24EC7389942A84B389E /* PersonalCinemaTests.swift in Sources */,
 				B38B7FF3838694CFF40A5768 /* PlaybackAdjustment.swift in Sources */,
@@ -1105,6 +1117,7 @@
 				364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */,
 				859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */,
 				1D4C1B9D6D757FEF47EE7DB9 /* RoonAPIModels.swift in Sources */,
+				F93BB67BAF92BF868B82159D /* RoonNowPlayingAttributes.swift in Sources */,
 				2F265711F9C366490043E056 /* SearchSelection.swift in Sources */,
 				C8F0613C003F396800946B91 /* SearchSelectionTests.swift in Sources */,
 				F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */,
@@ -1191,6 +1204,7 @@
 				FF4A951C2C5315B57FB20162 /* NowPlayingBridge.swift in Sources */,
 				C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */,
 				BBD5A6FC8FD5B59499268B48 /* NowPlayingSheets.swift in Sources */,
+				BCDD283C0007778008119258 /* NowPlayingSnapshot.swift in Sources */,
 				45403E597B935611457A6527 /* NowPlayingView.swift in Sources */,
 				061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */,
 				BC98B19DB64B2ECF2BBDEB66 /* PersonalCinemaStore.swift in Sources */,
