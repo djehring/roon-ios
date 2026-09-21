@@ -21,6 +21,9 @@ struct CapsuleRequest: Codable, Equatable {
   var timeZone: String
   var tracks: [CapsuleTrack]
   var options: CapsuleOptions?
+  var title: String?
+  var sourceLabel: String?
+  var clientRequestId: String?
 
   init(context: CapsuleSearchContext, tracks: [SuggestedTrack]) {
     query = context.query
@@ -37,6 +40,11 @@ struct CapsuleTrack: Codable, Equatable {
   var artist: String
   var track: String
   var album: String
+  var entryId: String?
+  var imageKey: String?
+  var durationSeconds: Double?
+  var roonPath: CinemaMusicPath?
+  var matchPolicy: String?
 }
 
 struct TimeCapsule: Codable, Identifiable, Equatable {
@@ -51,6 +59,7 @@ struct TimeCapsule: Codable, Identifiable, Equatable {
   var periodStart: String?
   var periodEnd: String?
   var generation: String?
+  var revision: Int?
 
   var isPersonal: Bool { request.options?.mode == .photos }
   var minimumPictures: Int { isPersonal || request.options?.topics == [.albumCovers] ? 1 : 3 }
@@ -84,7 +93,7 @@ struct CapsuleScene: Codable, Identifiable, Equatable {
 }
 
 struct CapsulePreparation {
-  let placeholder: TimeCapsule
+  var placeholder: TimeCapsule
   let original: TimeCapsule?
   var result: TimeCapsule?
   var jobId: String?
@@ -92,7 +101,7 @@ struct CapsulePreparation {
 
   init(request: CapsuleRequest, original: TimeCapsule? = nil) {
     self.original = original
-    placeholder = TimeCapsule(id: UUID().uuidString, title: original?.title ?? request.query,
+    placeholder = TimeCapsule(id: UUID().uuidString, title: request.title ?? original?.title ?? request.query,
       contextLabel: original?.contextLabel ?? request.query, request: request,
       createdAt: ISO8601DateFormatter().string(from: Date()), scenes: [],
       contextImage: original?.montageFrames.first?.image ?? original?.contextImage)

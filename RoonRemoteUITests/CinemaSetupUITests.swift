@@ -6,7 +6,7 @@ final class CinemaSetupUITests: XCTestCase {
     app.launchArguments = ["-roon-demo-store"]
     app.launchEnvironment["ROON_CINEMA_SETUP_QUERY"] = "UK top ten this week in 1978"
     app.launch()
-    XCTAssertTrue(app.navigationBars["Set up Cinema"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.navigationBars["Create Cinema"].waitForExistence(timeout: 10))
     capture("Chart week")
     reveal(app.switches["Headlines"], in: app)
     XCTAssertTrue(app.switches["Sports highlights"].exists)
@@ -36,10 +36,11 @@ final class CinemaSetupUITests: XCTestCase {
     reveal(app.buttons["Choose photos"], in: app)
     XCTAssertTrue(app.buttons["Choose an album"].exists)
     capture("Personal photos")
-    reveal(app.buttons["Save montage"], in: app)
-    XCTAssertFalse(app.buttons["Save montage"].isEnabled)
+    reveal(app.buttons["Save Cinema"], in: app)
+    XCTAssertFalse(app.buttons["Save Cinema"].isEnabled)
     app.buttons["Cancel"].tap()
-    XCTAssertFalse(app.navigationBars["Set up Cinema"].exists)
+    if app.buttons["Discard changes"].waitForExistence(timeout: 2) { app.buttons["Discard changes"].tap() }
+    XCTAssertTrue(app.navigationBars["Create Cinema"].waitForNonExistence(timeout: 5))
   }
 
   @MainActor func testBeethovenDefaults() throws {
@@ -47,7 +48,7 @@ final class CinemaSetupUITests: XCTestCase {
     app.launchArguments = ["-roon-demo-store"]
     app.launchEnvironment["ROON_CINEMA_SETUP_QUERY"] = "Beethoven Symphony No. 6"
     app.launch()
-    XCTAssertTrue(app.navigationBars["Set up Cinema"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.navigationBars["Create Cinema"].waitForExistence(timeout: 10))
     capture("Beethoven setup")
     reveal(app.staticTexts["Work & composer"], in: app)
     XCTAssertTrue(app.staticTexts["Work & composer"].exists)
@@ -59,15 +60,21 @@ final class CinemaSetupUITests: XCTestCase {
   @MainActor private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
     for _ in 0..<8 {
       if element.exists && element.isHittable { return }
-      app.swipeUp()
+      scrollForm(in: app, up: true)
     }
     XCTAssertTrue(element.exists)
   }
   @MainActor private func scrollToTop(_ app: XCUIApplication) {
     for _ in 0..<5 {
       if app.buttons["cinema-mode"].isHittable { return }
-      app.swipeDown()
+      scrollForm(in: app, up: false)
     }
+  }
+  @MainActor private func scrollForm(in app: XCUIApplication, up: Bool) {
+    let form = app.collectionViews.firstMatch
+    let start = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: up ? 0.75 : 0.45))
+    let end = form.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: up ? 0.45 : 0.75))
+    start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
   }
   @MainActor private func capture(_ name: String) {
     let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

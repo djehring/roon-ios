@@ -89,6 +89,8 @@ struct AISearchView: View {
             .clipShape(Circle())
             .foregroundStyle(recorder.isRecording ? Color.red : Palette.primary)
         }
+        .disabled(recorder.isChanging)
+        .accessibilityLabel(recorder.isRecording ? "Stop voice search recording" : "Record voice search")
         Button("Go") {
           search()
         }
@@ -242,40 +244,42 @@ struct AISearchView: View {
 @Observable
 final class VoiceRecorder {
   var isRecording = false
-  private var recorder: AVAudioRecorder?
+  var isChanging = false
   private var fileURL: URL {
     FileManager.default.temporaryDirectory.appendingPathComponent("roon-ai.m4a")
   }
 
   func toggle() async throws -> Data? {
+    guard !isChanging else { return nil }
+    isChanging = true
+    defer { isChanging = false }
     if isRecording {
-      recorder?.stop()
-      isRecording = false
-      try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-      HardwareVolumeBridge.shared.setActive(true)
-      NowPlayingBridge.shared.publish()
-      return try Data(contentsOf: fileURL)
+      defer {
+        isRecording = false
+        HardwareVolumeBridge.shared.setActive(true)
+        NowPlayingBridge.shared.publish()
+      }
+      return try await AudioSessionController.shared.stopRecording()
     }
     let granted = await AVAudioApplication.requestRecordPermission()
     guard granted else {
       throw RoonAPIError.httpStatus(403, "Microphone permission is off.")
     }
+    try Task.checkCancellation()
     HardwareVolumeBridge.shared.setActive(false)
-    NowPlayingBridge.shared.yieldAudioSession()
-    let session = AVAudioSession.sharedInstance()
-    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-    try session.setActive(true)
-    let settings: [String: Any] = [
-      AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-      AVSampleRateKey: 44100,
-      AVNumberOfChannelsKey: 1,
-      AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
-    ]
-    let next = try AVAudioRecorder(url: fileURL, settings: settings)
-    next.record()
-    recorder = next
-    isRecording = true
-    return nil
+    do {
+      try await AudioSessionController.shared.startRecording(to: fileURL)
+      if Task.isCancelled {
+        _ = try? await AudioSessionController.shared.stopRecording()
+        throw CancellationError()
+      }
+      isRecording = true
+      return nil
+    } catch {
+      HardwareVolumeBridge.shared.setActive(true)
+      NowPlayingBridge.shared.publish()
+      throw error
+    }
   }
 }
 

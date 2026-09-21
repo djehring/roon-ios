@@ -2,9 +2,20 @@
 
 Implemented locally on 17 September 2026 in this app and the companion `roon-web-stack` repository. Runtime deployment is separate from the tagged source release.
 
+## Editable soundtracks (21 September 2026)
+
+Cinema can start from an album, Roon playlist, current room queue, AI results or
+**New Cinema**. The common editor supports renaming, drag/move controls, removal,
+Undo and adding music. The source is an independent snapshot; picture subjects
+and the original date context stay independent of soundtrack edits.
+
+See [Cinema music implementation](cinema-music.md) for API requirements, playback
+identity, limits and validation. Album artwork is the initial visual mode for
+non-AI sources and requires no research or OpenAI key.
+
 ## Adaptive Cinema setup (18 September 2026)
 
-**Set up Cinema** opens a native setup sheet before any research. It snapshots the original
+**Create Cinema** opens a native setup sheet before any research. It snapshots the original
 search and selected tracks, suggests **Around this time**, **About the artist**, or
 **About the work**, and allows an override. **My photos** is always available on iOS.
 The visual subject can be edited without changing the soundtrack or original time anchor.

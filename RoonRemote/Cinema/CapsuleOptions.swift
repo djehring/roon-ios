@@ -1,10 +1,11 @@
 import Foundation
 
 enum CapsuleMode: String, Codable, CaseIterable, Identifiable {
-  case period, artist, work, photos
+  case artwork, period, artist, work, photos
   var id: Self { self }
   var title: String {
     switch self {
+    case .artwork: "Album artwork"
     case .period: "Around this time"
     case .artist: "About the artist"
     case .work: "About the work"
@@ -13,6 +14,7 @@ enum CapsuleMode: String, Codable, CaseIterable, Identifiable {
   }
   var symbol: String {
     switch self {
+    case .artwork: "square.stack"
     case .period: "calendar"
     case .artist: "person.crop.square"
     case .work: "music.note.list"
@@ -21,6 +23,7 @@ enum CapsuleMode: String, Codable, CaseIterable, Identifiable {
   }
   var topics: [CapsuleTopic] {
     switch self {
+    case .artwork: [.albumCovers]
     case .period: [.headlines, .sports, .culture, .everydayLife]
     case .artist: [.artistImages, .career, .collaborators, .places, .historicalContext]
     case .work: [.composer, .programmeNotes, .artwork, .manuscripts, .places, .performers, .historicalContext]
@@ -49,7 +52,7 @@ enum CapsuleMode: String, Codable, CaseIterable, Identifiable {
       let work = works.count == 1 ? works[0] : query
       return ([artists.count == 1 ? artists[0] : nil, work] as [String?])
         .compactMap { $0 }.joined(separator: " — ")
-    case .period, .photos:
+    case .artwork, .period, .photos:
       return query
     }
   }
@@ -98,7 +101,7 @@ enum CapsuleCaptions: String, Codable, CaseIterable, Identifiable {
   case none, brief, detailed
   var id: Self { self }
   var title: String {
-    switch self { case .none: "Pictures only"; case .brief: "Brief captions"; case .detailed: "More context" }
+    switch self { case .none: "No picture captions"; case .brief: "Brief captions"; case .detailed: "More context" }
   }
 }
 enum CapsuleMotion: String, Codable, CaseIterable, Identifiable {
@@ -130,6 +133,7 @@ enum CapsuleWorkContext: String, Codable, CaseIterable, Identifiable {
 }
 
 struct CapsuleOptions: Codable, Equatable {
+  var subjectIsExplicit: Bool?
   var mode: CapsuleMode
   var topics: [CapsuleTopic]
   var subject: String
@@ -138,9 +142,26 @@ struct CapsuleOptions: Codable, Equatable {
   var periodEnd: String?
   var workContext: CapsuleWorkContext = .composition
   var captions: CapsuleCaptions = .brief
+  // Optional so Cinema items and preferences saved before this option still decode.
+  var showTrackTitle: Bool?
   var motion: CapsuleMotion = .gentle
   var pace: CapsulePace = .standard
   var order: CapsuleOrder = .curated
+
+  var showsTrackTitle: Bool {
+    get { showTrackTitle ?? false }
+    set { showTrackTitle = newValue }
+  }
+
+  var presentationSummary: String {
+    [showsTrackTitle ? "Track title on" : "Track title off", captions.title, motion.title].joined(separator: " · ")
+  }
+
+  func hasSamePictureContent(as other: Self) -> Bool {
+    mode == other.mode && Set(topics) == Set(other.topics) && subject == other.subject
+      && region == other.region && periodStart == other.periodStart && periodEnd == other.periodEnd
+      && workContext == other.workContext
+  }
 
   /// Topics are a selection, not an ordering; the bridge sorts and deduplicates them.
   static func == (lhs: Self, rhs: Self) -> Bool {
@@ -148,6 +169,7 @@ struct CapsuleOptions: Codable, Equatable {
       && lhs.subject.trimmingCharacters(in: .whitespacesAndNewlines) == rhs.subject.trimmingCharacters(in: .whitespacesAndNewlines)
       && lhs.region == rhs.region && lhs.periodStart == rhs.periodStart && lhs.periodEnd == rhs.periodEnd
       && lhs.workContext == rhs.workContext && lhs.captions == rhs.captions && lhs.motion == rhs.motion
+      && lhs.showsTrackTitle == rhs.showsTrackTitle
       && lhs.pace == rhs.pace && lhs.order == rhs.order
   }
 
@@ -167,13 +189,14 @@ struct CapsuleOptions: Codable, Equatable {
       }
     }
     topics = mode.topics.filter { $0 != .historicalContext }
+    if mode == .artwork { captions = .none }
     if mode == .work || mode == .photos { pace = .relaxed }
     if mode == .photos { captions = .none; motion = .kenBurns }
   }
 
   var summary: String {
     let content = topics.map(\.title).joined(separator: ", ")
-    return [mode == .photos ? "Personal photos" : content, captions.title, motion.title,
+    return [mode == .photos ? "Personal photos" : content, presentationSummary,
       "\(Int(pace.seconds)) seconds per picture"].filter { !$0.isEmpty }.joined(separator: " · ")
   }
 
@@ -183,6 +206,7 @@ struct CapsuleOptions: Codable, Equatable {
           let saved = try? JSONDecoder().decode(Self.self, from: data) else { return }
     topics = saved.topics
     captions = saved.captions; motion = saved.motion; pace = saved.pace; order = saved.order
+    showTrackTitle = saved.showTrackTitle
   }
   func rememberPreferences(in defaults: UserDefaults = .standard) {
     var preferences = self
@@ -198,6 +222,7 @@ struct CapsuleSetup: Identifiable {
   let id = UUID()
   let request: CapsuleRequest
   var original: TimeCapsule? = nil
+  var currentTrackId: String? = nil
   var isEditing: Bool { original != nil }
 
   var initialOptions: CapsuleOptions {

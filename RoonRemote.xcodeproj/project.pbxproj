@@ -29,20 +29,25 @@
 		14D20892A4BD928CB792959E /* RoonRemoteWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C82F953539BF55800236CA9A /* RoonRemoteWatch.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		14FE90A189DC425EAD2CAEA4 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
 		15A0209C94904D5DC0E1F71A /* RoonCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E5D62E10B64D53BD824441 /* RoonCommands.swift */; };
+		16481E31D9BB50F8FB1AD7D3 /* CinemaPhotoAlbumUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */; };
 		1755C4BD6560BD9C09296AF0 /* CinemaEditorComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F54CE8112E30D9F178FFF1DB /* CinemaEditorComponents.swift */; };
 		17858EEBB9810763E535AE3B /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
 		18A0F30157FD224984261465 /* EventLivenessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */; };
+		1A6438BB45175C1BA6AD75DD /* CinemaMusicEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59914B965DB3C4B59D2BEAA7 /* CinemaMusicEditor.swift */; };
 		1BA3B440B03069998D1620C1 /* SearchSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */; };
 		1D4C1B9D6D757FEF47EE7DB9 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
 		1D51A3E3481F5F363FD8DC04 /* RegularBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */; };
 		1EF21BEA5BE9F8993BCEF636 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		1F9CAD48A41AB0D65F6E59AB /* RoonRemoteWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 37EDEEDE12F5D89A0A6067BE /* RoonRemoteWatchWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4814FEAE30516219F5ED8F68 /* SearchViews.swift */; };
+		24E71F2E746538B65AE948E5 /* CinemaMusicPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26D3D68736B3459EA17E1A3 /* CinemaMusicPicker.swift */; };
 		2528A54FA8DE2AB6475E47B1 /* CapsuleSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 037D88745DBE2065752AA96F /* CapsuleSetupView.swift */; };
 		25C307EEF7E9829D57665427 /* CapsuleOptionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B8D4BCCC040545DA881A213 /* CapsuleOptionsTests.swift */; };
 		25E6BF475CB02797CF9EA8B9 /* ZoneTrackSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */; };
 		2959F6DF91D42BDEDB59AE40 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */; };
+		29AAE46D67F30BDA2DC59EB3 /* CinemaMusic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */; };
 		29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
+		2A30BF94B98ECD289FC764E5 /* CinemaMusicUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49EB00E382EB40733797594F /* CinemaMusicUITests.swift */; };
 		2A6B571BB1CA5A70CECD874C /* CapsuleLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58B62D2765D22FABDE416E5 /* CapsuleLibraryTests.swift */; };
 		2A9AE1DE061A664A9D73CC97 /* CinemaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABEB803C30FE06CC197A5B /* CinemaView.swift */; };
 		2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
@@ -53,6 +58,7 @@
 		32D769EDFCBB7360155F202E /* DemoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8301FD882C4D88D26DBC910 /* DemoStore.swift */; };
 		34ED9EF068E109B2FAB39C43 /* TimeCapsule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3DB34DBD1710F387C9857E /* TimeCapsule.swift */; };
 		364F89B894D007F27CBBB811 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
+		36E51D1B813DC829F6FAE49E /* CinemaMusicEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59914B965DB3C4B59D2BEAA7 /* CinemaMusicEditor.swift */; };
 		39F920267E7A9A882EF012E3 /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
 		3D289F7B94B7BDA3977A94D8 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		3DC723974E3F895EE3B1E58E /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
@@ -62,6 +68,7 @@
 		4489F2943DF12FA6F3696FBE /* MockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE17D25F7DC793302FC135B /* MockStore.swift */; };
 		452F516B8E9BEC54F2DF1DC5 /* CinemaPhotoSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8610898FE4D40197628B10 /* CinemaPhotoSelection.swift */; };
 		45403E597B935611457A6527 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */; };
+		4571726A70A29F18179664CB /* CinemaMusicImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED93E98B83E8A8835F39546 /* CinemaMusicImport.swift */; };
 		47146FBBE4CDCBB7FE015DEB /* CoverScreensaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F043A2049FECB90E37FF482D /* CoverScreensaver.swift */; };
 		474EA2128DFCF94763C2D252 /* NowPlayingBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356074E80454A0C488C908E2 /* NowPlayingBridge.swift */; };
 		47CA655DA014563C0B5C0453 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
@@ -96,12 +103,14 @@
 		6B972485111A016A3F435342 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A111F24DBFE4E98B06B0E140 /* Theme.swift */; };
 		6C20384D96A52F6036D2F81B /* ZoneTrackSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */; };
 		6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
+		6D73E93766B2CC2802D968C9 /* CinemaMusicPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B26D3D68736B3459EA17E1A3 /* CinemaMusicPicker.swift */; };
 		7452D5E9374B851A3F04244D /* CapsuleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F19ECF7AC7926711335CA9 /* CapsuleLibrary.swift */; };
 		7509F44AD86A7ADC43AF1B40 /* CapsuleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F19ECF7AC7926711335CA9 /* CapsuleLibrary.swift */; };
 		755B0767E79A75CAEE6648AF /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD925CA7A704A07C1A93F4 /* Models.swift */; };
 		76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		76DB31B8EF594C74123923C1 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
+		7A0FBEB5B59929468DC9C151 /* CinemaMusicImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED93E98B83E8A8835F39546 /* CinemaMusicImport.swift */; };
 		7AC09ED290AD85F22720EB1C /* ProgressScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */; };
 		7ADAC6D0BD6135D71E850C95 /* CapsuleOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4E039679FAC978E8045E67 /* CapsuleOptions.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
@@ -116,6 +125,8 @@
 		851A49DC0E10625DD5CEFDAF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */; };
 		859441421881ACD294352C78 /* RoomPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5A3D718D511236A8996A25 /* RoomPresentationTests.swift */; };
 		867E0B42E0EF2E763764F30D /* CinemaPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4730C65A21687CD821A8A9EE /* CinemaPreview.swift */; };
+		8858A9FF8D0F80D2EBAE6E86 /* CinemaMusic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */; };
+		8889F59A515B52BC26AC9F75 /* CinemaPhotoAlbums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */; };
 		89A6DE0734A6A74BC9767916 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A9EB4011F2593A9D9504F023 /* PrivacyInfo.xcprivacy */; };
 		89E879FEC905132C8D0EEFFC /* PlaybackAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */; };
 		8B5F8B7E8B183EE369720DB7 /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */; };
@@ -129,6 +140,7 @@
 		999E76D4D7ECEF3059060247 /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
 		99AA0E200E7E7AC29EE7200A /* CinemaSetupUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD62BBBF081BF089615AA1B0 /* CinemaSetupUITests.swift */; };
 		9AA1409FAAB72AD05022B46A /* CapsuleLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F19ECF7AC7926711335CA9 /* CapsuleLibrary.swift */; };
+		9BA8A69533429DD1DF2504ED /* CinemaMusic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */; };
 		9C27AD376AC9850A2A338774 /* CinemaComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA158638CB0BD426CE829118 /* CinemaComponents.swift */; };
 		9FCB9A834208D5DA0569A458 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F1E40CD7B16597224C17356 /* KeychainStore.swift */; };
 		A1A6965851B819F4DF2962F0 /* FindingServerGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECF35B1D3BCA2307D6DAACC /* FindingServerGate.swift */; };
@@ -148,6 +160,7 @@
 		B3F1A9FEED87FDC267626CF7 /* RegularRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */; };
 		B42E798326E1348228942D07 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		B58B5E7477E02869E5847E49 /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
+		B658F0C258F3AC48A5E898E3 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F459820289EFC6B23364A416 /* AudioSessionController.swift */; };
 		B73EBC27D6282D064D90FE48 /* RegularNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B7A798F03140A9DA5730F8 /* RegularNowPlayingView.swift */; };
 		B80D386BEA1D8073967BF6DE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F8F1CDAFEAD563A05DD2A3EE /* Assets.xcassets */; };
 		B83CFE0BA1E656B9BA119ECA /* RoonNowPlayingAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */; };
@@ -159,6 +172,7 @@
 		BC98B19DB64B2ECF2BBDEB66 /* PersonalCinemaStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D0575FC7ADE206485431D /* PersonalCinemaStore.swift */; };
 		BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC17B2323BEB8BE438F3955A /* SettingsView.swift */; };
 		BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */; };
+		C12732E1D8796D80B726A673 /* CinemaMusicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164F759935633686683D6DF1 /* CinemaMusicTests.swift */; };
 		C1FD1582D39E817F5B87C42F /* RegularRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */; };
 		C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		C2EC53A7AF04777341E9B36A /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
@@ -169,12 +183,16 @@
 		C73FE7FD75C235B8FC07BB7C /* LiveActivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 686B8DC76E73D4C3F2404DAB /* LiveActivityBridge.swift */; };
 		C8F0613C003F396800946B91 /* SearchSelectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */; };
 		C9BCCC80478638CF5BAC5C95 /* RoonAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */; };
+		CAC90D315860C4A2AB37F5C8 /* AudioSessionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02193D8677C817DD999EE3DA /* AudioSessionControllerTests.swift */; };
 		CB97143509BB7DCB9796C955 /* TVRoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */; };
 		CBD14282548AC084A533174D /* LibraryIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */; };
 		CC06D3262994617708BDDCD7 /* TVRemoteActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C4188F78E2B9DA6F26D946 /* TVRemoteActivity.swift */; };
 		CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
+		D1B02C1725D432B9762F1AE0 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F459820289EFC6B23364A416 /* AudioSessionController.swift */; };
+		D25A4AB59E94F987B5A9E742 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F459820289EFC6B23364A416 /* AudioSessionController.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
+		D535B0A2A487FE46D15885D0 /* CinemaPhotoAlbums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */; };
 		D548CFDCA84BC47FEBEF7337 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		D6FF75819BBF7B47B3DF3FC7 /* RoomPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */; };
 		D7423257682A160A6DA09E74 /* QueueTimelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1EEC0D1CEE4090FB440D4F6 /* QueueTimelineTests.swift */; };
@@ -290,6 +308,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		02193D8677C817DD999EE3DA /* AudioSessionControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionControllerTests.swift; sourceTree = "<group>"; };
 		037D88745DBE2065752AA96F /* CapsuleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleSetupView.swift; sourceTree = "<group>"; };
 		0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonNowPlayingAttributes.swift; sourceTree = "<group>"; };
 		0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
@@ -298,6 +317,8 @@
 		11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingLiveIntents.swift; sourceTree = "<group>"; };
 		12F02C3B294AFD9980DEE669 /* TVPrimaryButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVPrimaryButton.swift; sourceTree = "<group>"; };
 		13C78ADDBB2A3F66E2B9CCE0 /* TVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSettingsView.swift; sourceTree = "<group>"; };
+		1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPhotoAlbumUITests.swift; sourceTree = "<group>"; };
+		164F759935633686683D6DF1 /* CinemaMusicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusicTests.swift; sourceTree = "<group>"; };
 		18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryDragItem.swift; sourceTree = "<group>"; };
 		18C4188F78E2B9DA6F26D946 /* TVRemoteActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRemoteActivity.swift; sourceTree = "<group>"; };
 		1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventLivenessTests.swift; sourceTree = "<group>"; };
@@ -327,6 +348,7 @@
 		3DC65859253E32AC8CEA8B12 /* BrowsePlaybackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePlaybackTests.swift; sourceTree = "<group>"; };
 		4730C65A21687CD821A8A9EE /* CinemaPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPreview.swift; sourceTree = "<group>"; };
 		4814FEAE30516219F5ED8F68 /* SearchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViews.swift; sourceTree = "<group>"; };
+		49EB00E382EB40733797594F /* CinemaMusicUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusicUITests.swift; sourceTree = "<group>"; };
 		4A5BFEBC2EE4BD861BF4FCBB /* RoonWatchWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonWatchWidgets.swift; sourceTree = "<group>"; };
 		4B4E039679FAC978E8045E67 /* CapsuleOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleOptions.swift; sourceTree = "<group>"; };
 		4D95DD7D74E22AF215EA4695 /* SiriControlIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriControlIntents.swift; sourceTree = "<group>"; };
@@ -337,12 +359,14 @@
 		5803354A53F4E76B9554B232 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		580EF6B1BFA64480F46DCB51 /* LibraryIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryIndex.swift; sourceTree = "<group>"; };
 		581604138A659F8F43EAA5B2 /* RoonRemoteWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatch.entitlements; sourceTree = "<group>"; };
+		59914B965DB3C4B59D2BEAA7 /* CinemaMusicEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusicEditor.swift; sourceTree = "<group>"; };
 		5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoneTrackSelectionTests.swift; sourceTree = "<group>"; };
 		5BC4AC2E11EB8F64A300EF5C /* PlaybackAdjustmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackAdjustmentTests.swift; sourceTree = "<group>"; };
 		5FE2288D8E5C5EF0FAA8B6D4 /* TVNowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVNowPlayingView.swift; sourceTree = "<group>"; };
 		6184800FAE2952A1B0DC2D27 /* RoomPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomPresentation.swift; sourceTree = "<group>"; };
 		65BD1ED893EC759573BCD8EA /* CinemaLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaLibraryView.swift; sourceTree = "<group>"; };
 		686B8DC76E73D4C3F2404DAB /* LiveActivityBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityBridge.swift; sourceTree = "<group>"; };
+		6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusic.swift; sourceTree = "<group>"; };
 		7188ADDF1853116C4EF3C301 /* TVSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVSearchView.swift; sourceTree = "<group>"; };
 		71F7C02FF1B04C5F3B6C1A5A /* PersonalCinemaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalCinemaTests.swift; sourceTree = "<group>"; };
 		755E9E17278FFFCC2E1044D1 /* TVOnboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVOnboarding.swift; sourceTree = "<group>"; };
@@ -351,6 +375,7 @@
 		7CA6BFC453ED5F5AD29AEE1A /* CinemaRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaRemoteUITests.swift; sourceTree = "<group>"; };
 		7DB23BC3B9A8020E4F087455 /* IntentHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentHandler.swift; sourceTree = "<group>"; };
 		80506818538B2F6597E20D61 /* LibraryIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryIndexTests.swift; sourceTree = "<group>"; };
+		80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPhotoAlbums.swift; sourceTree = "<group>"; };
 		81ABBEBFDA50D54CA6680BE2 /* CinemaPreparationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPreparationView.swift; sourceTree = "<group>"; };
 		827EBF13E8DFB957EFA65453 /* RoonRemoteWatchWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWatchWidgets.entitlements; sourceTree = "<group>"; };
 		82B2CC55BE424A41335C8BAD /* TVRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRootView.swift; sourceTree = "<group>"; };
@@ -379,10 +404,12 @@
 		B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindingServerOverlay.swift; sourceTree = "<group>"; };
 		B0ADC8D6A2732D115F1D4E1C /* SearchSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchSelection.swift; sourceTree = "<group>"; };
 		B0BAA62968D1EC97C0E44EC1 /* RoonRemoteWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteWidgets.entitlements; sourceTree = "<group>"; };
+		B26D3D68736B3459EA17E1A3 /* CinemaMusicPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusicPicker.swift; sourceTree = "<group>"; };
 		B33199FF34F69ECC129C7C69 /* TVRoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVRoomsView.swift; sourceTree = "<group>"; };
 		B7E0AC78E36F1CC66A4BB1E1 /* PlayMediaHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayMediaHandler.swift; sourceTree = "<group>"; };
 		B895799574E60D21626345F2 /* RoonRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonRemoteApp.swift; sourceTree = "<group>"; };
 		BC47CCD83FFF21271F44BF89 /* TVHardwareVolumeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TVHardwareVolumeBridge.swift; sourceTree = "<group>"; };
+		BED93E98B83E8A8835F39546 /* CinemaMusicImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaMusicImport.swift; sourceTree = "<group>"; };
 		C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonLiveActivity.swift; sourceTree = "<group>"; };
 		C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePageTests.swift; sourceTree = "<group>"; };
 		C5082362BA96FA4FB4159235 /* CoverScreensaverRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverScreensaverRemoteUITests.swift; sourceTree = "<group>"; };
@@ -414,6 +441,7 @@
 		F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressScrubber.swift; sourceTree = "<group>"; };
 		F3C55126C4B0965F44DDAA49 /* TimeCapsuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeCapsuleTests.swift; sourceTree = "<group>"; };
 		F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSelectionTests.swift; sourceTree = "<group>"; };
+		F459820289EFC6B23364A416 /* AudioSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionController.swift; sourceTree = "<group>"; };
 		F4CD925CA7A704A07C1A93F4 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		F54CE8112E30D9F178FFF1DB /* CinemaEditorComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaEditorComponents.swift; sourceTree = "<group>"; };
 		F5CE73900230DC94A7E28949 /* RoonRemoteIntents.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RoonRemoteIntents.entitlements; sourceTree = "<group>"; };
@@ -470,6 +498,7 @@
 			isa = PBXGroup;
 			children = (
 				2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */,
+				F459820289EFC6B23364A416 /* AudioSessionController.swift */,
 				9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */,
 				1BECA40AE3015F2E3CF0D4FF /* BrowsePlaybackFeedback.swift */,
 				A8301FD882C4D88D26DBC910 /* DemoStore.swift */,
@@ -520,10 +549,12 @@
 			isa = PBXGroup;
 			children = (
 				D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */,
+				02193D8677C817DD999EE3DA /* AudioSessionControllerTests.swift */,
 				C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */,
 				3DC65859253E32AC8CEA8B12 /* BrowsePlaybackTests.swift */,
 				E58B62D2765D22FABDE416E5 /* CapsuleLibraryTests.swift */,
 				0B8D4BCCC040545DA881A213 /* CapsuleOptionsTests.swift */,
+				164F759935633686683D6DF1 /* CinemaMusicTests.swift */,
 				D19240A57E2F0F7F7DF2CEB1 /* CoverScreensaverTests.swift */,
 				1B56C3EBF9BCA2F036222B01 /* EventLivenessTests.swift */,
 				AC08FBBEA1F4B47B2D2BC5A0 /* FindingServerTests.swift */,
@@ -641,6 +672,8 @@
 			isa = PBXGroup;
 			children = (
 				AB7FB10AA3436137661FCA2D /* BrowsePlaybackUITests.swift */,
+				49EB00E382EB40733797594F /* CinemaMusicUITests.swift */,
+				1606ABEAF99E76064270AC5B /* CinemaPhotoAlbumUITests.swift */,
 				22E0985147F993FCA13B3969 /* CinemaPlaylistFixture.swift */,
 				9585880B2ED0C7AD53C6493F /* CinemaPlaylistUITests.swift */,
 				FD62BBBF081BF089615AA1B0 /* CinemaSetupUITests.swift */,
@@ -657,6 +690,11 @@
 				DA158638CB0BD426CE829118 /* CinemaComponents.swift */,
 				F54CE8112E30D9F178FFF1DB /* CinemaEditorComponents.swift */,
 				65BD1ED893EC759573BCD8EA /* CinemaLibraryView.swift */,
+				6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */,
+				59914B965DB3C4B59D2BEAA7 /* CinemaMusicEditor.swift */,
+				BED93E98B83E8A8835F39546 /* CinemaMusicImport.swift */,
+				B26D3D68736B3459EA17E1A3 /* CinemaMusicPicker.swift */,
+				80E399A9EC373652549FCA5D /* CinemaPhotoAlbums.swift */,
 				0D8610898FE4D40197628B10 /* CinemaPhotoSelection.swift */,
 				81ABBEBFDA50D54CA6680BE2 /* CinemaPreparationView.swift */,
 				4730C65A21687CD821A8A9EE /* CinemaPreview.swift */,
@@ -842,7 +880,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					13C6C62DE2C7691371E014A7 = {
 						DevelopmentTeam = 37A49A3WRU;
@@ -966,6 +1004,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1134E0E879601513D081BA55 /* ArtworkCache.swift in Sources */,
+				B658F0C258F3AC48A5E898E3 /* AudioSessionController.swift in Sources */,
 				29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */,
 				93FA22C3B4CFDB2BDC758A31 /* BrowsePlayback.swift in Sources */,
 				E13DA9C698B5DA5C538381F0 /* BrowsePlaybackFeedback.swift in Sources */,
@@ -975,6 +1014,11 @@
 				DBBD2A9DBD27BEBB7909A3E6 /* CinemaComponents.swift in Sources */,
 				F0FEEA180794DD9EDBC9D724 /* CinemaEditorComponents.swift in Sources */,
 				97A56C85CC4134510FEA1DD1 /* CinemaLibraryView.swift in Sources */,
+				29AAE46D67F30BDA2DC59EB3 /* CinemaMusic.swift in Sources */,
+				1A6438BB45175C1BA6AD75DD /* CinemaMusicEditor.swift in Sources */,
+				7A0FBEB5B59929468DC9C151 /* CinemaMusicImport.swift in Sources */,
+				24E71F2E746538B65AE948E5 /* CinemaMusicPicker.swift in Sources */,
+				D535B0A2A487FE46D15885D0 /* CinemaPhotoAlbums.swift in Sources */,
 				4452E6EEDACA86751427F579 /* CinemaPhotoSelection.swift in Sources */,
 				E3F56630620F517D1A50CE8B /* CinemaPreparationView.swift in Sources */,
 				867E0B42E0EF2E763764F30D /* CinemaPreview.swift in Sources */,
@@ -1026,6 +1070,8 @@
 			files = (
 				6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */,
 				BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */,
+				D1B02C1725D432B9762F1AE0 /* AudioSessionController.swift in Sources */,
+				CAC90D315860C4A2AB37F5C8 /* AudioSessionControllerTests.swift in Sources */,
 				56E793975247D2ED5ED285F0 /* BrowsePageTests.swift in Sources */,
 				F3515A0B5F475EC672DD1CAF /* BrowsePlayback.swift in Sources */,
 				57CBE797AB5C9E17FE44BCD7 /* BrowsePlaybackTests.swift in Sources */,
@@ -1033,6 +1079,8 @@
 				2A6B571BB1CA5A70CECD874C /* CapsuleLibraryTests.swift in Sources */,
 				7ADAC6D0BD6135D71E850C95 /* CapsuleOptions.swift in Sources */,
 				25C307EEF7E9829D57665427 /* CapsuleOptionsTests.swift in Sources */,
+				9BA8A69533429DD1DF2504ED /* CinemaMusic.swift in Sources */,
+				C12732E1D8796D80B726A673 /* CinemaMusicTests.swift in Sources */,
 				39F920267E7A9A882EF012E3 /* CoverScreensaver.swift in Sources */,
 				0BC977FB2BDB6E8BB7516527 /* CoverScreensaverTests.swift in Sources */,
 				47DD95D7C05B232AC934B3ED /* EventLiveness.swift in Sources */,
@@ -1093,6 +1141,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F01EF5A0DE7E28F0EFF9448E /* BrowsePlaybackUITests.swift in Sources */,
+				2A30BF94B98ECD289FC764E5 /* CinemaMusicUITests.swift in Sources */,
+				16481E31D9BB50F8FB1AD7D3 /* CinemaPhotoAlbumUITests.swift in Sources */,
 				F4D0F265CFD5A91BB81F23E9 /* CinemaPlaylistFixture.swift in Sources */,
 				65676D93E85A2F1BA9145029 /* CinemaPlaylistUITests.swift in Sources */,
 				99AA0E200E7E7AC29EE7200A /* CinemaSetupUITests.swift in Sources */,
@@ -1104,6 +1154,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */,
+				D25A4AB59E94F987B5A9E742 /* AudioSessionController.swift in Sources */,
 				2B3BB42CB747B809A396F8F6 /* BonjourDiscovery.swift in Sources */,
 				7EFA04B8021F85702595E754 /* BrowsePlayback.swift in Sources */,
 				9262D55BAE78684F1435D1E3 /* BrowsePlaybackFeedback.swift in Sources */,
@@ -1113,6 +1164,11 @@
 				9C27AD376AC9850A2A338774 /* CinemaComponents.swift in Sources */,
 				1755C4BD6560BD9C09296AF0 /* CinemaEditorComponents.swift in Sources */,
 				C3801A863FDC5115C92215FB /* CinemaLibraryView.swift in Sources */,
+				8858A9FF8D0F80D2EBAE6E86 /* CinemaMusic.swift in Sources */,
+				36E51D1B813DC829F6FAE49E /* CinemaMusicEditor.swift in Sources */,
+				4571726A70A29F18179664CB /* CinemaMusicImport.swift in Sources */,
+				6D73E93766B2CC2802D968C9 /* CinemaMusicPicker.swift in Sources */,
+				8889F59A515B52BC26AC9F75 /* CinemaPhotoAlbums.swift in Sources */,
 				452F516B8E9BEC54F2DF1DC5 /* CinemaPhotoSelection.swift in Sources */,
 				848FBDCF0BB7D4B7FBB38824 /* CinemaPreparationView.swift in Sources */,
 				5ED7D2550EDA55C4E0D42456 /* CinemaPreview.swift in Sources */,
@@ -1421,10 +1477,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 4;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1439,6 +1497,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -1483,10 +1542,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 4;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 37A49A3WRU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1508,6 +1569,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;

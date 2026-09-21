@@ -75,9 +75,36 @@ private final class CinemaPreviewClient: CinemaClient {
   func timeCapsules() async throws -> [TimeCapsule] { items }
   func requireCinemaOptionsSupport() async throws { }
   func requireCinemaManagementSupport() async throws { }
+  func requireCinemaMusicSupport() async throws { }
+  func saveCinemaContent(_ id: String, request: CapsuleRequest, baseRevision: Int, mutationId: String) async throws -> CapsuleJob {
+    guard var item = items.first(where: { $0.id == id }) else { throw PersonalCinemaError("Missing preview") }
+    let updatePictures = request.options?.hasSamePictureContent(as: item.request.options ?? CapsuleSetup(request: item.request).initialOptions) == false
+    item.request = request
+    item.title = request.title ?? item.title
+    item.revision = (item.revision ?? 0) + 1
+    if updatePictures {
+      item.createdAt = ISO8601DateFormatter().string(from: Date())
+      replacement = item
+      readyAt = Date().addingTimeInterval(delay)
+      return CapsuleJob(id: id, status: "images")
+    }
+    items.removeAll { $0.id == id }; items.insert(item, at: 0)
+    return CapsuleJob(id: id, status: "ready", capsule: item)
+  }
   func createTimeCapsule(_ request: CapsuleRequest) async throws -> CapsuleJob {
     guard let first = items.first else { throw PersonalCinemaError("Missing preview") }
-    return try await rebuildTimeCapsule(first.id)
+    var item = first
+    item.id = request.clientRequestId ?? UUID().uuidString
+    item.request = request
+    item.title = request.title ?? request.query
+    item.createdAt = ISO8601DateFormatter().string(from: Date())
+    if request.options?.mode == .artwork {
+      items.insert(item, at: 0)
+      return CapsuleJob(id: item.id, status: "ready", capsule: item)
+    }
+    replacement = item
+    readyAt = Date().addingTimeInterval(delay)
+    return CapsuleJob(id: item.id, status: "images")
   }
   func rebuildTimeCapsule(_ id: String) async throws -> CapsuleJob {
     guard let item = items.first(where: { $0.id == id }) else { throw PersonalCinemaError("Missing preview") }

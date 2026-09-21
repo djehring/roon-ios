@@ -108,6 +108,7 @@ final class MockStore {
   private var holdQueueUntil: Date?
   private var heldQueue: [QueueItem]?
   private var browseChain: Task<Void, Never> = Task {}
+  private var cinemaBrowsePaths: [String: CinemaMusicPath] = [:]
   private var coverInFlight = 0
   private var coverWaiters: [CheckedContinuation<Void, Never>] = []
   private var coverPauseCount = 0
@@ -1114,6 +1115,13 @@ final class MockStore {
     input: String?,
     zoneId: String? = nil
   ) async -> BrowsePage {
+    var musicPath: CinemaMusicPath? = itemKey.flatMap { cinemaBrowsePaths["\(hierarchy)|\($0)"] }
+    if itemKey == nil, ["browse", "albums", "playlists", "search"].contains(hierarchy) {
+      cinemaBrowsePaths = cinemaBrowsePaths.filter { !$0.key.hasPrefix("\(hierarchy)|") }
+      musicPath = CinemaMusicPath(hierarchy: hierarchy, query: input)
+    } else if let input, let last = musicPath?.steps.indices.last {
+      musicPath?.steps[last].input = input
+    }
     var options: [String: Any] = [
       "hierarchy": hierarchy,
       "zone_or_output_id": zoneId ?? selectedZoneId,
@@ -1141,9 +1149,17 @@ final class MockStore {
         "count": min(max(list.count, 1), 500),
       ]
       let loaded = try await client.load(loadOptions)
+      let nodes = loaded.items.enumerated().map { index, item in
+        var node = Self.node(from: item, hierarchy: hierarchy)
+        node.musicPath = musicPath?.appending(item, index: loaded.offset + index)
+        if let key = item.itemKey, let path = node.musicPath { cinemaBrowsePaths["\(hierarchy)|\(key)"] = path }
+        return node
+      }
+      let isCollection = loaded.items.contains { ["Play Album", "Play Playlist"].contains($0.title) }
       return BrowsePage(
         title: loaded.list.title,
-        items: loaded.items.map { Self.node(from: $0, hierarchy: hierarchy) }
+        items: nodes,
+        musicSource: isCollection ? musicPath : nil
       )
     } catch {
       return BrowsePage(title: "Couldn't load", items: [])

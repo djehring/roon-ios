@@ -124,6 +124,7 @@ struct TVQueuePanel: View {
             }
           }
           Spacer()
+          CreateCinemaFromMusicButton()
           Button { dismiss() } label: { TVSheetDoneLabel() }
             .tvUnplated()
         }

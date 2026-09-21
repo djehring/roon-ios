@@ -90,23 +90,31 @@ actor PersonalCinemaStore {
   }
 
   /// Reuses the imported copies and identity; editing never reimports Photos.
-  func update(_ capsule: TimeCapsule, options: CapsuleOptions) throws -> TimeCapsule {
+  func update(_ capsule: TimeCapsule, options: CapsuleOptions, request: CapsuleRequest? = nil) throws -> TimeCapsule {
     guard capsule.isPersonal, options.mode == .photos,
       capsule.id.hasPrefix("personal-"), UUID(uuidString: String(capsule.id.dropFirst(9))) != nil else {
       throw PersonalCinemaError("This personal montage could not be updated.")
     }
     var updated = capsule
+    if let request {
+      guard !request.tracks.isEmpty else { throw PersonalCinemaError("Add at least one track.") }
+      updated.request = request
+      updated.title = request.title ?? capsule.title
+    }
     updated.request.options = options
-    updated.createdAt = ISO8601DateFormatter().string(from: Date())
-    if options.order == .chronological {
-      updated.scenes = updated.scenes.enumerated().sorted { left, right in
-        let a = left.element.image?.date ?? "", b = right.element.image?.date ?? ""
-        if a == b { return left.offset < right.offset }
-        if a.isEmpty { return false }
-        if b.isEmpty { return true }
-        return a < b
-      }.map(\.element)
-    } else if options.order == .shuffled { updated.scenes.shuffle() }
+    updated.revision = (capsule.revision ?? 0) + 1
+    if options.order != capsule.request.options?.order {
+      updated.createdAt = ISO8601DateFormatter().string(from: Date())
+      if options.order == .chronological {
+        updated.scenes = updated.scenes.enumerated().sorted { left, right in
+          let a = left.element.image?.date ?? "", b = right.element.image?.date ?? ""
+          if a == b { return left.offset < right.offset }
+          if a.isEmpty { return false }
+          if b.isEmpty { return true }
+          return a < b
+        }.map(\.element)
+      } else if options.order == .shuffled { updated.scenes.shuffle() }
+    }
     try Task.checkCancellation()
     try JSONEncoder().encode(updated).write(to: root.appendingPathComponent(capsule.id + ".json"), options: .atomic)
     return updated

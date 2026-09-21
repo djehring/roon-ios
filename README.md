@@ -87,18 +87,31 @@ key is set on the sidecar.
 
 ## Cinema / Time Capsules
 
-After an AI Search, choose **Set up Cinema**. The setup suggests a period, artist,
-or musical-work companion with relevant topic choices. On iPhone and iPad,
+Choose **Create Cinema** from an album, Roon playlist, room queue or AI Search,
+or **+ New Cinema** in the Cinema library. **Music** lets you reorder tracks,
+remove them with Undo, and add tracks, albums, playlists or the current queue.
+Each Cinema owns an independent soundtrack; saving never alters the source or
+starts room playback. Saved items use **Edit → Music** for the same controls.
+Albums, playlists and queues start with **Album artwork**, which needs no AI key.
+AI searches suggest a period, artist or musical-work companion with relevant topics. On iPhone and iPad,
 **My photos** also supports selected photos or an album snapshot kept on that device.
-Choose captions, still/gentle/Ken Burns movement, order, and a 5-, 8- or 16-second pace.
+The album browser shows Photos album names, folder paths, cover thumbnails, and a
+photo preview before selection. Albums larger than 200 photos remain browsable;
+choose up to 200 pictures from the preview to save with the montage.
+In **Presentation**, enable **Show track title** to keep the current song and artist
+visible after controls fade. **Picture motion** offers Still, Gentle motion and
+Ken Burns pan and zoom, including continuous movement for a single album cover.
+Choose picture captions, order, and a 5-, 8- or 16-second pace. Presentation changes
+save without rebuilding pictures; Reduce Motion keeps them still.
 The selected tracks remain the soundtrack. Pictures continue across songs. Swipe or use the
 photograph controls to move between pictures, or hold the montage while the music keeps playing.
 No historical programme is bundled.
 Open **Cinema** from Now Playing to replay saved programmes. On Apple TV, select
 the same Roon room and choose **Join** to follow its programme without restarting music.
 
-This requires the accompanying Time Capsule bridge update and an OpenAI API key
-on the bridge. See [implementation and setup](docs/time-capsule.md) and the
+Music importing and editing require the accompanying bridge update (`musicVersion: 1`).
+Research-based pictures require an OpenAI API key on the bridge; album artwork and
+personal photos do not. Music snapshots support up to 1,000 tracks. See [implementation and setup](docs/time-capsule.md) and the
 [Cinema design](docs/design/time-capsule.md). Native viewing is implemented;
 AirPlay video export and licensed newspaper archive integration are future work.
 
@@ -118,6 +131,11 @@ on iPhone and iPad with deterministic demo content. Run the **Roon Remote** sche
 xcodebuild test -project RoonRemote.xcodeproj -scheme RoonRemote \
   -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
+
+`CinemaPhotoAlbumUITests` creates real sample albums in the simulator's Photos
+library and checks permission handling, album previews, folder search, cancellation,
+large-album subsets, saving, playback, and reopening after launch. These tests need
+no bridge or iCloud account; Photos authorization is handled by the UI test.
 
 Files under test are listed explicitly in the target's `sources`, so add new
 ones there when they need coverage.

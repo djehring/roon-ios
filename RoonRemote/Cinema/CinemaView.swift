@@ -25,6 +25,7 @@ struct CinemaView: View {
   private var running: Bool { !showingSources && !photosHeld }
   private var captions: CapsuleCaptions { capsule.request.options?.captions ?? .brief }
   private var motion: CapsuleMotion { capsule.request.options?.motion ?? .gentle }
+  private var showsTrackTitle: Bool { capsule.request.options?.showsTrackTitle ?? false }
   private var secondsPerPhoto: Double { capsule.request.options?.pace.seconds ?? 8 }
   private var awaitingMontage: Bool { store.cinema.preparation?.placeholder.id == capsule.id }
   private var playbackMessage: String? {
@@ -129,6 +130,9 @@ struct CinemaView: View {
                   ? "Rebuild this capsule from Cinema to prepare a montage."
                   : "The archive pictures could not be loaded. Check the bridge connection, then reopen the montage."))
           }
+          if controlsVisible || (showsTrackTitle && store.currentTrack != nil) {
+            currentMusic(compact: compact)
+          }
           if controlsVisible { controls(compact: compact) }
         }
         .padding(compact ? 24 : 48)
@@ -193,18 +197,24 @@ struct CinemaView: View {
     #endif
   }
 
+  private func currentMusic(compact: Bool) -> some View {
+    HStack(spacing: 14) {
+      VStack(alignment: .leading, spacing: 4) {
+        Text(store.currentTrack?.title ?? "Nothing playing")
+          .font(compact ? .headline : .title2.weight(.semibold)).lineLimit(2)
+          .accessibilityIdentifier("cinema-track-title")
+        Text(store.currentTrack?.artist ?? store.selectedZone.name)
+          .font(.subheadline).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
+          .accessibilityIdentifier("cinema-track-artist")
+      }
+      Spacer(minLength: 0)
+      if !compact && controlsVisible { Text(store.selectedZone.name).font(.subheadline) }
+    }
+  }
+
   private func controls(compact: Bool) -> some View {
     VStack(alignment: .leading, spacing: 14) {
       Divider().overlay(.white.opacity(0.2))
-      HStack(spacing: 14) {
-        VStack(alignment: .leading, spacing: 4) {
-          Text(store.currentTrack?.title ?? "Nothing playing").font(.headline).lineLimit(1)
-          Text(store.currentTrack?.artist ?? store.selectedZone.name)
-            .font(.subheadline).foregroundStyle(.white.opacity(0.65)).lineLimit(1)
-        }
-        Spacer(minLength: 0)
-        if !compact { Text(store.selectedZone.name).font(.subheadline) }
-      }
       transportRow("MUSIC") {
         Group {
           Button { store.previous(); revealControls() } label: {
@@ -229,17 +239,19 @@ struct CinemaView: View {
             Image(systemName: "backward.frame.fill").frame(width: 28, height: 28)
           }
           .accessibilityLabel("Previous photograph")
+          .disabled(frames.count < 2)
           Button { togglePhotoHold() } label: {
             Image(systemName: photosHeld ? "play.rectangle.fill" : "pause.rectangle.fill")
               .frame(width: 28, height: 28)
           }
           .accessibilityLabel(photosHeld ? "Resume photographs" : "Hold photograph")
+          .disabled(frames.isEmpty)
           Button { movePhoto(1) } label: {
             Image(systemName: "forward.frame.fill").frame(width: 28, height: 28)
           }
           .accessibilityLabel("Next photograph")
+          .disabled(frames.count < 2)
         }
-        .disabled(frames.count < 2)
         Spacer(minLength: 0)
         if let position = photoPosition {
           Text(position).font(.caption).foregroundStyle(.white.opacity(0.65))
@@ -341,7 +353,11 @@ private struct MontagePhotograph: View {
   @State private var photograph: UIImage?
   @State private var motionSeconds: Double = 0
   private var animated: Bool { !reduceMotion && motion != .still }
-  private var fraction: Double { min(motionSeconds / max(1, duration), 1) }
+  // Reverse smoothly and keep moving even when a montage has only one album cover.
+  private var fraction: Double {
+    let phase = (motionSeconds / max(1, duration)).truncatingRemainder(dividingBy: 2)
+    return phase <= 1 ? phase : 2 - phase
+  }
   private var direction: Double { image.file.utf8.reduce(0, { $0 + Int($1) }).isMultiple(of: 2) ? 1 : -1 }
 
   var body: some View {
@@ -371,7 +387,7 @@ private struct MontagePhotograph: View {
     }
     .task(id: moving && animated && photograph != nil) {
       guard moving, animated, photograph != nil else { return }
-      while motionSeconds < duration {
+      while !Task.isCancelled {
         do { try await Task.sleep(for: .seconds(1)) } catch { return }
         withAnimation(.linear(duration: 1)) { motionSeconds += 1 }
       }

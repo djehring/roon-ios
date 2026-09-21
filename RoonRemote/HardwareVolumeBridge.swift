@@ -18,6 +18,7 @@ final class HardwareVolumeBridge {
   private var lastSystemVolume: Float = 0.5
   private var ignoringSystemWrites = false
   private var isRunning = false
+  private var activationTask: Task<Void, Never>?
   private let baseline: Float = 0.5
   /// Off-screen view that suppresses the system volume HUD and owns the slider
   /// we use to reset system volume after each press.
@@ -42,11 +43,21 @@ final class HardwareVolumeBridge {
 
   func start() {
     guard !isRunning else {
-      activateSessionIfNeeded()
+      AudioSessionController.shared.setVolumeEnabled(true)
       return
     }
     isRunning = true
-    activateSessionIfNeeded()
+    AudioSessionController.shared.setVolumeEnabled(true)
+    activationTask = Task { [weak self] in
+      await AudioSessionController.shared.flush()
+      guard !Task.isCancelled, let self, self.isRunning else { return }
+      self.observeVolume()
+    }
+  }
+
+  private func observeVolume() {
+    // Category/route changes can change outputVolume. Observe only after setup
+    // so they cannot be mistaken for hardware presses and change the Roon room.
     lastSystemVolume = AVAudioSession.sharedInstance().outputVolume
     observation = AVAudioSession.sharedInstance().observe(
       \.outputVolume,
@@ -62,9 +73,12 @@ final class HardwareVolumeBridge {
   }
 
   func stop() {
+    activationTask?.cancel()
+    activationTask = nil
     observation?.invalidate()
     observation = nil
     isRunning = false
+    AudioSessionController.shared.setVolumeEnabled(false)
   }
 
   private func handleSystemVolumeChange(_ newValue: Float) {
@@ -94,19 +108,6 @@ final class HardwareVolumeBridge {
     let step = max(1, span / 20)
     store.adjustVolume(by: delta > 0 ? step : -step)
     writeSystemVolume(baseline)
-  }
-
-  private func activateSessionIfNeeded() {
-    let session = AVAudioSession.sharedInstance()
-    guard session.category != .playAndRecord else { return }
-    // Now Playing owns `.playback` so lock-screen controls stay live.
-    guard session.category != .playback else { return }
-    do {
-      try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-      try session.setActive(true)
-    } catch {
-      // Volume bridging is best-effort; leave buttons alone if session fails.
-    }
   }
 
   private func writeSystemVolume(_ value: Float) {

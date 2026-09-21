@@ -54,6 +54,7 @@ struct Output: Identifiable, Hashable {
 struct BrowsePage: Hashable {
   var title: String
   var items: [BrowseNode]
+  var musicSource: CinemaMusicPath? = nil
 
   /// The key for the row named `title`, for a sidebar entry that has to step
   /// one level into a hierarchy to reach what it is named after.
@@ -106,6 +107,7 @@ struct BrowseNode: Identifiable, Hashable {
   var imageKey: String?
   var hierarchy: String?
   var hint: String?
+  var musicPath: CinemaMusicPath? = nil
 }
 
 struct LibraryEntry: Identifiable, Hashable {

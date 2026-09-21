@@ -420,6 +420,9 @@ struct QueueList: View {
       }
     }
     .background(Palette.background)
+    .safeAreaInset(edge: .bottom) {
+      CreateCinemaFromMusicButton().padding(12).background(Palette.background)
+    }
     .safeAreaInset(edge: .top, spacing: 0) {
       if embedded {
         HStack {
