@@ -146,6 +146,8 @@ targets:
       - path: RoonRemote/QueueTimeline.swift
       - path: RoonRemote/ZoneTrackSelection.swift
       - path: RoonRemote/EventLiveness.swift
+      - path: RoonRemote/NowPlayingSnapshot.swift
+      - path: Shared/RoonNowPlayingAttributes.swift
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
@@ -292,6 +294,7 @@ targets:
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/BrowsePlaybackFeedback.swift
       - path: RoonRemote/NowPlayingBridge.swift
+      - path: RoonRemote/NowPlayingSnapshot.swift
       - path: RoonRemote/AudioSessionController.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/DemoStore.swift

@@ -17,14 +17,14 @@ struct RoonRemoteApp: App {
               HardwareVolumeBridge.shared.attach(store: store)
               HardwareVolumeBridge.shared.setActive(true)
               NowPlayingBridge.shared.attach(store: store)
-              NowPlayingBridge.shared.publish()
+              store.publishWatchSnapshot()
             }
             .onChange(of: scenePhase) { _, phase in
               HardwareVolumeBridge.shared.setActive(phase == .active)
               switch phase {
               case .active:
                 store.resumeSync()
-                NowPlayingBridge.shared.publish()
+                store.publishWatchSnapshot()
               case .inactive, .background:
                 // Do not refreshEvents here. That tears down the SSE stream and
                 // the next zone tick never arrives, so the lock-screen card freezes.

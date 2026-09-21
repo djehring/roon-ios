@@ -29,8 +29,8 @@ struct EventLivenessTests {
     )
   }
 
-  @Test("paused rooms do not reconnect")
-  func pausedSkips() {
+  @Test("paused rooms wait longer than the bridge's 45 second heartbeat")
+  func recentlyPausedSkips() {
     let now = Date()
     #expect(
       !EventLiveness.shouldRefresh(
@@ -40,6 +40,28 @@ struct EventLivenessTests {
         now: now
       )
     )
+  }
+
+  @Test("a dead stream recovers even when the last known room state was paused")
+  func pausedDeadStreamRefreshes() {
+    let now = Date()
+    #expect(EventLiveness.shouldRefresh(isPlaying: false,
+      lastEventAt: now.addingTimeInterval(-70), lastRefreshAt: nil, now: now))
+  }
+
+  @Test("other rooms and heartbeats cannot hide stale selected-room playback")
+  func unrelatedEventsDoNotMaskAStaleRoom() {
+    let now = Date()
+    #expect(EventLiveness.shouldRefresh(isPlaying: true,
+      lastEventAt: now, lastZoneEventAt: now.addingTimeInterval(-12),
+      lastRefreshAt: nil, now: now))
+  }
+
+  @Test("a stream that never delivers its first event is retried")
+  func missingFirstEventRefreshes() {
+    let now = Date()
+    #expect(EventLiveness.shouldRefresh(isPlaying: false,
+      lastEventAt: nil, lastRefreshAt: now.addingTimeInterval(-70), now: now))
   }
 
   @Test("a refresh is not repeated until the cooldown passes")

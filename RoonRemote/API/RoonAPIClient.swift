@@ -34,6 +34,7 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
   var onQueue: ((QueueStatePayload) -> Void)?
   var onConfig: ((SharedConfigPayload) -> Void)?
   var onEventsFailed: ((Error) -> Void)?
+  var onHeartbeat: (() -> Void)?
 
   init(host: String = "", port: Int = 3000) {
     self.host = host
@@ -619,6 +620,8 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
   private func flushSSE(event: String, data: String) {
     guard !data.isEmpty, let payload = data.data(using: .utf8) else { return }
     switch event {
+    case "ping":
+      onHeartbeat?()
     case "state":
       do {
         onState?(try decoder.decode(ApiStatePayload.self, from: payload))

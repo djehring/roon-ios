@@ -102,7 +102,8 @@ final class MockStore {
   /// the core has had time to catch up, or a change from another client
   /// stays hidden behind the pin.
   private var holdPinnedUntil: Date?
-  private var lastEventAt: Date?
+  private var lastEventAt: Date? = Date()
+  private var lastZoneEventAt: [String: Date] = [:]
   private var lastLivenessRefreshAt: Date?
   private var livenessTask: Task<Void, Never>?
   private var holdQueueUntil: Date?
@@ -153,6 +154,9 @@ final class MockStore {
     }
     client.onEventsFailed = { [weak self] error in
       Task { @MainActor in self?.discoveryError = error.localizedDescription }
+    }
+    client.onHeartbeat = { [weak self] in
+      Task { @MainActor in self?.noteEvent() }
     }
     if client.isPaired {
       Task { await self.reconnect() }
@@ -264,9 +268,11 @@ final class MockStore {
 
   func selectZone(_ id: String) {
     clearPinnedTrack()
+    holdPlaybackUntil = nil
     selectedZoneId = id
     zoneDefaults.set(id, forKey: "selectedZoneId")
-    isPlaying = selectedZone.state == .playing
+    isPlaying = selectedZone.state == .playing || selectedZone.state == .loading
+    loadCurrentArtwork(selectedZone.track?.imageKey)
     // Empty rather than the previous room's tracks: a stale queue reads as this
     // room's, which is worse than showing nothing until the event arrives.
     queue = queuesByZone[selectedZone.id] ?? []
@@ -1669,6 +1675,7 @@ final class MockStore {
 
   private func applyZone(_ payload: ZoneStatePayload) {
     noteEvent()
+    lastZoneEventAt[payload.zoneId] = Date()
     expirePinnedTrackIfNeeded()
     let incoming = Self.track(from: payload.nowPlaying)
     let playback = PlaybackState(rawValue: payload.state) ?? .stopped
@@ -1748,6 +1755,7 @@ final class MockStore {
     guard EventLiveness.shouldRefresh(
       isPlaying: isPlaying,
       lastEventAt: lastEventAt,
+      lastZoneEventAt: lastZoneEventAt[selectedZoneId],
       lastRefreshAt: lastLivenessRefreshAt
     ) else { return }
     resumeSync()
