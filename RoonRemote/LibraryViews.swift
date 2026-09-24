@@ -63,12 +63,26 @@ struct LibraryRootView: View {
           path: $path
         )
       }
+      .navigationDestination(for: ArtistDiscography.self) { artist in
+        BrowseListView(
+          hierarchy: "search",
+          title: artist.name,
+          artist: artist,
+          path: $path
+        )
+      }
       // onAppear as well as onChange: TabView may create this tab after
       // runToolbar already wrote libraryLaunchHierarchy, so onChange alone
       // never sees a transition and Playlists would land on the Library grid.
-      .onAppear { consumeLaunchHierarchy() }
+      .onAppear {
+        consumeLaunchHierarchy()
+        consumeLaunchArtist()
+      }
       .onChange(of: store.libraryLaunchHierarchy) { _, _ in
         consumeLaunchHierarchy()
+      }
+      .onChange(of: store.libraryLaunchArtist) { _, _ in
+        consumeLaunchArtist()
       }
       .toolbar {
         if store.isRecordingAction {
@@ -95,6 +109,12 @@ struct LibraryRootView: View {
     path.append(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library))
     store.libraryLaunchHierarchy = nil
   }
+
+  private func consumeLaunchArtist() {
+    guard let artist = store.libraryLaunchArtist else { return }
+    path = NavigationPath([artist])
+    store.libraryLaunchArtist = nil
+  }
 }
 
 struct BrowseListView: View {
@@ -104,6 +124,7 @@ struct BrowseListView: View {
   var title: String
   var input: String?
   var openChild: String?
+  var artist: ArtistDiscography?
   @Binding var path: NavigationPath
 
   @State private var page = BrowsePage(title: "", items: [])
@@ -129,6 +150,14 @@ struct BrowseListView: View {
           ProgressView()
             .tint(Palette.accent)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let message = page.errorMessage {
+          ContentUnavailableView {
+            Label("Couldn't load", systemImage: "exclamationmark.circle")
+          } description: {
+            Text(message)
+          } actions: {
+            Button("Try Again") { Task { await reload() } }
+          }
         } else {
           ScrollViewReader { proxy in
             List {
@@ -155,7 +184,7 @@ struct BrowseListView: View {
         indexBar
       }
     }
-    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")") {
+    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(artist?.token.uuidString ?? "")") {
       await reload()
     }
     .safeAreaInset(edge: .top) {
@@ -303,9 +332,9 @@ struct BrowseListView: View {
       )
       .frame(width: 48, height: 48)
       VStack(alignment: .leading, spacing: 2) {
-        Text(child.title)
-        if let subtitle = child.subtitle {
-          Text(subtitle)
+        Text(child.listedTitle)
+        if !child.listedSubtitle.isEmpty {
+          Text(child.listedSubtitle)
             .font(.footnote)
             .foregroundStyle(Palette.secondary)
         }
@@ -373,6 +402,10 @@ struct BrowseListView: View {
   private func reload() async {
     loading = true
     defer { loading = false }
+    if let artist {
+      page = await store.loadArtistDiscography(artist)
+      return
+    }
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: title)
     }

@@ -20,7 +20,7 @@ extension MockStore {
   /// Sample browse pages, artwork and playback let the UI be exercised without
   /// sending playback commands to a real room.
   func applyDemoContent() {
-    let track = Track(
+    var track = Track(
       id: "demo-track",
       title: "So What",
       artist: "Miles Davis",
@@ -30,6 +30,11 @@ extension MockStore {
       progress: 0.35,
       imageKey: "demo-cover"
     )
+    if ProcessInfo.processInfo.environment["ROON_ARTIST_PREVIEW_CLASSICAL"] == "1" {
+      track.title = "Violin Sonata No. 1 in D Major, Op. 12 No 1: I. Allegro con brio"
+      track.artist = "Ludwig van Beethoven"
+      track.album = "Beethoven: Violin Sonatas Op. 12 & Op. 24"
+    }
     let pausedTrack = Track(
       id: "demo-paused",
       title: "Violin Sonata in F-flat Major",
@@ -253,12 +258,67 @@ extension MockStore {
     "Library", "Playlists", "My Live Radio", "Genres", "TIDAL", "Qobuz", "Settings",
   ]
 
+  func demoArtistCreditPage(path: CinemaMusicPath) -> CinemaMusicPage {
+    let classical = ProcessInfo.processInfo.environment["ROON_ARTIST_PREVIEW_CLASSICAL"] == "1"
+    let title = classical ? "Beethoven: Violin Sonatas Op. 12 & Op. 24" : "Kind of Blue"
+    let credits = classical
+      ? "[[16206970|Alina Ibragimova]], [[9095290|Cédric Tiberghien]]"
+      : "[[1|Miles Davis]]"
+    // Reproduce the live long-title search miss, followed by the shorter query.
+    let items: [CinemaMusicItem] = classical && path.query == title ? [] : [
+      CinemaMusicItem(title: title, subtitle: credits, imageKey: "demo-cover", kind: "list", path: path),
+    ]
+    return CinemaMusicPage(title: "Search", kind: "list", path: path, items: items)
+  }
+
   func demoBrowsePage(
     hierarchy: String,
     itemKey: String?,
     input: String?,
     childTitled: String? = nil
   ) -> BrowsePage {
+    if hierarchy == "search" {
+      let rows: [(String, String)]?
+      let title: String
+      switch itemKey {
+      case nil where input != nil:
+        title = "Search"
+        rows = ["Alina Ibragimova", "Cedric Tiberghien"].contains(input ?? "")
+          ? [("Artists", "demo-search-artists"), ("Albums", "demo-performer-albums")]
+          : [("Artists", "demo-search-artists")]
+      case "demo-search-artists":
+        title = "Artists"
+        rows = [("Miles Davis", "demo-artist-miles-davis")]
+      case "demo-artist-miles-davis":
+        title = "Miles Davis"
+        rows = [("Discography", "demo-miles-discography")]
+      case "demo-miles-discography":
+        title = "Discography"
+        rows = [("Kind of Blue", "kind-of-blue"), ("1958 Miles", "1958-miles")]
+      default:
+        title = ""
+        rows = nil
+      }
+      if itemKey == "demo-performer-albums" {
+        return BrowsePage(title: "Albums", items: [
+          BrowseNode(
+            id: "demo-beethoven", title: "Beethoven: Violin Sonatas Op. 12 & Op. 24",
+            subtitle: "[[16206970|Alina Ibragimova]], [[9095290|Cédric Tiberghien]]",
+            symbol: "opticaldisc", actions: [], isPrompt: false, children: [],
+            itemKey: "beethoven-sonatas", hierarchy: hierarchy, hint: "list"
+          ),
+        ])
+      }
+      if let rows {
+        return BrowsePage(title: title, items: rows.map { name, key in
+          BrowseNode(
+            id: key, title: name, symbol: "opticaldisc", actions: [],
+            isPrompt: false, children: [], itemKey: key, hierarchy: hierarchy, hint: "list"
+          )
+        })
+      }
+    }
+
     if hierarchy == "browse", itemKey == nil, childTitled == nil {
       return BrowsePage(
         title: "Browse",

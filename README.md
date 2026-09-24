@@ -33,6 +33,12 @@ with the selected room, then opens Now Playing on iPhone, iPad, and Apple TV.
 Queue and Play Next keep the browse screen open. Failed actions show an error
 without navigating away.
 
+On iPhone and iPad, tap an artist name in Now Playing to open their discography
+in Library. Each performer has a separate link. Album credits are resolved through
+the bridge's read-only music browser so classical recordings can show performers
+when the transport metadata names the composer. Albums and tracks remain browsable
+without changing playback.
+
 ## Apple Watch
 
 Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon

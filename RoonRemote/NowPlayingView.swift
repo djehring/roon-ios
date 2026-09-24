@@ -108,9 +108,8 @@ struct NowPlayingView: View {
         Text("on \(track.album)")
           .font(.system(size: 16))
           .foregroundStyle(Palette.secondary)
-        Text("by \(track.artist)")
+        NowPlayingArtistLinks(track: track, showsByPrefix: true)
           .font(.system(size: 16))
-          .foregroundStyle(Palette.secondary)
       }
     } else {
       Text("Nothing playing")
@@ -196,6 +195,81 @@ struct NowPlayingView: View {
     .padding(.top, 10)
   }
 
+}
+
+struct NowPlayingArtistLinks: View {
+  @Environment(MockStore.self) private var store
+  let track: Track
+  var showsByPrefix = false
+  var alignment: HorizontalAlignment = .center
+
+  var body: some View {
+    let names = store.artistNames(for: track)
+    ArtistCreditLayout(alignment: alignment) {
+      ForEach(Array(names.enumerated()), id: \.offset) { index, name in
+        Button {
+          store.openArtistDiscography(name)
+        } label: {
+          (Text(showsByPrefix && index == 0 ? "by " : "").foregroundColor(Palette.secondary)
+            + Text(name).underline().foregroundColor(Palette.accent)
+            + Text(index < names.count - 1 ? "," : "").foregroundColor(Palette.secondary))
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(name)
+        .accessibilityHint("Opens artist discography in Library")
+        .accessibilityIdentifier(index == 0 ? "now-playing-artist-link" : "now-playing-artist-link-\(index)")
+      }
+    }
+    .multilineTextAlignment(alignment == .leading ? .leading : .center)
+    .task(id: NowPlayingAlbum(track: track)) { await store.loadArtistCredits(for: track) }
+  }
+}
+
+/// Wrap whole artist links, keeping every name independently tappable.
+private struct ArtistCreditLayout: SwiftUI.Layout {
+  var alignment: HorizontalAlignment
+  private let spacing: CGFloat = 4
+
+  private func rows(width: CGFloat, subviews: Subviews) -> [[Int]] {
+    var rows: [[Int]] = []
+    var used: CGFloat = 0
+    for index in subviews.indices {
+      let size = subviews[index].sizeThatFits(ProposedViewSize(width: width, height: nil))
+      if rows.isEmpty || used + spacing + size.width > width {
+        rows.append([index])
+        used = size.width
+      } else {
+        rows[rows.count - 1].append(index)
+        used += spacing + size.width
+      }
+    }
+    return rows
+  }
+
+  func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    let width = proposal.width ?? subviews.reduce(CGFloat.zero) { $0 + $1.sizeThatFits(.unspecified).width + spacing }
+    let height = rows(width: width, subviews: subviews).reduce(CGFloat.zero) { total, row in
+      total + (row.map { subviews[$0].sizeThatFits(ProposedViewSize(width: width, height: nil)).height }.max() ?? 0)
+    }
+    return CGSize(width: width, height: height)
+  }
+
+  func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    var y = bounds.minY
+    for row in rows(width: bounds.width, subviews: subviews) {
+      let sizes = row.map { subviews[$0].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil)) }
+      let width = sizes.reduce(CGFloat.zero) { $0 + $1.width } + CGFloat(max(0, row.count - 1)) * spacing
+      var x = bounds.minX + (alignment == .leading ? 0 : (bounds.width - width) / 2)
+      for (index, size) in zip(row, sizes) {
+        subviews[index].place(at: CGPoint(x: x, y: y), anchor: .topLeading,
+          proposal: ProposedViewSize(size))
+        x += size.width + spacing
+      }
+      y += sizes.map(\.height).max() ?? 0
+    }
+  }
 }
 
 private extension MockStore {

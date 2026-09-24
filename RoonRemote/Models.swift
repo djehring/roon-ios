@@ -55,6 +55,7 @@ struct BrowsePage: Hashable {
   var title: String
   var items: [BrowseNode]
   var musicSource: CinemaMusicPath? = nil
+  var errorMessage: String? = nil
 
   /// The key for the row named `title`, for a sidebar entry that has to step
   /// one level into a hierarchy to reach what it is named after.
@@ -63,6 +64,80 @@ struct BrowsePage: Hashable {
   /// session, so there is nothing stable to hardcode.
   func itemKey(forChildTitled title: String) -> String? {
     items.first { $0.title == title }?.itemKey
+  }
+}
+
+/// Resolve fresh browse keys when opened; Roon's item keys belong to a session.
+struct ArtistDiscography: Hashable {
+  let token = UUID()
+  let name: String
+
+  init?(_ artist: String) {
+    let name = RoonDisplayText.format(artist).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !name.isEmpty else { return nil }
+    self.name = name
+  }
+
+  @MainActor
+  func load(using browse: (String?, String?) async -> BrowsePage) async -> BrowsePage {
+    let query = ArtistCredits.searchQuery(name)
+    var results = await browse(nil, query)
+    if results.errorMessage != nil { return results }
+    // The artist page may contain only Play Artist when none of their albums
+    // are saved. Search's Albums section also includes the streaming catalog.
+    if let albums = navigableRow(named: "Albums", in: results) {
+      let page = await browse(albums.itemKey, nil)
+      if page.errorMessage != nil { return page }
+      let credited = creditedAlbums(in: page)
+      if !credited.isEmpty { return BrowsePage(title: name, items: credited) }
+      results = await browse(nil, query)
+      if results.errorMessage != nil { return results }
+    } else {
+      let credited = creditedAlbums(in: results)
+      if !credited.isEmpty { return BrowsePage(title: name, items: credited) }
+    }
+    guard let artists = navigableRow(named: "Artists", in: results) else {
+      return unavailable
+    }
+    let matches = await browse(artists.itemKey, nil)
+    if matches.errorMessage != nil { return matches }
+    guard let artist = navigableRow(named: name, in: matches) else {
+      return unavailable
+    }
+    var page = await browse(artist.itemKey, nil)
+    if page.errorMessage != nil { return page }
+    // Open the album section when offered; otherwise keep the artist's page.
+    if let albums = navigableRow(named: "Discography", in: page)
+      ?? navigableRow(named: "Albums", in: page) {
+      page = await browse(albums.itemKey, nil)
+    }
+    if page.errorMessage == nil { page.title = name }
+    return page
+  }
+
+  private var unavailable: BrowsePage {
+    BrowsePage(
+      title: name,
+      items: [],
+      errorMessage: "Couldn't find \(name) in Roon. Try browsing Artists in Library."
+    )
+  }
+
+  private func creditedAlbums(in page: BrowsePage) -> [BrowseNode] {
+    page.items.filter { item in
+      item.itemKey != nil && !item.isPrompt && item.hint != "action" && item.hint != "action_list"
+        && ArtistCredits.names(in: item.subtitle ?? "").contains {
+          $0.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }
+    }
+  }
+
+  private func navigableRow(named title: String, in page: BrowsePage) -> BrowseNode? {
+    page.items.first {
+      $0.itemKey != nil && !$0.isPrompt && $0.hint != "action" && $0.hint != "action_list"
+        && $0.listedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+          .compare(title, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+    }
   }
 }
 
