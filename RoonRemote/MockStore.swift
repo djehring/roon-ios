@@ -87,6 +87,8 @@ final class MockStore {
   var recordingHierarchy: String?
   var houseOutputs: [OutputDescription] = []
   var libraryLaunchHierarchy: String?
+  var libraryLaunchArtist: ArtistDiscography?
+  private var albumArtistCredits: [NowPlayingAlbum: [String]] = [:]
 
   static let shared = MockStore()
 
@@ -194,6 +196,33 @@ final class MockStore {
 
   var currentTrack: Track? { selectedZone.track }
 
+  func artistNames(for track: Track) -> [String] {
+    if let names = albumArtistCredits[NowPlayingAlbum(track: track)], !names.isEmpty { return names }
+    return ArtistCredits.names(in: track.artist)
+  }
+
+  func loadArtistCredits(for track: Track) async {
+    let album = NowPlayingAlbum(track: track)
+    guard albumArtistCredits[album] == nil else { return }
+    let zoneId = selectedZoneId
+    do {
+      let names = try await album.artistNames { path in
+        #if DEBUG
+        if Self.wantsDemoContent { return self.demoArtistCreditPage(path: path) }
+        #endif
+        // This read-only browser uses its own session, preserving Library's
+        // current browse keys while Now Playing resolves album credits.
+        return try await self.client.browseCinemaMusic(path, zoneId: zoneId)
+      }
+      guard !Task.isCancelled else { return }
+      if albumArtistCredits.count >= 64 { albumArtistCredits.removeAll() }
+      albumArtistCredits[album] = names ?? []
+    } catch {
+      // Preserve the supplied credit if metadata is temporarily unavailable.
+      // An unsuccessful request can retry when Now Playing is opened again.
+    }
+  }
+
   var colorScheme: ColorScheme? {
     switch appearance {
     case .system: nil
@@ -209,6 +238,7 @@ final class MockStore {
     zones = []
     queue = []
     queuesByZone = [:]
+    albumArtistCredits = [:]
     outputs = []
     isAwaitingServer = false
     isDiscovering = false
@@ -726,6 +756,28 @@ final class MockStore {
     }
   }
 
+  func openArtistDiscography(_ artist: String) {
+    guard let destination = ArtistDiscography(artist) else { return }
+    libraryLaunchHierarchy = nil
+    libraryLaunchArtist = destination
+    selectedTab = .library
+  }
+
+  func loadArtistDiscography(_ artist: ArtistDiscography) async -> BrowsePage {
+    // Keep search, artist resolution, and album loading together so another
+    // browse request cannot invalidate their session keys between steps.
+    await withBrowseSession {
+      await artist.load { itemKey, input in
+        #if DEBUG
+        if Self.wantsDemoContent {
+          return self.demoBrowsePage(hierarchy: "search", itemKey: itemKey, input: input)
+        }
+        #endif
+        return await self.performLoadLibrary(hierarchy: "search", itemKey: itemKey, input: input)
+      }
+    }
+  }
+
   func playInRoom(query: String, roomName: String, zoneId: String?) async throws -> String {
     let zone = try await zoneForSiri(named: roomName, zoneId: zoneId)
     selectZone(zone.id)
@@ -1168,7 +1220,7 @@ final class MockStore {
         musicSource: isCollection ? musicPath : nil
       )
     } catch {
-      return BrowsePage(title: "Couldn't load", items: [])
+      return BrowsePage(title: "Couldn't load", items: [], errorMessage: error.localizedDescription)
     }
   }
 
@@ -1382,6 +1434,7 @@ final class MockStore {
   func runToolbar(_ action: ToolbarAction) {
     // Hierarchy first so a Library tab that is already mounted can observe the
     // change before selectedTab switches away from Now Playing.
+    libraryLaunchArtist = nil
     libraryLaunchHierarchy = action.hierarchy
     selectedTab = .library
   }

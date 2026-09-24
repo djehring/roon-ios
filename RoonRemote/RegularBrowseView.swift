@@ -7,6 +7,7 @@ struct RegularBrowseView: View {
   var title: String
   var input: String?
   var openChild: String?
+  var artist: ArtistDiscography?
   @Binding var path: NavigationPath
 
   @State private var page = BrowsePage(title: "", items: [])
@@ -28,6 +29,14 @@ struct RegularBrowseView: View {
           ProgressView()
             .tint(Palette.accent)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let message = page.errorMessage {
+          ContentUnavailableView {
+            Label("Couldn't load", systemImage: "exclamationmark.circle")
+          } description: {
+            Text(message)
+          } actions: {
+            Button("Try Again") { Task { await reload() } }
+          }
         } else if page.items.isEmpty {
           ContentUnavailableView(
             "Nothing here",
@@ -65,7 +74,7 @@ struct RegularBrowseView: View {
     }
     .background(Palette.background)
     .navigationTitle(page.title.isEmpty ? title : page.title)
-    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")") {
+    .task(id: "\(hierarchy)|\(itemKey ?? "")|\(input ?? "")|\(openChild ?? "")|\(artist?.token.uuidString ?? "")") {
       await reload()
     }
     .safeAreaInset(edge: .top) {
@@ -164,12 +173,12 @@ struct RegularBrowseView: View {
         }
       }
 
-      Text(child.title)
+      Text(child.listedTitle)
         .font(.headline)
         .foregroundStyle(Palette.primary)
         .lineLimit(2)
-      if let subtitle = child.subtitle, !subtitle.isEmpty {
-        Text(subtitle)
+      if !child.listedSubtitle.isEmpty {
+        Text(child.listedSubtitle)
           .font(.subheadline)
           .foregroundStyle(Palette.secondary)
           .lineLimit(2)
@@ -297,6 +306,10 @@ struct RegularBrowseView: View {
   private func reload() async {
     loading = true
     defer { loading = false }
+    if let artist {
+      page = await store.loadArtistDiscography(artist)
+      return
+    }
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: title)
     }

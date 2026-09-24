@@ -38,6 +38,14 @@ struct RegularRootView: View {
                 path: $path
               )
             }
+            .navigationDestination(for: ArtistDiscography.self) { artist in
+              RegularBrowseView(
+                hierarchy: "search",
+                title: artist.name,
+                artist: artist,
+                path: $path
+              )
+            }
             .toolbar { sidebarReveal }
             // Opaque so scrolling content clips behind the bar instead of
             // riding up through the title and the status bar. Now Playing is
@@ -69,6 +77,7 @@ struct RegularRootView: View {
         adaptColumns(to: geometry.size.width)
         syncSelection(to: store.selectedTab)
         consumeLaunchHierarchy()
+        consumeLaunchArtist()
       }
       .onChange(of: geometry.size.width) { _, width in
         adaptColumns(to: width)
@@ -78,6 +87,7 @@ struct RegularRootView: View {
         // jump to a different category.
         path = NavigationPath()
         guard let item else { return }
+        consumeLaunchArtist()
         store.selectedTab = item.tab
         if case let .search(segment) = item {
           store.searchSegment = segment
@@ -88,6 +98,9 @@ struct RegularRootView: View {
       }
       .onChange(of: store.libraryLaunchHierarchy) { _, _ in
         consumeLaunchHierarchy()
+      }
+      .onChange(of: store.libraryLaunchArtist) { _, _ in
+        consumeLaunchArtist()
       }
     }
   }
@@ -204,6 +217,7 @@ struct RegularRootView: View {
   }
 
   private func syncSelection(to tab: AppTab) {
+    guard store.libraryLaunchArtist == nil else { return }
     guard let next = SidebarItem.selection(
       for: tab,
       current: selection,
@@ -218,6 +232,19 @@ struct RegularRootView: View {
     guard let hierarchy = store.libraryLaunchHierarchy else { return }
     selection = .library(LibraryEntry.forLaunchHierarchy(hierarchy, in: store.library).id)
     store.libraryLaunchHierarchy = nil
+  }
+
+  private func consumeLaunchArtist() {
+    guard let artist = store.libraryLaunchArtist else { return }
+    let artists = SidebarItem.libraryRow(forHierarchy: "artists", in: store.library)
+    // Changing selection clears the old stack. Let that change finish before
+    // pushing the artist, including when the split view has just appeared.
+    guard selection == artists else {
+      selection = artists
+      return
+    }
+    path = NavigationPath([artist])
+    store.libraryLaunchArtist = nil
   }
 
   private var miniPlayer: some View {

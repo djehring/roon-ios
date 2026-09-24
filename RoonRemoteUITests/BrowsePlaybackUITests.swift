@@ -1,6 +1,68 @@
 import XCTest
 
 final class BrowsePlaybackUITests: XCTestCase {
+  @MainActor func testFirstPerformerHasItsOwnDiscographyLink() {
+    checkPerformerLink("Alina Ibragimova")
+  }
+
+  @MainActor func testSecondPerformerHasItsOwnDiscographyLink() {
+    checkPerformerLink("Cédric Tiberghien")
+  }
+
+  @MainActor private func checkPerformerLink(_ name: String) {
+    let app = XCUIApplication()
+    app.launchArguments = ["-roon-demo-store"]
+    app.launchEnvironment["ROON_ARTIST_PREVIEW_CLASSICAL"] = "1"
+    app.launch()
+    XCTAssertTrue(app.buttons["Alina Ibragimova"].waitForExistence(timeout: 8))
+    XCTAssertTrue(app.buttons["Cédric Tiberghien"].exists)
+    XCTAssertFalse(app.buttons["Ludwig van Beethoven"].exists)
+    capture("Separate performer links")
+    app.buttons[name].tap()
+    XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Beethoven: Violin Sonatas Op. 12 & Op. 24"].firstMatch.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Alina Ibragimova, Cédric Tiberghien"].firstMatch.exists)
+    XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "[[")).firstMatch.exists)
+    XCTAssertFalse(app.descendants(matching: .any)["browse-playback-feedback"].firstMatch.exists)
+    capture("Discography for \(name)")
+  }
+
+  @MainActor func testNowPlayingArtistOpensDiscography() {
+    let app = XCUIApplication()
+    app.launchArguments = ["-roon-demo-store"]
+    app.launch()
+    let artist = app.buttons["now-playing-artist-link"]
+    XCTAssertTrue(artist.waitForExistence(timeout: 5))
+    artist.tap()
+    XCTAssertTrue(app.navigationBars["Miles Davis"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["1958 Miles"].firstMatch.waitForExistence(timeout: 5))
+    XCTAssertFalse(app.staticTexts["A Love Supreme"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["now-playing-screen"].firstMatch.exists)
+    if app.tabBars.buttons["Library"].exists {
+      XCTAssertTrue(app.tabBars.buttons["Library"].isSelected)
+    }
+    capture("Artist discography in Library")
+    open("1958 Miles", in: app)
+    XCTAssertTrue(app.staticTexts["Play Album"].firstMatch.waitForExistence(timeout: 5))
+    XCTAssertFalse(app.descendants(matching: .any)["browse-playback-feedback"].firstMatch.exists)
+  }
+
+  @MainActor func testArtistLinkReplacesPreviousLibraryNavigation() {
+    let app = launch(hierarchy: "playlists")
+    open("A Love Supreme", in: app)
+    open("Freddie Freeloader", in: app)
+    let artist = app.buttons["now-playing-artist-link"]
+    XCTAssertTrue(artist.waitForExistence(timeout: 8))
+    artist.tap()
+    XCTAssertTrue(app.navigationBars["Miles Davis"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["1958 Miles"].firstMatch.waitForExistence(timeout: 5))
+    // Returning from an album should retain the artist destination.
+    open("1958 Miles", in: app)
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    XCTAssertTrue(app.navigationBars["Miles Davis"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["1958 Miles"].firstMatch.waitForExistence(timeout: 5))
+  }
+
   @MainActor func testPlaylistTrackOpensNowPlaying() {
     let app = launch(hierarchy: "playlists")
     open("A Love Supreme", in: app)

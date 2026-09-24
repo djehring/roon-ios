@@ -138,6 +138,7 @@ targets:
       - path: RoonRemote/Layout.swift
       - path: RoonRemote/LibraryIndex.swift
       - path: RoonRemote/Models.swift
+      - path: RoonRemote/ArtistCredits.swift
       - path: RoonRemote/LibraryDragItem.swift
       - path: RoonRemote/PlaybackAdjustment.swift
       - path: RoonRemote/AudioSessionController.swift
@@ -291,6 +292,7 @@ targets:
         excludes:
           - WatchPayload.swift
       - path: RoonRemote/Models.swift
+      - path: RoonRemote/ArtistCredits.swift
       - path: RoonRemote/MockStore.swift
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/BrowsePlaybackFeedback.swift

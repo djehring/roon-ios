@@ -1,6 +1,114 @@
 import Foundation
 import Testing
 
+@Suite("Artist discography")
+@MainActor
+struct ArtistDiscographyTests {
+  private func node(_ title: String, key: String, hint: String = "list") -> BrowseNode {
+    BrowseNode(
+      id: key, title: title, symbol: "person", actions: [], isPrompt: false,
+      children: [], itemKey: key, hierarchy: "search", hint: hint
+    )
+  }
+
+  @Test func cleansArtistCreditsAndRejectsBlankNames() {
+    #expect(ArtistDiscography("  [[123|Miles Davis]]  ")?.name == "Miles Davis")
+    #expect(ArtistDiscography(" \n ") == nil)
+    #expect(ArtistDiscography("Miles Davis") != ArtistDiscography("Miles Davis"))
+  }
+
+  @Test(arguments: ["Discography", "Albums"])
+  func opensMatchingArtistAlbums(section: String) async throws {
+    let artist = try #require(ArtistDiscography("Miles Davis"))
+    var requests: [String] = []
+    let page = await artist.load { key, input in
+      requests.append(key ?? "root")
+      switch key {
+      case nil:
+        #expect(input == "Miles Davis")
+        return BrowsePage(title: "Search", items: [node("Artists", key: "artists")])
+      case "artists":
+        return BrowsePage(title: "Artists", items: [
+          node("Miles Davis Quintet", key: "wrong"),
+          node("[[123|MILES DAVIS]]", key: "miles"),
+        ])
+      case "miles":
+        return BrowsePage(title: "Miles Davis", items: [node(section, key: "albums")])
+      case "albums":
+        return BrowsePage(title: section, items: [node("Kind of Blue", key: "kind-of-blue")])
+      default:
+        Issue.record("Opened an unexpected browse row")
+        return BrowsePage(title: "Unexpected", items: [])
+      }
+    }
+    #expect(requests == ["root", "artists", "miles", "albums"])
+    #expect(page.title == "Miles Davis")
+    #expect(page.items.first?.itemKey == "kind-of-blue")
+    #expect(page.errorMessage == nil)
+  }
+
+  @Test func acceptsAlbumsDirectlyOnArtistPage() async throws {
+    let artist = try #require(ArtistDiscography("Björk"))
+    let page = await artist.load { key, _ in
+      switch key {
+      case nil: BrowsePage(title: "Search", items: [node("Artists", key: "artists")])
+      case "artists": BrowsePage(title: "Artists", items: [node("Bjork", key: "artist")])
+      default: BrowsePage(title: "Bjork", items: [node("Debut", key: "debut")])
+      }
+    }
+    #expect(page.title == "Björk")
+    #expect(page.items.first?.title == "Debut")
+  }
+
+  @Test func opensStreamingDiscographyForAnArtistWithNoSavedAlbums() async throws {
+    let artist = try #require(ArtistDiscography("Cédric Tiberghien"))
+    var opened: [String] = []
+    let page = await artist.load { key, input in
+      opened.append(key ?? "root")
+      if key == nil {
+        #expect(input == "Cedric Tiberghien")
+        return BrowsePage(title: "Search", items: [node("Artists", key: "artists"), node("Albums", key: "albums")])
+      }
+      #expect(key == "albums")
+      var match = node("Beethoven: Violin Sonatas Op. 12 & Op. 24", key: "beethoven")
+      match.subtitle = "[[16206970|Alina Ibragimova]], [[9095290|Cédric Tiberghien]]"
+      var other = node("Another recording", key: "other")
+      other.subtitle = "[[1|Another Performer]]"
+      return BrowsePage(title: "Albums", items: [match, other])
+    }
+    #expect(opened == ["root", "albums"])
+    #expect(page.title == "Cédric Tiberghien")
+    #expect(page.items.map(\.itemKey) == ["beethoven"])
+  }
+
+  @Test func neverOpensAnActionOrADifferentArtist() async throws {
+    let artist = try #require(ArtistDiscography("Miles Davis"))
+    var requests = 0
+    let page = await artist.load { key, _ in
+      requests += 1
+      if key == nil {
+        return BrowsePage(title: "Search", items: [node("Artists", key: "artists")])
+      }
+      return BrowsePage(title: "Artists", items: [
+        node("Miles Davis Quintet", key: "quintet"),
+        node("Miles Davis", key: "play", hint: "action"),
+        node("Miles Davis", key: "actions", hint: "action_list"),
+      ])
+    }
+    #expect(requests == 2)
+    #expect(page.items.isEmpty)
+    #expect(page.errorMessage?.contains("Miles Davis") == true)
+  }
+
+  @Test func preservesLoadErrors() async throws {
+    let artist = try #require(ArtistDiscography("Miles Davis"))
+    let page = await artist.load { _, _ in
+      BrowsePage(title: "Couldn't load", items: [], errorMessage: "Bridge is offline")
+    }
+    #expect(page.errorMessage == "Bridge is offline")
+  }
+}
+
 @Suite("Browse page")
 struct BrowsePageTests {
   private func node(_ title: String, itemKey: String?) -> BrowseNode {
