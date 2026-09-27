@@ -46,7 +46,13 @@ struct RegularRootView: View {
                 path: $path
               )
             }
-            .toolbar { sidebarReveal }
+            .toolbar {
+              // iPadOS 27 supplies its own reveal button when the sidebar is
+              // hidden. Keep the older-OS workaround from duplicating it.
+              if #unavailable(iOS 27.0) {
+                sidebarReveal
+              }
+            }
             // Opaque so scrolling content clips behind the bar instead of
             // riding up through the title and the status bar. Now Playing is
             // the exception: it draws full-bleed under the bar on purpose, and
@@ -105,15 +111,9 @@ struct RegularRootView: View {
     }
   }
 
-  /// A destination that is the root of the detail stack has no back button, so
-  /// with the sidebar hidden there is nothing to leave Playlists — or any other
-  /// category — with.
-  ///
-  /// Only the root. A leading item in this slot replaces the back button, so
-  /// showing it on a drilled-in page (a playlist, an album) leaves no way back
-  /// to the list. Now Playing and every other root still get the same control
-  /// in the same place. Reveal only: a shown sidebar carries the split view's
-  /// own toggle, so a second control beside it would be redundant.
+  /// Older iPadOS releases can lose the split view's reveal control when a
+  /// category root fills the detail column. Only add the fallback at the root
+  /// so it cannot replace a drilled-in page's Back button.
   @ToolbarContentBuilder
   private var sidebarReveal: some ToolbarContent {
     if columnVisibility == .detailOnly, path.isEmpty {
@@ -125,8 +125,6 @@ struct RegularRootView: View {
         } label: {
           Image(systemName: "sidebar.left")
         }
-        // Against the app-wide accent tint, which the split view's own sidebar
-        // control does not take, so an accented one would not match it.
         .tint(Palette.primary)
         .accessibilityLabel("Show Sidebar")
       }
