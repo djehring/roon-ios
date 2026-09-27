@@ -11,8 +11,8 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   private var lastEncoded: Data?
   private var lastWakeKey: String?
 
-  func activate(store: MockStore) {
-    self.store = store
+  func activate(store: MockStore? = nil) {
+    if let store { self.store = store }
     guard WCSession.isSupported() else { return }
     let session = WCSession.default
     session.delegate = self
@@ -106,51 +106,57 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
     didReceiveMessage message: [String: Any],
     replyHandler: @escaping ([String: Any]) -> Void
   ) {
-    handle(message)
-    replyHandler(["ok": true])
+    handle(message, replyHandler: replyHandler)
   }
 
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
     handle(userInfo)
   }
 
-  private func handle(_ message: [String: Any]) {
+  private func handle(
+    _ message: [String: Any], replyHandler: (([String: Any]) -> Void)? = nil
+  ) {
     guard let data = message[WatchMessageKey.command] as? Data,
           let command = try? JSONDecoder().decode(WatchCommand.self, from: data)
-    else { return }
+    else {
+      replyHandler?(["ok": false, "error": "Invalid watch command."])
+      return
+    }
     Task { @MainActor in
-      guard let store else { return }
-      switch command {
-      case .playPause:
-        store.togglePlay()
-      case .skip:
-        store.skip()
-      case .previous:
-        store.previous()
-      case .stop:
-        store.stop()
-      case .mute:
-        let output = store.outputs.first { !$0.isFixed } ?? store.outputs.first
-        if let output {
-          store.toggleMute(output)
+      // WatchConnectivity may launch us without ever creating an app scene.
+      let store = self.store ?? MockStore.shared
+      do {
+        switch command {
+        case .playPause:
+          try await store.togglePlayRemotely(zoneID: nil)
+        case .skip:
+          store.skip()
+        case .previous:
+          store.previous()
+        case .stop:
+          store.stop()
+        case .mute:
+          let output = store.outputs.first { !$0.isFixed } ?? store.outputs.first
+          if let output {
+            store.toggleMute(output)
+          }
+        case let .setVolume(outputId, value):
+          try await store.setVolumeRemotely(outputID: outputId, value: value)
+        case let .selectZone(id):
+          store.selectZone(id)
+        case let .playFromHere(id):
+          if let item = store.queue.first(where: { $0.id == id }) {
+            store.playFromHere(item)
+          }
+        case let .transfer(toZoneId):
+          store.transfer(to: toZoneId)
+        case let .playInRoom(query, room):
+          _ = try await store.playInRoom(query: query, roomName: room, zoneId: nil)
         }
-      case let .setVolume(outputId, value):
-        let output = store.outputs.first { $0.id == outputId } ?? store.outputs.first
-        if let output {
-          store.setVolume(output, value: value)
-        }
-      case let .selectZone(id):
-        store.selectZone(id)
-      case let .playFromHere(id):
-        if let item = store.queue.first(where: { $0.id == id }) {
-          store.playFromHere(item)
-        }
-      case let .transfer(toZoneId):
-        store.transfer(to: toZoneId)
-      case let .playInRoom(query, room):
-        Task {
-          _ = try? await store.playInRoom(query: query, roomName: room, zoneId: nil)
-        }
+        replyHandler?(["ok": true])
+      } catch {
+        Self.log.error("watch command failed: \(error.localizedDescription, privacy: .public)")
+        replyHandler?(["ok": false, "error": error.localizedDescription])
       }
     }
   }

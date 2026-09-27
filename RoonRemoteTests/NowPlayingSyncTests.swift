@@ -78,3 +78,54 @@ struct NowPlayingSyncTests {
     #expect(state.title == "Song")
   }
 }
+
+@MainActor
+@Suite("Live Activity playback actions", .serialized)
+struct NowPlayingLiveActionTests {
+  @Test func missingBackgroundHandlerReportsFailure() async {
+    let saved = NowPlayingLiveActions.playPause
+    defer { NowPlayingLiveActions.playPause = saved }
+    NowPlayingLiveActions.playPause = nil
+
+    await #expect(throws: NowPlayingLiveActions.ActionError.unavailable) {
+      _ = try await NowPlayingPlayPauseIntent().perform()
+    }
+  }
+
+  @Test func intentWaitsForTheCommandAndUsesTheDisplayedRoom() async throws {
+    let saved = NowPlayingLiveActions.playPause
+    defer { NowPlayingLiveActions.playPause = saved }
+    var completed = false
+    NowPlayingLiveActions.playPause = { zoneID in
+      #expect(zoneID == "office")
+      await Task.yield()
+      completed = true
+    }
+
+    _ = try await NowPlayingPlayPauseIntent(zoneID: "office").perform()
+    #expect(completed)
+  }
+
+  @Test func intentPropagatesPlaybackFailure() async {
+    let saved = NowPlayingLiveActions.playPause
+    defer { NowPlayingLiveActions.playPause = saved }
+    NowPlayingLiveActions.playPause = { _ in throw CancellationError() }
+
+    await #expect(throws: CancellationError.self) {
+      _ = try await NowPlayingPlayPauseIntent(zoneID: "office").perform()
+    }
+  }
+
+  @Test func olderCardsCanUseTheSavedRoom() async throws {
+    let saved = NowPlayingLiveActions.playPause
+    defer { NowPlayingLiveActions.playPause = saved }
+    var called = false
+    NowPlayingLiveActions.playPause = { zoneID in
+      #expect(zoneID == nil)
+      called = true
+    }
+
+    _ = try await NowPlayingPlayPauseIntent().perform()
+    #expect(called)
+  }
+}

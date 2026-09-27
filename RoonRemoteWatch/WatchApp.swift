@@ -84,6 +84,14 @@ struct WatchRootView: View {
       }
     }
     .onAppear { store.activate() }
+    .alert("Playback controls", isPresented: Binding(
+      get: { store.controlError != nil },
+      set: { if !$0 { store.controlError = nil } }
+    )) {
+      Button("OK", role: .cancel) { store.controlError = nil }
+    } message: {
+      Text(store.controlError ?? "")
+    }
   }
 
   private var nowPlaying: some View {
@@ -112,7 +120,6 @@ struct WatchRootView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
-    .focusable(store.crownEnabled)
     .modifier(CrownVolume(store: store, enabled: store.crownEnabled))
     .onTapGesture { tapPlayPause() }
     .onLongPressGesture {
@@ -297,23 +304,32 @@ private struct WatchTransferView: View {
 private struct CrownVolume: ViewModifier {
   @Bindable var store: WatchStore
   let enabled: Bool
+  @FocusState private var isFocused: Bool
+  @Environment(\.scenePhase) private var scenePhase
 
   func body(content: Content) -> some View {
     let min = store.snapshot.volumeMin
     let max = store.snapshot.volumeMax
     if enabled, max > min {
-      content.digitalCrownRotation(
-        Binding(
-          get: { store.volume },
-          set: { store.crownMoved($0) }
-        ),
-        from: min,
-        through: max,
-        by: max - min > 20 ? 1 : 0.5,
-        sensitivity: .medium,
-        isContinuous: true,
-        isHapticFeedbackEnabled: true
-      )
+      content
+        .focusable(true, interactions: .edit)
+        .focused($isFocused)
+        .digitalCrownRotation(
+          Binding(
+            get: { store.volume },
+            set: { store.crownMoved($0) }
+          ),
+          from: min,
+          through: max,
+          by: max - min > 20 ? 1 : 0.5,
+          sensitivity: .medium,
+          isContinuous: true,
+          isHapticFeedbackEnabled: true
+        )
+        .onAppear { isFocused = true }
+        .onChange(of: scenePhase) { _, phase in
+          if phase == .active { isFocused = true }
+        }
     } else {
       content
     }

@@ -32,15 +32,21 @@ final class NowPlayingBridge {
   func attach(store: MockStore) {
     self.store = store
     registerCommandsIfNeeded()
-    #if os(iOS)
-    NowPlayingLiveActions.playPause = { [weak self] in
-      guard let store = self?.store else { return }
+  }
+
+  /// Register before a scene appears: a Live Activity can launch the app in
+  /// the background. Resolve the store lazily when the intent is invoked.
+  #if os(iOS)
+  static func registerLiveActivityActions() {
+    NowPlayingLiveActions.playPause = { zoneID in
+      let store = MockStore.shared
+      shared.attach(store: store)
       store.resumeSync()
-      store.togglePlay()
+      try await store.togglePlayRemotely(zoneID: zoneID)
       await Self.flushLiveActivity()
     }
-    #endif
   }
+  #endif
 
   /// Live Activities are an iPhone feature; tvOS has no Watch companion to feed.
   private static func flushLiveActivity() async {

@@ -350,6 +350,40 @@ final class MockStore {
     }
   }
 
+  /// Keep background controls alive until the bridge accepts the command.
+  /// A Live Activity's room may differ from the phone's current selection.
+  func togglePlayRemotely(zoneID: String?) async throws {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let targetID = zoneID ?? selectedZoneId
+    let available = await waitForZones()
+    try Task.checkCancellation()
+    guard let zone = available.first(where: { $0.id == targetID }) else {
+      throw PlayInRoomError.noRoom("the selected room")
+    }
+    let nextPlaying = zone.state != .playing && zone.state != .loading
+    try await sendCommand("PLAY_PAUSE", zoneId: zone.id)
+    if let index = zones.firstIndex(where: { $0.id == zone.id }) {
+      zones[index].state = nextPlaying ? .playing : .paused
+    }
+    if selectedZoneId == zone.id {
+      isPlaying = nextPlaying
+      holdPlaybackUntil = Date().addingTimeInterval(4)
+    }
+    publishWatchSnapshot()
+  }
+
+  func setVolumeRemotely(outputID: String, value: Double) async throws {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let zoneID = selectedZoneId
+    let available = await waitForOutputs(in: zoneID)
+    try Task.checkCancellation()
+    guard let output = available.first(where: { $0.id == outputID }), !output.isFixed else {
+      throw PlayInRoomError.volumeFixed("the selected output")
+    }
+    let clamped = min(output.max, max(output.min, value))
+    try await applyVolume(output, value: clamped, zoneId: zoneID)
+  }
+
   func skip() {
     if let next = upNext {
       showNowPlaying(Self.track(from: next), playing: isPlaying)

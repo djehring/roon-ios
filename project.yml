@@ -149,6 +149,7 @@ targets:
       - path: RoonRemote/EventLiveness.swift
       - path: RoonRemote/NowPlayingSnapshot.swift
       - path: Shared/RoonNowPlayingAttributes.swift
+      - path: Shared/NowPlayingLiveIntents.swift
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
@@ -239,6 +240,8 @@ targets:
         PRODUCT_NAME: Roon
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: RoonRemoteWatch/Info.plist
+        # Explicit registration avoids the mirrored Live Activity's iPhone fallback.
+        INFOPLIST_KEY_WKSupportsLiveActivityLaunchAttributeTypes: RoonNowPlayingAttributes
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "4"
     entitlements:

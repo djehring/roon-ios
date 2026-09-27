@@ -220,6 +220,7 @@
 		EB56D814457DC8B16C90B057 /* LibraryDragItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18277ADCB03B17B104874AD1 /* LibraryDragItem.swift */; };
 		EB5921F82C85C33C5D77D348 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		EC1C627651E91A723880B3D1 /* RoonLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C256E568C1357BBC4ECC5B69 /* RoonLiveActivity.swift */; };
+		ECA7059859EC70C57CB68021 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		EEA15777265C80B307A97805 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		EF4291DF2BD93F0E3B7257D5 /* IdleTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */; };
 		EF7E2807BDD87B9C4A082CD1 /* WatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97C1EA62154B94FECA419F8 /* WatchApp.swift */; };
@@ -1126,6 +1127,7 @@
 				CBD14282548AC084A533174D /* LibraryIndex.swift in Sources */,
 				50220EBCA240F22C39952FFF /* LibraryIndexTests.swift in Sources */,
 				76AFEB358408E5F3C68A8C30 /* Models.swift in Sources */,
+				ECA7059859EC70C57CB68021 /* NowPlayingLiveIntents.swift in Sources */,
 				C2F6DC24AF6249A97CD7BE8E /* NowPlayingSnapshot.swift in Sources */,
 				939519D57F30A574356F0F40 /* NowPlayingSyncTests.swift in Sources */,
 				BC7DF3FF790105D42FE01E72 /* PersonalCinemaStore.swift in Sources */,
@@ -1404,6 +1406,7 @@
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatch/Info.plist;
+				INFOPLIST_KEY_WKSupportsLiveActivityLaunchAttributeTypes = RoonNowPlayingAttributes;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp;
 				PRODUCT_NAME = Roon;
 				SDKROOT = watchos;
@@ -1720,6 +1723,7 @@
 				CODE_SIGN_ENTITLEMENTS = RoonRemoteWatch/RoonRemoteWatch.entitlements;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RoonRemoteWatch/Info.plist;
+				INFOPLIST_KEY_WKSupportsLiveActivityLaunchAttributeTypes = RoonNowPlayingAttributes;
 				PRODUCT_BUNDLE_IDENTIFIER = com.djehring.roonremote.watchkitapp;
 				PRODUCT_NAME = Roon;
 				SDKROOT = watchos;

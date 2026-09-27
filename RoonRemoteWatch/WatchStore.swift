@@ -125,6 +125,7 @@ final class WatchStore {
   var volume: Double = 0
   var phoneReachable = false
   var isAwaitingServer = true
+  var controlError: String?
 
   var showsFindingServer: Bool {
     FindingServerGate.isVisible(
@@ -303,12 +304,23 @@ final class WatchStore {
     guard let data = try? JSONEncoder().encode(command) else { return }
     let payload = [WatchMessageKey.command: data]
     let session = WCSession.default
-    guard session.activationState == .activated else { return }
-    if session.isReachable {
-      session.sendMessage(payload, replyHandler: nil, errorHandler: nil)
-    } else {
-      session.transferUserInfo(payload)
+    guard session.activationState == .activated else {
+      controlError = "Connecting to iPhone. Try again in a moment."
+      WatchSessionRelay.shared.activate()
+      return
     }
+    // An active watch can wake its iPhone with sendMessage. Queuing user info
+    // instead can delay a pause or volume change until long after the gesture.
+    session.sendMessage(payload, replyHandler: { [weak self] reply in
+      Task { @MainActor in
+        self?.controlError = reply["ok"] as? Bool == true
+          ? nil : (reply["error"] as? String ?? "Couldn't control playback.")
+      }
+    }, errorHandler: { [weak self] _ in
+      Task { @MainActor in
+        self?.controlError = "Couldn't reach iPhone. Open House Remote on your iPhone and try again."
+      }
+    })
   }
 
   private func persist(_ snapshot: WatchSnapshot) {

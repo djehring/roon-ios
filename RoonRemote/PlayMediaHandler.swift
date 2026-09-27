@@ -8,6 +8,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    NowPlayingBridge.registerLiveActivityActions()
+    PhoneWatchSync.shared.activate()
     // Don't call INPreferences here: it requires com.apple.developer.siri, and
     // crashing at launch is worse than deferring Siri auth until the user uses it.
     return true
