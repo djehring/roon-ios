@@ -13,6 +13,15 @@ struct LibraryRootView: View {
           columns: Layout.libraryColumns(hSize),
           spacing: Layout.gridSpacing
         ) {
+          NavigationLink { HistoryView() } label: {
+            VStack(alignment: .leading, spacing: 12) {
+              Image(systemName: "clock.arrow.circlepath").font(.system(size: 22, weight: .medium)).foregroundStyle(Palette.accent)
+              Text("Recently played").font(.headline).foregroundStyle(Palette.primary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+            .padding(16).background(Palette.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+          }.accessibilityIdentifier("open-history")
           ForEach(store.library) { entry in
             NavigationLink(value: entry) {
               VStack(alignment: .leading, spacing: 12) {

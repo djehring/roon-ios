@@ -180,6 +180,8 @@ struct RegularRootView: View {
         .accessibilityIdentifier("now-playing-screen")
     case .rooms:
       RegularRoomsView()
+    case .history:
+      HistoryView()
     case .library:
       if let entry = libraryEntry {
         RegularBrowseView(

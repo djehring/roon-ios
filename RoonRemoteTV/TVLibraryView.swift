@@ -56,9 +56,12 @@ struct TVLibraryView: View {
         ],
         spacing: 48
       ) {
+        NavigationLink { HistoryView() } label: {
+          TVLibraryCategoryCard(title: "Recently played", symbol: "clock.arrow.circlepath")
+        }.tvUnplated().accessibilityIdentifier("open-history")
         ForEach(store.library) { entry in
           Button { path.append(entry) } label: {
-            TVLibraryCategoryCard(entry: entry)
+            TVLibraryCategoryCard(title: entry.title, symbol: entry.symbol)
           }
           .tvUnplated()
         }
@@ -252,18 +255,19 @@ struct TVBrowsePageView: View {
 }
 
 private struct TVLibraryCategoryCard: View {
-  let entry: LibraryEntry
+  let title: String
+  let symbol: String
   @Environment(\.isFocused) private var isFocused
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
-      Image(systemName: entry.symbol)
+      Image(systemName: symbol)
         .font(.system(size: 34, weight: .medium))
         .foregroundStyle(isFocused ? Palette.onAccent : Palette.accent)
         .frame(maxWidth: .infinity, minHeight: 140)
         .background(isFocused ? Color.white : Palette.surface)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-      Text(entry.title)
+      Text(title)
         .font(.headline)
         .foregroundStyle(isFocused ? Palette.primary : Palette.accent)
         .lineLimit(2)

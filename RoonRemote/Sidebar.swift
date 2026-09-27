@@ -10,6 +10,7 @@ import Foundation
 enum SidebarItem: Hashable {
   case nowPlaying
   case rooms
+  case history
   case library(LibraryEntry.ID)
   case search(SearchSegment)
   case settings
@@ -18,7 +19,7 @@ enum SidebarItem: Hashable {
     switch self {
     case .nowPlaying: .nowPlaying
     case .rooms: .rooms
-    case .library: .library
+    case .library, .history: .library
     case .search: .search
     case .settings: .settings
     }
@@ -94,7 +95,7 @@ extension SidebarSection {
       SidebarSection(
         id: "library",
         title: "Library",
-        rows: library.map { entry in
+        rows: [SidebarRow(item: .history, title: "Recently played", symbol: "clock.arrow.circlepath")] + library.map { entry in
           SidebarRow(item: .library(entry.id), title: entry.title, symbol: entry.symbol)
         }
       ),

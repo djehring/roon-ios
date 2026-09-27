@@ -1,6 +1,6 @@
 import Foundation
 
-final class RoonAPIClient: CinemaClient, @unchecked Sendable {
+final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
   static let clientIdAccount = "client_id"
   static let hostAccount = "bridge_host"
   static let portAccount = "bridge_port"
@@ -318,6 +318,53 @@ final class RoonAPIClient: CinemaClient, @unchecked Sendable {
     guard (capabilities.musicVersion ?? 0) >= 1 else {
       throw PersonalCinemaError("Update the bridge to create Cinema from your library and edit its music.")
     }
+  }
+
+  func historyCapabilities() async throws -> HistoryCapabilities {
+    do {
+      return try JSONDecoder.historyDecoder().decode(HistoryCapabilities.self,
+        from: await historyResponse("capabilities"))
+    } catch RoonAPIError.httpStatus(let status, _) where status == 404 {
+      throw HistoryFailure.unsupported
+    }
+  }
+
+  func historyPage(kind: HistoryKind, room: String?, cursor: String?) async throws -> HistoryPage {
+    var query: [URLQueryItem] = []
+    if let room { query.append(URLQueryItem(name: "roomId", value: room)) }
+    if let cursor { query.append(URLQueryItem(name: "cursor", value: cursor)) }
+    return try JSONDecoder.historyDecoder().decode(HistoryPage.self,
+      from: await historyResponse(kind.rawValue, query: query))
+  }
+
+  func resolveHistory(_ entry: HistoryEntry, kind: HistoryKind, zoneId: String) async throws -> HistoryResolution {
+    try JSONDecoder.historyDecoder().decode(HistoryResolution.self, from: await historyResponse("resolve",
+      body: JSONEncoder().encode(["eventId": entry.id, "kind": kind.rawValue, "zoneId": zoneId])))
+  }
+
+  func browseHistoryMusic(_ path: CinemaMusicPath, zoneId: String) async throws -> CinemaMusicPage {
+    struct Input: Encodable { let path: CinemaMusicPath; let zoneId: String }
+    return try decoder.decode(CinemaMusicPage.self, from: await historyResponse("browse",
+      body: JSONEncoder().encode(Input(path: path, zoneId: zoneId))))
+  }
+
+  func playHistoryMusic(_ path: CinemaMusicPath, zoneId: String, action: String) async throws {
+    struct Input: Encodable { let path: CinemaMusicPath; let zoneId: String; let action: String }
+    _ = try await historyResponse("play", body: JSONEncoder().encode(Input(path: path, zoneId: zoneId, action: action)))
+  }
+
+  private func historyResponse(_ endpoint: String, query: [URLQueryItem] = [], body: Data? = nil) async throws -> Data {
+    let clientId = try requireClient()
+    var request = try rawRequest(path: "/api/\(clientId)/history/\(endpoint)", method: body == nil ? "GET" : "POST")
+    if !query.isEmpty, let url = request.url {
+      var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+      components.queryItems = query
+      request.url = components.url
+    }
+    if let body { request.httpBody = body; request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+    let (bytes, response) = try await data(for: request)
+    try throwIfNeeded(response, data: bytes)
+    return bytes
   }
 
   func browseCinemaMusic(_ path: CinemaMusicPath, zoneId: String) async throws -> CinemaMusicPage {

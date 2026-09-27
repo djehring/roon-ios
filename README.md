@@ -39,6 +39,14 @@ the bridge's read-only music browser so classical recordings can show performers
 when the transport metadata names the composer. Albums and tracks remain browsable
 without changing playback.
 
+## Recently played
+
+Library includes **Recently played** on iPhone, iPad and Apple TV, with Albums,
+Tracks and room filtering. The matching bridge update records qualifying plays
+while connected, retaining up to **14 days / 10,000 plays**. Collection continues
+when the native apps are closed; Roon's older history cannot be imported.
+See [Recently played](docs/recently-played.md) for counting, replay and rollout.
+
 ## Apple Watch
 
 Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon

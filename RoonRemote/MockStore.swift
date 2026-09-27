@@ -74,6 +74,7 @@ final class MockStore {
   /// Paired launch starts `.main` before the first state event. The overlay
   /// stays up until rooms or SYNC arrive, or reconnect gives up.
   var isAwaitingServer = false
+  var historyConnectionRevision = 0
   var syncState: RoonSyncState = .starting
   var pairingPinDisplay = ""
   var bridgeVersion = ""
@@ -964,6 +965,12 @@ final class MockStore {
     }
   }
 
+  func playHistory(path: CinemaMusicPath, action: String) {
+    performBrowsePlayback(itemKey: "demo-track-so-what", actionTitle: action) { zoneId in
+      try await self.client.playHistoryMusic(path, zoneId: zoneId, action: action)
+    }
+  }
+
   private func performBrowsePlayback(
     itemKey: String,
     actionTitle: String,
@@ -1736,6 +1743,7 @@ final class MockStore {
 
   private func applyState(_ state: ApiStatePayload) {
     noteEvent()
+    if state.state == .sync && syncState != .sync { historyConnectionRevision += 1 }
     syncState = state.state
     bridgeVersion = client.version ?? bridgeVersion
     houseOutputs = state.outputs

@@ -30,7 +30,7 @@ struct SidebarTests {
   @Test("the Library section mirrors the store's roots in order")
   func libraryRowsMirrorTheStore() throws {
     let section = try #require(sections.first { $0.id == "library" })
-    let libraryRows = section.rows
+    let libraryRows = section.rows.filter { $0.item != .history }
 
     #expect(libraryRows.map(\.title) == ["Browse", "Albums", "Radios"])
     #expect(libraryRows.map(\.symbol) == ["safari", "opticaldisc", "radio"])
@@ -44,7 +44,7 @@ struct SidebarTests {
     let empty = SidebarSection.all(library: [])
 
     #expect(empty.map(\.id) == ["listen", "library", "search", "app"])
-    #expect(empty.first { $0.id == "library" }?.rows.isEmpty == true)
+    #expect(empty.first { $0.id == "library" }?.rows.map(\.item) == [.history])
     #expect(empty.flatMap(\.rows).contains { $0.item == .nowPlaying })
   }
 
@@ -79,8 +79,8 @@ struct SidebarTests {
   func libraryItemsAreDistinct() {
     let items = rows.map(\.item).filter { $0.tab == .library }
 
-    #expect(items.count == library.count)
-    #expect(Set(items).count == library.count)
+    #expect(items.count == library.count + 1)
+    #expect(Set(items).count == library.count + 1)
   }
 
   @Test("Rooms is reachable exactly once")
