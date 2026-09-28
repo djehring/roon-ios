@@ -23,12 +23,32 @@ final class HistoryUITests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Freddie Freeloader"].firstMatch.waitForExistence(timeout: 5))
     let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "Recently played tracks"; screenshot.lifetime = .keepAlways; add(screenshot)
     app.buttons["history-track-demo-history-0"].tap()
-    XCTAssertTrue(app.staticTexts["Choose the recording or edition you want."].waitForExistence(timeout: 5))
-    app.buttons["history-choice-0"].tap()
     XCTAssertTrue(app.buttons["history-Queue"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.buttons["history-choice-0"].exists)
     app.buttons["history-Queue"].tap()
     XCTAssertTrue(app.staticTexts["Queue updated"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.navigationBars["So What"].exists)
+  }
+  @MainActor func testSingleAlbumOpensDirectlyAndBackReturnsToHistory() {
+    let app = openHistory()
+    app.buttons["history-album-demo-history-0"].tap()
+    XCTAssertTrue(app.buttons["history-Play Now"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Freddie Freeloader"].firstMatch.exists)
+    XCTAssertFalse(app.buttons["history-choice-0"].exists)
+    XCTAssertFalse(app.staticTexts["Queue updated"].exists)
+    let screenshot = XCTAttachment(screenshot: app.screenshot())
+    screenshot.name = "One tap to album playback"; screenshot.lifetime = .keepAlways; add(screenshot)
+    app.navigationBars["Kind of Blue"].buttons.firstMatch.tap()
+    XCTAssertTrue(app.buttons["history-album-demo-history-0"].waitForExistence(timeout: 5))
+  }
+  @MainActor func testMultipleEditionsStillRequireAChoice() {
+    let app = openHistory(state: "ambiguous")
+    app.buttons["history-album-demo-history-0"].tap()
+    XCTAssertTrue(app.buttons["history-choice-1"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.buttons["history-Play Now"].exists)
+    app.buttons["history-choice-1"].tap()
+    XCTAssertTrue(app.buttons["history-Play Now"].waitForExistence(timeout: 5))
+    XCTAssertFalse(app.staticTexts["Queue updated"].exists)
   }
   @MainActor func testEmptyAndUnsupportedBridge() {
     var app = openHistory(state: "empty")

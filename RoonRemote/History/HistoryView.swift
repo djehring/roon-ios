@@ -210,6 +210,22 @@ struct HistorySelectionView: View {
   @State private var failure: String?
 
   var body: some View {
+    Group {
+      if failure == nil, let resolution, resolution.choices.count == 1, let choice = resolution.choices.first {
+        // Replace the resolver in place so Back returns straight to history.
+        HistoryMusicView(path: choice.path, title: choice.title)
+      } else {
+        choicesList
+      }
+    }
+    .navigationTitle(kind == .albums ? entry.album : entry.title)
+    #if os(tvOS)
+    .toolbar(.hidden, for: .navigationBar)
+    #endif
+    .task(id: entry.id) { await resolve() }
+  }
+
+  private var choicesList: some View {
     List {
       #if os(tvOS)
       Text(kind == .albums ? entry.album : entry.title).font(.title2).foregroundStyle(Palette.primary)
@@ -229,11 +245,6 @@ struct HistorySelectionView: View {
         }
       } else { ProgressView("Finding music in Roon…") }
     }
-    .navigationTitle(kind == .albums ? entry.album : entry.title)
-    #if os(tvOS)
-    .toolbar(.hidden, for: .navigationBar)
-    #endif
-    .task { await resolve() }
   }
 
   private func resolve() async {
@@ -270,7 +281,7 @@ struct HistoryMusicView: View {
         if page.canImport {
           Section {
             ForEach(["Play Now", "Play Next", "Queue"], id: \.self) { action in
-              Button(action) { store.playHistory(path: path, action: action) }
+              Button(action) { store.playHistory(path: page.path, action: action) }
                 .disabled(store.selectedZoneId.isEmpty)
                 .accessibilityIdentifier("history-\(action)")
             }

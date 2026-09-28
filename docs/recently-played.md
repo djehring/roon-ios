@@ -28,18 +28,25 @@ missed during disconnection cannot be imported. ARC coverage is not promised.
   indistinguishable repeats, manual seeks near the end and long connection gaps
   cannot be classified perfectly. Counts can differ from Roon's history.
 
-Album grouping uses album title, displayed artist and artwork as conservative
-hints. Compilation/classical albums with changing performer labels, or changed
-artwork, can appear as multiple groups. These hints do not establish exact edition
-identity. Plays with no album information remain visible in Tracks.
+Album grouping uses the Core, normalized album title and artwork key. Changing
+track performers or composers does not split an album with matching title and
+artwork. Without artwork, matching display credits are also required. Album cards
+show credits shared by their grouped plays; Tracks retains each play's full
+credits. These are provisional hints, not verified album-artist or edition IDs:
+different artwork stays separate, while editions sharing title and artwork can
+group together. Existing plays are regrouped when read without rewriting history.
+Plays with no album information remain visible in Tracks.
 
 ## Reopening music
 
-Select an album or track to find current Roon candidates. Choose the recording or
-edition, then use Play Now, Play Next or Queue in the selected playback room.
-Album details also allow selecting an individual track. Resolution uses isolated
-browse sessions and fresh keys. Opening history or a candidate never starts music.
-Unavailable items remain in history; no first title-only match is played silently.
+Select an album or track to find current Roon candidates. A single result opens
+directly to its details; multiple results show a recording/edition chooser. The
+bridge skips redundant single-child rows with the same title, stopping at playable
+details or a genuine choice. Play Now, Play Next and Queue remain explicit actions
+in the selected playback room. Album details also allow selecting an individual
+track. Resolution uses isolated browse sessions and fresh keys. Opening history
+or a candidate never starts music. Unavailable items remain in history; no first
+title-only match is played silently.
 
 The screens refresh on entry and while visible every 30 seconds, offer manual
 refresh and load older pages on demand. A failed refresh preserves loaded rows
@@ -121,3 +128,23 @@ and was confirmed in the saved history file.
 Feature validation did not issue real-room playback or queue commands. Repeat,
 transfer and failure scenarios use deterministic fixtures; physical-device
 browsing and replay behaviour remains unverified.
+
+On 28 September 2026, the local bridge was rebuilt and restarted with the album
+grouping correction. All 507 bridge tests across 49 suites and the production
+build passed. Live API verification confirmed that the 21 saved Django Reinhardt
+plays now produce one album card labelled “Django Reinhardt”, instead of 17 cards.
+All 39 plays present before the restart retained their original metadata in both
+the saved history and track API. Existing installed apps receive the correction
+on their next history refresh; no app rebuild or history-file migration is needed.
+
+Later the same day, the direct-opening flow was deployed to the local bridge and
+the signed app was installed on David's iPhone. Live read-only browsing of
+“David Jehring - AI Compilation” returned one matching album and opened its seven
+tracks directly, with a playable track detail on selection. All 516 bridge tests
+across 50 suites passed, along with seven native history tests, four iPhone UI
+tests and the Apple TV remote UI test. Tests cover direct album/track opening,
+Back returning straight to history, multiple-edition choices and explicit queue
+actions. iPhone and TV simulator screenshots were inspected. The phone build
+succeeded and device inspection confirmed the app running from the new install.
+The foreground-launch command timed out while the phone was locked; its installed
+UI was not inspected through Device Hub.
