@@ -62,5 +62,58 @@ final class BrowsePlayback {
     guard !title.contains("queue"), !title.contains("next") else { return false }
     return title == "play" || title.hasPrefix("play ")
       || title == "shuffle" || title.hasPrefix("shuffle ")
+      || title == "start radio"
+  }
+}
+
+/// Executes one collection suffix in the store's serialized browse session.
+enum BrowseTrackPlayback {
+  @MainActor
+  static func play(
+    _ tracks: [BrowseNode],
+    actions: (BrowseNode) async throws -> [BrowseNode],
+    execute: (BrowseNode) async throws -> Void
+  ) async throws {
+    for (index, track) in tracks.enumerated() {
+      try Task.checkCancellation()
+      let available = try await actions(track)
+      func action(named title: String) -> BrowseNode? {
+        available.first {
+          $0.hint == "action" && $0.itemKey != nil
+            && $0.title.compare(title, options: .caseInsensitive) == .orderedSame
+        }
+      }
+      if index == 0, let native = action(named: "Play From Here") {
+        try await execute(native)
+        return
+      }
+      let title = index == 0 ? "Play Now" : "Queue"
+      guard let selected = action(named: title) else {
+        throw RoonAPIError.browseAction("“\(title)” is unavailable for “\(track.listedTitle)”.")
+      }
+      try await execute(selected)
+    }
+  }
+
+  /// Read every page before starting playback; never silently truncate a playlist.
+  static func loadCollection(
+    first: LoadResponse,
+    load: (Int, Int) async throws -> LoadResponse
+  ) async throws -> [BrowseItem] {
+    var items = first.items
+    guard first.offset == 0 else { throw changedCollection }
+    while items.count < first.list.count {
+      let next = try await load(items.count, min(500, first.list.count - items.count))
+      guard next.offset == items.count, next.list.count == first.list.count,
+            next.list.level == first.list.level, next.list.title == first.list.title,
+            !next.items.isEmpty else { throw changedCollection }
+      items += next.items
+    }
+    guard items.count == first.list.count else { throw changedCollection }
+    return items
+  }
+
+  private static var changedCollection: RoonAPIError {
+    .browseAction("The collection changed while loading. Please reopen it and try again.")
   }
 }

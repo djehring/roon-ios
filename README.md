@@ -33,6 +33,11 @@ with the selected room, then opens Now Playing on iPhone, iPad, and Apple TV.
 Queue and Play Next keep the browse screen open. Failed actions show an error
 without navigating away.
 
+On iPhone and iPad, playlist and album track menus include **Play From Here**:
+start the selected track, then queue the remaining tracks in collection order.
+**Play This Track**, **Play Next** and **Add to End** apply to the individual track.
+Less common actions, including **Start Radio**, are under **More…**.
+
 On iPhone and iPad, tap an artist name in Now Playing to open their discography
 in Library. Each performer has a separate link. Album credits are resolved through
 the bridge's read-only music browser so classical recordings can show performers

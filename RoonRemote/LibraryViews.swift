@@ -1,6 +1,91 @@
 import SwiftUI
 import UIKit
 
+/// Labels are presentation only: execute the original Roon node and action title.
+struct BrowseActionPicker: Identifiable {
+  let child: BrowseNode
+  let actions: [BrowseNode]
+  let tracks: [BrowseNode]
+  var id: String { child.id }
+
+  private static let primaryTitles = [["play from here"], ["play now"], ["add next", "play next"], ["queue"]]
+
+  var primaryActions: [BrowseNode] {
+    Self.primaryTitles.compactMap { titles in
+      if !tracks.isEmpty, titles.contains("play from here") { return nil }
+      return actions.first { titles.contains($0.title.lowercased()) }
+    }
+  }
+
+  var moreActions: [BrowseNode] {
+    actions.filter { action in
+      !Self.primaryTitles.contains { $0.contains(action.title.lowercased()) }
+    }
+  }
+
+  func label(for action: BrowseNode) -> String {
+    switch action.title.lowercased() {
+    case "play now" where child.isCollectionTrack: "Play This Track"
+    case "add next", "play next": "Play Next"
+    case "queue": "Add to End"
+    default: action.listedTitle
+    }
+  }
+}
+
+/// A popover supports a real submenu while keeping the everyday actions visible.
+struct BrowseActionsPopover: View {
+  @Environment(\.dismiss) private var dismiss
+  let selection: BrowseActionPicker
+  let playFromHere: () -> Void
+  let run: (BrowseNode) -> Void
+
+  var body: some View {
+    VStack(spacing: 8) {
+      Text(selection.child.listedTitle)
+        .font(.headline)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.bottom, 8)
+      if !selection.tracks.isEmpty {
+        actionButton("Play From Here", action: playFromHere)
+      }
+      ForEach(selection.primaryActions) { action in
+        actionButton(selection.label(for: action)) { run(action) }
+      }
+      if !selection.moreActions.isEmpty {
+        Menu {
+          ForEach(selection.moreActions) { action in
+            Button(selection.label(for: action)) {
+              dismiss()
+              run(action)
+            }
+          }
+        } label: {
+          Label("More…", systemImage: "ellipsis")
+            .frame(maxWidth: .infinity, minHeight: 32)
+        }
+      }
+    }
+    .buttonStyle(.bordered)
+    .buttonBorderShape(.capsule)
+    .controlSize(.large)
+    .tint(Palette.accent)
+    .padding(20)
+    .frame(width: 300)
+    .fixedSize(horizontal: false, vertical: true)
+  }
+
+  private func actionButton(_ title: String, action: @escaping () -> Void) -> some View {
+    Button {
+      dismiss()
+      action()
+    } label: {
+      Text(title).frame(maxWidth: .infinity, minHeight: 32)
+    }
+  }
+}
+
 struct LibraryRootView: View {
   @Environment(MockStore.self) private var store
   @Environment(\.horizontalSizeClass) private var hSize
@@ -140,17 +225,11 @@ struct BrowseListView: View {
   @State private var loading = true
   @State private var prompt = ""
   @State private var jump: Character?
-  @State private var actionPicker: ActionPicker?
+  @State private var actionPicker: BrowseActionPicker?
 
   private static let titlesWithIndex = [
     "Albums", "Artists", "Composers", "My Live Radio", "Playlists", "Tags", "Radios",
   ]
-
-  private struct ActionPicker: Identifiable {
-    let id: String
-    let title: String
-    let actions: [BrowseNode]
-  }
 
   var body: some View {
     ZStack(alignment: .trailing) {
@@ -174,6 +253,17 @@ struct BrowseListView: View {
                 row(child)
                   .id(child.id)
                   .listRowBackground(Palette.surface)
+                  .popover(item: Binding(
+                    get: { actionPicker?.id == child.id ? actionPicker : nil },
+                    set: { actionPicker = $0 }
+                  )) { selection in
+                    BrowseActionsPopover(selection: selection) {
+                      playTracks(selection.tracks)
+                    } run: { action in
+                      run(action, title: action.title)
+                    }
+                    .presentationCompactAdaptation(.popover)
+                  }
               }
             }
             .scrollContentBackground(.hidden)
@@ -206,23 +296,6 @@ struct BrowseListView: View {
         recordingBar
       }
     }
-    .confirmationDialog(
-      actionPicker?.title ?? "Actions",
-      isPresented: Binding(
-        get: { actionPicker != nil },
-        set: { if !$0 { actionPicker = nil } }
-      ),
-      titleVisibility: .visible
-    ) {
-      if let actionPicker {
-        ForEach(actionPicker.actions) { action in
-          Button(action.title) {
-            run(action, title: action.title)
-          }
-        }
-      }
-      Button("Cancel", role: .cancel) { actionPicker = nil }
-    }
   }
 
   private var showsIndex: Bool {
@@ -250,6 +323,12 @@ struct BrowseListView: View {
       } label: {
         rowLabel(child)
       }
+      .contextMenu {
+        if !tracksFrom(child).isEmpty {
+          Button("Play From Here") { playFromTrack(child) }
+        }
+        Button("Actions…") { openActionList(child) }
+      }
     } else if child.itemKey != nil, isPlaylistContents {
       listButton {
         playFromTrack(child)
@@ -258,9 +337,9 @@ struct BrowseListView: View {
       }
       .contextMenu {
         Button("Play From Here") { playFromTrack(child) }
-        Button("Play Now") { run(child, title: "Play Now") }
-        Button("Queue") { run(child, title: "Queue") }
+        Button("Play This Track") { run(child, title: "Play Now") }
         Button("Play Next") { run(child, title: "Play Next") }
+        Button("Add to End") { run(child, title: "Queue") }
         Button("Actions…") { openActionList(child) }
       }
     } else if child.itemKey != nil {
@@ -291,14 +370,22 @@ struct BrowseListView: View {
   }
 
   private func playFromTrack(_ child: BrowseNode) {
-    guard let key = child.itemKey else { return }
+    playTracks(tracksFrom(child))
+  }
+
+  private func tracksFrom(_ child: BrowseNode) -> [BrowseNode] {
+    page.tracksFrom(child, hierarchy: hierarchy, parentKey: itemKey)
+  }
+
+  private func playTracks(_ tracks: [BrowseNode]) {
+    guard let child = tracks.first else { return }
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
       store.finishRecording(actionTitle: "Play From Here", actionIndex: 0)
       return
     }
-    store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
+    store.playLibraryTracks(tracks, hierarchy: hierarchy)
   }
 
   private func openActionList(_ child: BrowseNode) {
@@ -306,12 +393,13 @@ struct BrowseListView: View {
     UIImpactFeedbackGenerator(style: .light).impactOccurred()
     Task {
       let actions = await store.loadItemActions(hierarchy: hierarchy, itemKey: key)
-      if actions.isEmpty {
+      let tracks = tracksFrom(child)
+      if actions.isEmpty, tracks.isEmpty {
         // Fall back to playing if Roon didn't expose a menu.
         store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
         return
       }
-      actionPicker = ActionPicker(id: child.id, title: child.title, actions: actions)
+      actionPicker = BrowseActionPicker(child: child, actions: actions, tracks: tracks)
     }
   }
 

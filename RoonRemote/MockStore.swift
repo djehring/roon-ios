@@ -913,7 +913,13 @@ final class MockStore {
 
   /// Loads the real Roon action rows for an item (handles nested action_list).
   func loadItemActions(hierarchy: String, itemKey: String) async -> [BrowseNode] {
-    await withBrowseSession {
+    #if DEBUG
+    if Self.wantsDemoContent {
+      return demoBrowsePage(hierarchy: hierarchy, itemKey: itemKey, input: nil).items
+        .filter { $0.hint == "action" }
+    }
+    #endif
+    return await withBrowseSession {
       await self.collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0)
     }
   }
@@ -965,6 +971,23 @@ final class MockStore {
     }
   }
 
+  func playLibraryTracks(_ tracks: [BrowseNode], hierarchy: String) {
+    guard let first = tracks.first, let key = first.itemKey else { return }
+    performBrowsePlayback(itemKey: key, actionTitle: "Play From Here", demoTracks: tracks) { zoneId in
+      try await BrowseTrackPlayback.play(tracks) { track in
+        guard let itemKey = track.itemKey else { return [] }
+        return await self.collectActions(hierarchy: hierarchy, itemKey: itemKey, depth: 0, zoneId: zoneId)
+      } execute: { action in
+        guard let itemKey = action.itemKey else { return }
+        _ = try await self.client.browse([
+          "hierarchy": hierarchy,
+          "item_key": itemKey,
+          "zone_or_output_id": zoneId,
+        ])
+      }
+    }
+  }
+
   func playHistory(path: CinemaMusicPath, action: String) {
     performBrowsePlayback(itemKey: "demo-track-so-what", actionTitle: action) { zoneId in
       try await self.client.playHistoryMusic(path, zoneId: zoneId, action: action)
@@ -974,6 +997,7 @@ final class MockStore {
   private func performBrowsePlayback(
     itemKey: String,
     actionTitle: String,
+    demoTracks: [BrowseNode]? = nil,
     operation: @escaping (String) async throws -> Void
   ) {
     // Pin the destination before waiting for the shared browse session. Changing
@@ -986,6 +1010,11 @@ final class MockStore {
         #if DEBUG
         if Self.wantsDemoContent {
           try await self.performDemoBrowseAction(itemKey: itemKey, actionTitle: actionTitle, zoneId: zone.id)
+          if let demoTracks {
+            self.queue = demoTracks.map {
+              QueueItem(id: $0.id, title: $0.title, artist: $0.subtitle ?? "", album: "Kind of Blue", imageKey: $0.imageKey)
+            }
+          }
           return
         }
         #endif
@@ -1248,13 +1277,25 @@ final class MockStore {
         "count": min(max(list.count, 1), 500),
       ]
       let loaded = try await client.load(loadOptions)
-      let nodes = loaded.items.enumerated().map { index, item in
+      let isCollection = loaded.items.contains { ["Play Album", "Play Playlist", "Play Work", "Play Disc"].contains($0.title) }
+        || (["playlists", "albums"].contains(hierarchy) && itemKey != nil && list.hint != "action_list"
+          && loaded.items.contains { $0.hint == "action_list" })
+      let items: [BrowseItem]
+      if isCollection {
+        items = try await BrowseTrackPlayback.loadCollection(first: loaded) { offset, count in
+          try await self.client.load([
+            "hierarchy": hierarchy, "level": list.level, "offset": offset, "count": count,
+          ])
+        }
+      } else {
+        items = loaded.items
+      }
+      let nodes = items.enumerated().map { index, item in
         var node = Self.node(from: item, hierarchy: hierarchy)
         node.musicPath = musicPath?.appending(item, index: loaded.offset + index)
         if let key = item.itemKey, let path = node.musicPath { cinemaBrowsePaths["\(hierarchy)|\(key)"] = path }
         return node
       }
-      let isCollection = loaded.items.contains { ["Play Album", "Play Playlist"].contains($0.title) }
       return BrowsePage(
         title: loaded.list.title,
         items: nodes,

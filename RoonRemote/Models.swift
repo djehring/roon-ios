@@ -65,6 +65,22 @@ struct BrowsePage: Hashable {
   func itemKey(forChildTitled title: String) -> String? {
     items.first { $0.title == title }?.itemKey
   }
+
+  /// Collection controls also have action_list hints, just like track rows.
+  var isMusicCollection: Bool {
+    items.contains { $0.isCollectionControl }
+  }
+
+  func tracksFrom(_ track: BrowseNode, hierarchy: String, parentKey: String?) -> [BrowseNode] {
+    let collection = isMusicCollection
+      || (["playlists", "albums"].contains(hierarchy) && parentKey != nil)
+    guard collection, track.isCollectionTrack,
+          let index = items.firstIndex(where: { $0.id == track.id }) else { return [] }
+    // Keep later disc/work groups so their Queue action includes their tracks.
+    return items[index...].filter {
+      $0.isCollectionTrack || ($0.hint == "list" && $0.itemKey != nil && !$0.isPrompt && !$0.isCollectionControl)
+    }
+  }
 }
 
 /// Resolve fresh browse keys when opened; Roon's item keys belong to a session.
@@ -183,6 +199,16 @@ struct BrowseNode: Identifiable, Hashable {
   var hierarchy: String?
   var hint: String?
   var musicPath: CinemaMusicPath? = nil
+
+  var isCollectionControl: Bool {
+    ["play album", "play playlist", "play work", "play disc", "play all", "shuffle", "shuffle all"]
+      .contains(title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+  }
+
+  var isCollectionTrack: Bool {
+    itemKey != nil && !isPrompt && !isCollectionControl
+      && (hint == "action_list" || hint == nil)
+  }
 }
 
 struct LibraryEntry: Identifiable, Hashable {

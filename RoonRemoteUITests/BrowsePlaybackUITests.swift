@@ -1,6 +1,86 @@
 import XCTest
 
 final class BrowsePlaybackUITests: XCTestCase {
+  @MainActor func testPlaylistActionMenuOffersPlayFromHere() {
+    checkPlayFromHereMenu(hierarchy: "playlists", collection: "A Love Supreme")
+  }
+
+  @MainActor func testAlbumActionMenuOffersPlayFromHere() {
+    checkPlayFromHereMenu(hierarchy: "albums", collection: "1958 Miles")
+  }
+
+  @MainActor private func checkPlayFromHereMenu(hierarchy: String, collection: String) {
+    let app = openTrackMenu(hierarchy: hierarchy, collection: collection)
+    let action = app.buttons["Play From Here"].firstMatch
+    XCTAssertTrue(action.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["Play This Track"].firstMatch.exists)
+    XCTAssertTrue(app.buttons["Play Next"].firstMatch.exists)
+    XCTAssertTrue(app.buttons["Add to End"].firstMatch.exists)
+    XCTAssertTrue(app.buttons["More…"].firstMatch.exists)
+    XCTAssertFalse(app.buttons["Start Radio"].exists)
+    XCTAssertFalse(app.buttons["Play Now"].exists)
+    XCTAssertFalse(app.buttons["Add Next"].exists)
+    capture("Simplified \(hierarchy) track menu")
+    action.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["now-playing-screen"].firstMatch.waitForExistence(timeout: 8))
+    XCTAssertTrue(app.staticTexts["Freddie Freeloader"].exists)
+  }
+
+  @MainActor func testTrackMenuMoreOpensRadio() {
+    let app = openTrackMenu()
+    let more = app.buttons["More…"].firstMatch
+    XCTAssertTrue(more.waitForExistence(timeout: 5))
+    more.tap()
+    let radio = app.buttons["Start Radio"].firstMatch
+    XCTAssertTrue(radio.waitForExistence(timeout: 5))
+    capture("Radio in More menu")
+    radio.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["now-playing-screen"].firstMatch.waitForExistence(timeout: 8))
+  }
+
+  @MainActor func testTrackMenuPlaysJustSelectedTrack() {
+    let app = openTrackMenu()
+    let play = app.buttons["Play This Track"].firstMatch
+    XCTAssertTrue(play.waitForExistence(timeout: 5))
+    play.tap()
+    XCTAssertTrue(app.descendants(matching: .any)["now-playing-screen"].firstMatch.waitForExistence(timeout: 8))
+    XCTAssertTrue(app.staticTexts["Freddie Freeloader"].exists)
+  }
+
+  @MainActor func testTrackMenuPlayNextKeepsBrowseOpen() {
+    checkDeferredTrackAction("Play Next")
+  }
+
+  @MainActor func testTrackMenuAddToEndKeepsBrowseOpen() {
+    checkDeferredTrackAction("Add to End")
+  }
+
+  @MainActor private func checkDeferredTrackAction(_ title: String) {
+    let app = openTrackMenu()
+    let action = app.buttons[title].firstMatch
+    XCTAssertTrue(action.waitForExistence(timeout: 5))
+    action.tap()
+    let feedback = app.descendants(matching: .any)["browse-playback-feedback"].firstMatch
+    XCTAssertTrue(feedback.waitForExistence(timeout: 3))
+    XCTAssertTrue(feedback.waitForNonExistence(timeout: 6))
+    XCTAssertTrue(app.staticTexts["Freddie Freeloader"].exists)
+    XCTAssertFalse(app.buttons["More…"].exists)
+    XCTAssertFalse(app.descendants(matching: .any)["now-playing-screen"].firstMatch.exists)
+  }
+
+  @MainActor private func openTrackMenu(
+    hierarchy: String = "playlists", collection: String = "A Love Supreme"
+  ) -> XCUIApplication {
+    let app = XCUIApplication()
+    app.launchArguments = ["-roon-demo-store"]
+    app.launchEnvironment["ROON_BROWSE_PREVIEW_HIERARCHY"] = hierarchy
+    app.launchEnvironment["ROON_BROWSE_PREVIEW_ACTION_LISTS"] = "1"
+    app.launch()
+    open(collection, in: app)
+    open("Freddie Freeloader", in: app)
+    return app
+  }
+
   @MainActor func testFirstPerformerHasItsOwnDiscographyLink() {
     checkPerformerLink("Alina Ibragimova")
   }

@@ -205,7 +205,8 @@ extension MockStore {
     guard BrowsePlayback.startsPlayback(actionTitle),
           let index = zones.firstIndex(where: { $0.id == zoneId }) else { return }
     let titles = ["So What", "Freddie Freeloader", "Blue in Green", "All Blues", "Flamenco Sketches"]
-    let trackIndex = itemKey.components(separatedBy: "-track-").last.flatMap(Int.init) ?? 0
+    let trackIndex = itemKey.components(separatedBy: "-track-").last?
+      .components(separatedBy: "-").first.flatMap(Int.init) ?? 0
     let title = titles[min(trackIndex, titles.count - 1)]
     zones[index].track = Track(
       id: itemKey, title: title, artist: "Miles Davis", album: "Kind of Blue",
@@ -342,7 +343,10 @@ extension MockStore {
 
     if let itemKey {
       if itemKey.contains("-track-") {
-        return BrowsePage(title: "Track actions", items: ["Play Now", "Queue", "Play Next"].map { title in
+        let actions = ProcessInfo.processInfo.environment["ROON_BROWSE_PREVIEW_ACTION_LISTS"] == "1"
+          ? ["Play Now", "Add Next", "Queue", "Start Radio"]
+          : ["Play Now", "Queue", "Play Next"]
+        return BrowsePage(title: "Track actions", items: actions.map { title in
           BrowseNode(
             id: "\(itemKey)-\(title)", title: title, subtitle: nil, symbol: "play.circle",
             actions: [], isPrompt: false, children: [], itemKey: "\(itemKey)-\(title)",
@@ -378,7 +382,7 @@ extension MockStore {
             itemKey: "\(itemKey)-track-\(index)",
             imageKey: nil,
             hierarchy: hierarchy,
-            hint: nil
+            hint: ProcessInfo.processInfo.environment["ROON_BROWSE_PREVIEW_ACTION_LISTS"] == "1" ? "action_list" : nil
           )
         }
       )

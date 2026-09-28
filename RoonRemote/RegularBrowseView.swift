@@ -14,6 +14,7 @@ struct RegularBrowseView: View {
   @State private var loading = true
   @State private var prompt = ""
   @State private var jump: Character?
+  @State private var actionPicker: BrowseActionPicker?
 
   private static let indexedTitles = [
     "Albums", "Artists", "Composers", "My Live Radio", "Playlists", "Tags", "Radios",
@@ -50,6 +51,17 @@ struct RegularBrowseView: View {
                 ForEach(page.items) { child in
                   cell(child)
                     .id(child.id)
+                    .popover(item: Binding(
+                      get: { actionPicker?.id == child.id ? actionPicker : nil },
+                      set: { actionPicker = $0 }
+                    )) { selection in
+                      BrowseActionsPopover(selection: selection) {
+                        playFromTrack(selection.child)
+                      } run: { action in
+                        run(action, title: action.title)
+                      }
+                      .presentationCompactAdaptation(.popover)
+                    }
                 }
               }
               .padding(28)
@@ -104,6 +116,17 @@ struct RegularBrowseView: View {
         coverLabel(child, playIndicator: true)
       }
       .buttonStyle(.plain)
+    } else if child.hint == "action_list" {
+      Button { openActionList(child) } label: {
+        coverLabel(child)
+      }
+      .buttonStyle(.plain)
+      .contextMenu {
+        if !tracksFrom(child).isEmpty {
+          Button("Play From Here") { playFromTrack(child) }
+        }
+        Button("Actions…") { openActionList(child) }
+      }
     } else if child.itemKey != nil, isPlaylistContents {
       Button {
         playFromTrack(child)
@@ -113,9 +136,9 @@ struct RegularBrowseView: View {
       .buttonStyle(.plain)
       .contextMenu {
         Button("Play From Here") { playFromTrack(child) }
-        ForEach(["Play Now", "Queue", "Play Next"], id: \.self) { action in
-          Button(action) { run(child, title: action) }
-        }
+        Button("Play This Track") { run(child, title: "Play Now") }
+        Button("Play Next") { run(child, title: "Play Next") }
+        Button("Add to End") { run(child, title: "Queue") }
         NavigationLink(value: child) {
           Text("Open")
         }
@@ -242,13 +265,26 @@ struct RegularBrowseView: View {
   }
 
   private func playFromTrack(_ child: BrowseNode) {
-    guard let key = child.itemKey else { return }
+    let tracks = tracksFrom(child)
+    guard !tracks.isEmpty else { return }
     if store.isRecordingAction {
       store.recordBrowseStep(hierarchy: hierarchy, title: child.title)
       store.finishRecording(actionTitle: "Play From Here", actionIndex: 0)
       return
     }
-    store.playLibraryItem(hierarchy: hierarchy, itemKey: key, hint: child.hint)
+    store.playLibraryTracks(tracks, hierarchy: hierarchy)
+  }
+
+  private func tracksFrom(_ child: BrowseNode) -> [BrowseNode] {
+    page.tracksFrom(child, hierarchy: hierarchy, parentKey: itemKey)
+  }
+
+  private func openActionList(_ child: BrowseNode) {
+    guard let key = child.itemKey else { return }
+    Task {
+      let actions = await store.loadItemActions(hierarchy: hierarchy, itemKey: key)
+      actionPicker = BrowseActionPicker(child: child, actions: actions, tracks: tracksFrom(child))
+    }
   }
 
   private func run(_ child: BrowseNode, title: String) {
