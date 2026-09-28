@@ -248,7 +248,7 @@ struct LibraryEntry: Identifiable, Hashable {
   }
 }
 
-struct SuggestedTrack: Identifiable, Hashable {
+struct SuggestedTrack: Identifiable, Hashable, Codable {
   let id: String
   var title: String
   var artist: String

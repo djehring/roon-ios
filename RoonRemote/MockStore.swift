@@ -605,19 +605,10 @@ final class MockStore {
     Task {
       defer { aiLoading = false }
       do {
-        let items = try await client.aiSearch(query: query)
+        let items = try await AIMusicSearch.search(query, using: client.aiSearch)
         guard isCurrentAIQuery(query) else { return }
         aiSearchContext = searchContext
-        aiResults = items.map {
-          SuggestedTrack(
-            id: $0.id,
-            title: RoonDisplayText.format($0.track),
-            artist: RoonDisplayText.format($0.artist),
-            album: RoonDisplayText.format($0.album),
-            error: $0.error,
-            corrected: $0.wasAutoCorrected ?? false
-          )
-        }
+        aiResults = items
       } catch RoonAPIError.missingOpenAI {
         guard isCurrentAIQuery(query) else { return }
         aiError = "OpenAI API key is missing. Add yours in the web Settings."
@@ -814,6 +805,7 @@ final class MockStore {
   }
 
   func playInRoom(query: String, roomName: String, zoneId: String?) async throws -> String {
+    SiriMusicTrace.record("legacy.play", detail: query)
     let zone = try await zoneForSiri(named: roomName, zoneId: zoneId)
     selectZone(zone.id)
     let result: Result<String, Error> = await withBrowseSession {
@@ -823,7 +815,152 @@ final class MockStore {
         return .failure(error)
       }
     }
-    return "Playing \(try result.get()) in \(zone.name)."
+    do {
+      return "Playing \(try result.get()) in \(zone.name)."
+    } catch PlayInRoomError.notFound {
+      // Exact station/album requests retain the existing fast path. Descriptive
+      // music requests use the same AI search as the Search tab.
+      let selection = try await makeSiriMusicSelection(query: query, zone: zone)
+      return try await playSiriMusicSelection(selection)
+    }
+  }
+
+  func playSiriRequest(_ phrase: String) async throws -> String {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let rooms = await waitForZones()
+    let request = PlayRequest.parse(phrase, roomNames: rooms.map(\.name))
+    guard !request.what.isEmpty else { throw SiriMusicError.emptyQuery }
+    let namedRoom = request.room ?? ""
+    guard !namedRoom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      throw SiriMusicError.roomRequired
+    }
+    return try await playInRoom(query: request.what, roomName: namedRoom, zoneId: nil)
+  }
+
+  func showAISearchFromSiri(_ query: String) throws {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !query.isEmpty else { throw SiriMusicError.emptyQuery }
+    guard !aiLoading else { throw SiriMusicError.busy }
+    aiQuery = query
+    searchSegment = .ai
+    selectedTab = .search
+    runAISearch()
+  }
+
+  var siriMusicBridgeScope: String { "\(client.host.lowercased()):\(client.port)" }
+
+  func searchMusicForSiri(_ phrase: String) async throws -> SiriMusicSelection {
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let rooms = await waitForZones()
+    let request = SiriMusicRequest.parse(phrase, roomNames: rooms.map(\.name))
+    // Audio search can arrive without a room, even when Siri extracted one
+    // separately. Defer that choice to the play intent; never assume a zone.
+    let zone = rooms.first { $0.name == request.roomName }
+    if request.isFollowUp {
+      guard var selection = SiriMusicSelections.shared.recentMusicSelection(
+        bridgeScope: siriMusicBridgeScope, roomNames: rooms.map(\.name)) else {
+        throw SiriMusicError.missingMusicContext
+      }
+      selection.id = UUID().uuidString
+      // An unspecified room must still prompt, even if a previous result had one.
+      selection.zoneId = zone?.id ?? ""
+      selection.roomName = zone?.name ?? ""
+      selection.roomWasExplicit = zone != nil
+      try SiriMusicSelections.shared.save(selection)
+      SiriMusicTrace.record("search.followup", detail: "query=\(selection.context.query), room=\(selection.roomName)")
+      return selection
+    }
+    return try await makeSiriMusicSelection(query: request.query, zone: zone)
+  }
+
+  func siriRoomChoices(for selection: SiriMusicSelection) async throws -> [SiriMusicSelection] {
+    guard selection.bridgeScope == siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let rooms = await waitForZones()
+    guard !rooms.isEmpty else { throw PlayInRoomError.noRoom("an available room") }
+    return try rooms.map { room in
+      var choice = selection.inRoom(room)
+      choice.id = "\(selection.id):\(room.id)"
+      try SiriMusicSelections.shared.save(choice)
+      return choice
+    }
+  }
+
+  private func makeSiriMusicSelection(query: String, zone: Zone?) async throws -> SiriMusicSelection {
+    SiriMusicTrace.record("search.started", detail: query)
+    let context = CapsuleSearchContext(query: query.trimmingCharacters(in: .whitespacesAndNewlines))
+    let scope = siriMusicBridgeScope
+    if let selection = SiriMusicSelections.shared.recentSelection(query: context.query, zoneId: zone?.id ?? "", bridgeScope: scope),
+       zone == nil || selection.hasRoom {
+      SiriMusicTrace.record("search.reused", detail: selection.id)
+      return selection
+    }
+    let tracks = try await AIMusicSearch.search(context.query, using: client.aiSearch)
+    guard tracks.contains(where: { $0.error == nil }) else { throw SiriMusicError.noResults }
+    guard scope == siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
+    let selection = SiriMusicSelection(context: context, tracks: tracks, zoneId: zone?.id ?? "",
+      roomName: zone?.name ?? "", bridgeScope: scope, roomWasExplicit: zone != nil)
+    try SiriMusicSelections.shared.save(selection)
+    SiriMusicTrace.record("search.saved", detail: "id=\(selection.id), tracks=\(tracks.count), room=\(selection.roomName)")
+    return selection
+  }
+
+  func playSiriMusicSelection(_ selection: SiriMusicSelection, shuffled: Bool = false) async throws -> String {
+    SiriMusicTrace.record("selection.play", detail: "id=\(selection.id), room=\(selection.roomName)")
+    guard selection.bridgeScope == siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
+    guard selection.hasRoom else { throw SiriMusicError.roomRequired }
+    // Never silently send a resolved request to a different room if its zone
+    // disappeared between search and playback.
+    guard client.isPaired else { throw PlayInRoomError.unpaired }
+    let rooms = await waitForZones()
+    guard let zone = rooms.first(where: { $0.id == selection.zoneId }) else {
+      throw PlayInRoomError.noRoom(selection.roomName)
+    }
+    let tracks = shuffled ? selection.tracks.shuffled() : selection.tracks
+    let requestedAt = Date()
+    let result: Result<AIMusicSearch.Playback, Error> = await withBrowseSession {
+      do {
+        guard selection.bridgeScope == self.siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
+        guard self.client.isPaired else { throw PlayInRoomError.unpaired }
+        SiriMusicTrace.record("bridge.play.send", detail: "tracks=\(tracks.count), room=\(zone.name), state=\(zone.state)")
+        return .success(try await AIMusicSearch.play(tracks, zoneId: zone.id, using: self.client.playTracks))
+      } catch {
+        return .failure(error)
+      }
+    }
+    let playback = try result.get()
+    SiriMusicTrace.record("bridge.play.acknowledged", detail: "room=\(zone.name), state=\(String(describing: zones.first { $0.id == zone.id }?.state))")
+    // Update the screen only after the bridge acknowledges playback. A failed
+    // Siri request must not leave an optimistic, fictional queue on the phone.
+    guard selection.bridgeScope == siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
+    selectZone(zone.id)
+    if !aiLoading {
+      aiQuery = selection.context.query
+      aiSearchContext = selection.context
+      aiResults = playback.tracks
+      aiError = playback.warning
+    }
+    selectedTab = .nowPlaying
+    resumeSync()
+    try await confirmSiriPlayback(zone: zone, tracks: playback.tracks, requestedAt: requestedAt)
+    return playback.dialog(room: zone.name)
+  }
+
+  private func confirmSiriPlayback(zone: Zone, tracks: [SuggestedTrack], requestedAt: Date) async throws {
+    let deadline = Date().addingTimeInterval(10)
+    while Date() < deadline {
+      try Task.checkCancellation()
+      let live = zones.first { $0.id == zone.id }
+      if SiriPlaybackConfirmation.isPlaying(live, tracks: tracks,
+        eventAt: lastZoneEventAt[zone.id], requestedAt: requestedAt) {
+        SiriMusicTrace.record("playback.confirmed", detail: "room=\(zone.name), track=\(live?.track?.title ?? "")")
+        return
+      }
+      try await Task.sleep(for: .milliseconds(250))
+    }
+    SiriMusicTrace.record("playback.unconfirmed", detail: "room=\(zone.name), state=\(String(describing: zones.first { $0.id == zone.id }?.state))")
+    throw SiriMusicError.playbackNotConfirmed(zone.name)
   }
 
   func siriStop(roomName: String) async throws -> String {
@@ -1234,7 +1371,11 @@ final class MockStore {
       return await work()
     }
     browseChain = Task { _ = await task.value }
-    return await task.value
+    return await withTaskCancellationHandler {
+      await task.value
+    } onCancel: {
+      task.cancel()
+    }
   }
 
   private func performLoadLibrary(
@@ -1329,7 +1470,7 @@ final class MockStore {
       client.refreshEvents()
     }
     let deadline = Date().addingTimeInterval(8)
-    while Date() < deadline {
+    while !Task.isCancelled && Date() < deadline {
       if !zones.isEmpty { return zones }
       try? await Task.sleep(nanoseconds: 200_000_000)
     }

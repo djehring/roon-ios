@@ -16,6 +16,7 @@
 		056DD24EC7389942A84B389E /* PersonalCinemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71F7C02FF1B04C5F3B6C1A5A /* PersonalCinemaTests.swift */; };
 		05DDDC42F39E7CCCEDD41AA4 /* TVOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 755E9E17278FFFCC2E1044D1 /* TVOnboarding.swift */; };
 		061161320DB6544DE16650CF /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */; };
+		07C51AF90EF64F291EB10715 /* SiriAIMusicIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EF35C869310D847C4877CB /* SiriAIMusicIntents.swift */; };
 		0954C51BF85B98DF2BAA2F36 /* TVRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B2CC55BE424A41335C8BAD /* TVRootView.swift */; };
 		09995FA90839CD6F1D1D1702 /* RoonAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */; };
 		0AB4F42477FB66F1C1374948 /* TVLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF18A3204F7E657E19AC108 /* TVLibraryView.swift */; };
@@ -50,6 +51,7 @@
 		2959F6DF91D42BDEDB59AE40 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1FC0AA8FB78FCCAF5EC8551 /* PrivacyInfo.xcprivacy */; };
 		29AAE46D67F30BDA2DC59EB3 /* CinemaMusic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E43917E5C91F6D9FE90D861 /* CinemaMusic.swift */; };
 		29B0F3BB91C57B1509C5A44F /* BonjourDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4D92F6106CCC0E905A0665C /* BonjourDiscovery.swift */; };
+		29BFEF18F312253F03FEAADB /* AIMusicSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE928066FBB807D831BBADD /* AIMusicSearch.swift */; };
 		2A30BF94B98ECD289FC764E5 /* CinemaMusicUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49EB00E382EB40733797594F /* CinemaMusicUITests.swift */; };
 		2A6B571BB1CA5A70CECD874C /* CapsuleLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E58B62D2765D22FABDE416E5 /* CapsuleLibraryTests.swift */; };
 		2A9AE1DE061A664A9D73CC97 /* CinemaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABEB803C30FE06CC197A5B /* CinemaView.swift */; };
@@ -85,6 +87,7 @@
 		518C42942E8C682F7AE8886B /* ArtistCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 862DB4C1606718F750059DBF /* ArtistCredits.swift */; };
 		53F9FDE49B1E49BC12906ABF /* HardwareVolumeBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71EC03B5088BBAD08418C3A /* HardwareVolumeBridge.swift */; };
 		54C29928665633135687FD19 /* QueueRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC338DCB0FEC9D8DFCBD55C /* QueueRouting.swift */; };
+		55372C62402A4B4FCA4DBF61 /* AIMusicSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE928066FBB807D831BBADD /* AIMusicSearch.swift */; };
 		556B986E2EB2EB7F7B0DC323 /* NowPlayingSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7846890785230E2E8D58E0 /* NowPlayingSnapshot.swift */; };
 		56E793975247D2ED5ED285F0 /* BrowsePageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C49BA4564B322C892A028BD9 /* BrowsePageTests.swift */; };
 		57CBE797AB5C9E17FE44BCD7 /* BrowsePlaybackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC65859253E32AC8CEA8B12 /* BrowsePlaybackTests.swift */; };
@@ -117,6 +120,7 @@
 		76C977C1C234A31F6F0DC618 /* QueueTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EC1B18319F044EE6619B3D /* QueueTimeline.swift */; };
 		76DB31B8EF594C74123923C1 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		7A0FBEB5B59929468DC9C151 /* CinemaMusicImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED93E98B83E8A8835F39546 /* CinemaMusicImport.swift */; };
+		7A492410C73143F60B6533CF /* PlayRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B537335978A7DE3589DC1C /* PlayRequest.swift */; };
 		7AC09ED290AD85F22720EB1C /* ProgressScrubber.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28ACBD8B098DE0793438E9D /* ProgressScrubber.swift */; };
 		7ADAC6D0BD6135D71E850C95 /* CapsuleOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4E039679FAC978E8045E67 /* CapsuleOptions.swift */; };
 		7C9F6032D7477422E1D2CC5D /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
@@ -126,6 +130,7 @@
 		7EFA04B8021F85702595E754 /* BrowsePlayback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */; };
 		8135F3C33E1EF00080593AE7 /* ArtworkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBCBD324662E2195A39A21D8 /* ArtworkCache.swift */; };
 		81B7BCA662BD061630995D37 /* CinemaView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABEB803C30FE06CC197A5B /* CinemaView.swift */; };
+		820EDC8BE35010E5D7B6D134 /* AIMusicSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE928066FBB807D831BBADD /* AIMusicSearch.swift */; };
 		848FBDCF0BB7D4B7FBB38824 /* CinemaPreparationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ABBEBFDA50D54CA6680BE2 /* CinemaPreparationView.swift */; };
 		8514E9B729B06628FEE83258 /* LibraryDragItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FCB4BC484D2F1B67FCD5DD /* LibraryDragItemTests.swift */; };
 		851A49DC0E10625DD5CEFDAF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DF581B97E58190D5EF87A78B /* PrivacyInfo.xcprivacy */; };
@@ -191,6 +196,7 @@
 		BE56D73B7DB6FB0D2EB510EC /* ArtworkCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E4774198ED6EE2A7CC091C /* ArtworkCacheTests.swift */; };
 		C042F87004F9A17146425B66 /* HistoryRemoteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A8304AF0AB6008A31A0EFD /* HistoryRemoteUITests.swift */; };
 		C12732E1D8796D80B726A673 /* CinemaMusicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 164F759935633686683D6DF1 /* CinemaMusicTests.swift */; };
+		C19BD816110554100BB811A5 /* SiriPlaybackDeviceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 091E1BBF966567C7ACD5AD1C /* SiriPlaybackDeviceTests.swift */; };
 		C1FD1582D39E817F5B87C42F /* RegularRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB6DB94C8CAF2BFA7A1D902 /* RegularRootView.swift */; };
 		C2E1A68A27B6CACE0AAE4535 /* NowPlayingLiveIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11F0BD2C67E729396F6B0979 /* NowPlayingLiveIntents.swift */; };
 		C2E45A18197368D3B1A8F17E /* CinemaResourceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67350631D237B3B7AFB13A3 /* CinemaResourceStore.swift */; };
@@ -211,6 +217,7 @@
 		CE6F7AA711FA455C48D2B3C8 /* FindingServerOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B063D0D84611CF6E27D77DD0 /* FindingServerOverlay.swift */; };
 		CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */; };
 		D1B02C1725D432B9762F1AE0 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F459820289EFC6B23364A416 /* AudioSessionController.swift */; };
+		D21B58742580B18CE9C71919 /* SiriMusicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 240166FBA3FA60BA83254E6A /* SiriMusicTests.swift */; };
 		D25A4AB59E94F987B5A9E742 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F459820289EFC6B23364A416 /* AudioSessionController.swift */; };
 		D37D3912D806B5CDDF28DF40 /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BEEA94089E975DAF57FF098 /* HistoryStore.swift */; };
 		D4238F07083DEC5B7DD9B1A0 /* WatchPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C593B07F14E89605669C1AD /* WatchPayload.swift */; };
@@ -338,6 +345,7 @@
 		02193D8677C817DD999EE3DA /* AudioSessionControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionControllerTests.swift; sourceTree = "<group>"; };
 		037D88745DBE2065752AA96F /* CapsuleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleSetupView.swift; sourceTree = "<group>"; };
 		0790FF8D94CB3CE34A8983CE /* RoonNowPlayingAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonNowPlayingAttributes.swift; sourceTree = "<group>"; };
+		091E1BBF966567C7ACD5AD1C /* SiriPlaybackDeviceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriPlaybackDeviceTests.swift; sourceTree = "<group>"; };
 		0A7E852AEB4C63B4E939283D /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		0B8D4BCCC040545DA881A213 /* CapsuleOptionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsuleOptionsTests.swift; sourceTree = "<group>"; };
 		0D8610898FE4D40197628B10 /* CinemaPhotoSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPhotoSelection.swift; sourceTree = "<group>"; };
@@ -356,6 +364,7 @@
 		2254F0E98B67DCA3883F2838 /* RegularBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularBrowseView.swift; sourceTree = "<group>"; };
 		22E0985147F993FCA13B3969 /* CinemaPlaylistFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CinemaPlaylistFixture.swift; sourceTree = "<group>"; };
 		23BEADFB2D74AE470C4AE825 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
+		240166FBA3FA60BA83254E6A /* SiriMusicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriMusicTests.swift; sourceTree = "<group>"; };
 		25F02FF10E3BCA531255F114 /* PlaybackAdjustment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackAdjustment.swift; sourceTree = "<group>"; };
 		2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2AE17D25F7DC793302FC135B /* MockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockStore.swift; sourceTree = "<group>"; };
@@ -366,6 +375,7 @@
 		2F70D57127C09E4A0FBDD6A2 /* QueueRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueRoutingTests.swift; sourceTree = "<group>"; };
 		2FE78F9BC5159FB96527AFF5 /* RegularRoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegularRoomsView.swift; sourceTree = "<group>"; };
 		30ABB364B1542E468D9C63B0 /* RoonRemoteWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = RoonRemoteWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		30EF35C869310D847C4877CB /* SiriAIMusicIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriAIMusicIntents.swift; sourceTree = "<group>"; };
 		32631C68B5069CAE68BEE9DC /* BrowsePlaybackRemoteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePlaybackRemoteUITests.swift; sourceTree = "<group>"; };
 		34BDEF88D54EB957842C41A5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		356074E80454A0C488C908E2 /* NowPlayingBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingBridge.swift; sourceTree = "<group>"; };
@@ -420,6 +430,7 @@
 		98EC1B18319F044EE6619B3D /* QueueTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueTimeline.swift; sourceTree = "<group>"; };
 		9919DBF9DEB3A6C6A320EBEF /* IdleTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleTimer.swift; sourceTree = "<group>"; };
 		99ECD3DAB268493B2DF132FF /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
+		9AE928066FBB807D831BBADD /* AIMusicSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMusicSearch.swift; sourceTree = "<group>"; };
 		9B2BF1D4054E0C1E47D10C0A /* RoonAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIClient.swift; sourceTree = "<group>"; };
 		9BA6939C7DBEC55B2A85F00E /* BrowsePlayback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsePlayback.swift; sourceTree = "<group>"; };
 		9FC7BA9C09527DA7EA7C2F57 /* RoonAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoonAPIModels.swift; sourceTree = "<group>"; };
@@ -538,6 +549,7 @@
 		1A2719353E2F538E0BADB9E7 /* RoonRemote */ = {
 			isa = PBXGroup;
 			children = (
+				9AE928066FBB807D831BBADD /* AIMusicSearch.swift */,
 				862DB4C1606718F750059DBF /* ArtistCredits.swift */,
 				2AB82B2D1AE6DD3384F3FF82 /* Assets.xcassets */,
 				F459820289EFC6B23364A416 /* AudioSessionController.swift */,
@@ -579,6 +591,7 @@
 				4814FEAE30516219F5ED8F68 /* SearchViews.swift */,
 				AC17B2323BEB8BE438F3955A /* SettingsView.swift */,
 				4DFE2DD36CBC62B27BC389F4 /* Sidebar.swift */,
+				30EF35C869310D847C4877CB /* SiriAIMusicIntents.swift */,
 				4D95DD7D74E22AF215EA4695 /* SiriControlIntents.swift */,
 				2DC1F81F99B1FEDFEFD13C0D /* SiriPlayIntent.swift */,
 				E51E3AD3F461B6BE1891530C /* ZoneTrackSelection.swift */,
@@ -617,6 +630,7 @@
 				E7E1D15DAA5AC9663B2868BE /* SearchSelectionTests.swift */,
 				F3EADAD75C42917803E7433E /* SidebarSelectionTests.swift */,
 				FF3CB1930A45E606D40EB0F3 /* SidebarTests.swift */,
+				240166FBA3FA60BA83254E6A /* SiriMusicTests.swift */,
 				F3C55126C4B0965F44DDAA49 /* TimeCapsuleTests.swift */,
 				5B402678CF4A414C085AB54C /* ZoneTrackSelectionTests.swift */,
 			);
@@ -737,6 +751,7 @@
 				9585880B2ED0C7AD53C6493F /* CinemaPlaylistUITests.swift */,
 				FD62BBBF081BF089615AA1B0 /* CinemaSetupUITests.swift */,
 				DEBE1DCD0C87F3ECC92E2D0A /* HistoryUITests.swift */,
+				091E1BBF966567C7ACD5AD1C /* SiriPlaybackDeviceTests.swift */,
 			);
 			path = RoonRemoteUITests;
 			sourceTree = "<group>";
@@ -1064,6 +1079,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				55372C62402A4B4FCA4DBF61 /* AIMusicSearch.swift in Sources */,
 				518C42942E8C682F7AE8886B /* ArtistCredits.swift in Sources */,
 				1134E0E879601513D081BA55 /* ArtworkCache.swift in Sources */,
 				B658F0C258F3AC48A5E898E3 /* AudioSessionController.swift in Sources */,
@@ -1136,6 +1152,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				820EDC8BE35010E5D7B6D134 /* AIMusicSearch.swift in Sources */,
 				9A6FCF6902A05DB101F50BFF /* ArtistCredits.swift in Sources */,
 				B6F4EF883E07B0B881A7A2EB /* ArtistCreditsTests.swift in Sources */,
 				6D1CC430F193F56AC602C25A /* ArtworkCache.swift in Sources */,
@@ -1174,6 +1191,7 @@
 				939519D57F30A574356F0F40 /* NowPlayingSyncTests.swift in Sources */,
 				BC7DF3FF790105D42FE01E72 /* PersonalCinemaStore.swift in Sources */,
 				056DD24EC7389942A84B389E /* PersonalCinemaTests.swift in Sources */,
+				7A492410C73143F60B6533CF /* PlayRequest.swift in Sources */,
 				B38B7FF3838694CFF40A5768 /* PlaybackAdjustment.swift in Sources */,
 				A1DCC3705F85009C8B41C699 /* PlaybackAdjustmentTests.swift in Sources */,
 				FBF67225AB0CC91ED99F9D98 /* QueueRouting.swift in Sources */,
@@ -1189,6 +1207,7 @@
 				F798550922D3C20CFC3279E9 /* Sidebar.swift in Sources */,
 				ADAAEB9E3406A514F3E6C127 /* SidebarSelectionTests.swift in Sources */,
 				EABD78CB4E0234C91AB75E80 /* SidebarTests.swift in Sources */,
+				D21B58742580B18CE9C71919 /* SiriMusicTests.swift in Sources */,
 				34ED9EF068E109B2FAB39C43 /* TimeCapsule.swift in Sources */,
 				8F9B62B61E0F1AD640ED0E0D /* TimeCapsuleTests.swift in Sources */,
 				C3D764182510F527C23A1BD3 /* ZoneTrackSelection.swift in Sources */,
@@ -1226,6 +1245,7 @@
 				65676D93E85A2F1BA9145029 /* CinemaPlaylistUITests.swift in Sources */,
 				99AA0E200E7E7AC29EE7200A /* CinemaSetupUITests.swift in Sources */,
 				96E848DB7366EDD3C5BC0B6D /* HistoryUITests.swift in Sources */,
+				C19BD816110554100BB811A5 /* SiriPlaybackDeviceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1233,6 +1253,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				29BFEF18F312253F03FEAADB /* AIMusicSearch.swift in Sources */,
 				89BC2795D7CD3B9BB6726B1D /* ArtistCredits.swift in Sources */,
 				4C72C889A6A1C2B5ACB097EE /* ArtworkCache.swift in Sources */,
 				D25A4AB59E94F987B5A9E742 /* AudioSessionController.swift in Sources */,
@@ -1303,6 +1324,7 @@
 				21B60FAF3BB65CB406DF19FC /* SearchViews.swift in Sources */,
 				BE221C540C1A2BAD86000D5C /* SettingsView.swift in Sources */,
 				CF8BDCE49550ABDFED660595 /* Sidebar.swift in Sources */,
+				07C51AF90EF64F291EB10715 /* SiriAIMusicIntents.swift in Sources */,
 				4DDA9AC3B9E5512B205A1467 /* SiriControlIntents.swift in Sources */,
 				480E1D7C7736B63518BFC2D2 /* SiriPlayIntent.swift in Sources */,
 				43062E38FE8FD95A9A6FCA27 /* Theme.swift in Sources */,
@@ -1565,7 +1587,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 37A49A3WRU;
@@ -1630,7 +1652,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 37A49A3WRU;

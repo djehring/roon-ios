@@ -3,7 +3,7 @@ import Foundation
 
 struct PlayInRoomIntent: AudioPlaybackIntent {
   static var title: LocalizedStringResource = "Play in a room"
-  static var description = IntentDescription("Play a radio station, album, or playlist on a Roon zone.")
+  static var description = IntentDescription("Play a radio station or album, or find music with AI Search, in a Roon room.")
   static var openAppWhenRun = false
 
   @Parameter(
@@ -18,18 +18,18 @@ struct PlayInRoomIntent: AudioPlaybackIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    let parsed = PlayRequest.parse(request.id)
-    let spoken = try await MockStore.shared.playInRoom(
-      query: parsed.what,
-      roomName: parsed.room ?? "",
-      zoneId: nil
-    )
+    SiriMusicTrace.record("shortcut.play", detail: request.id)
+    let parsed = PlayRequest.parse(request.id, roomNames: await RoonSiriSupport.roomNames())
+    guard parsed.room != nil else {
+      throw $request.needsValueError("What should I play, and in which room? For example, jazz in Office.")
+    }
+    let spoken = try await MockStore.shared.playSiriRequest(request.id)
     return .result(dialog: IntentDialog(stringLiteral: spoken))
   }
 }
 
 struct PlayUtteranceEntity: AppEntity {
-  static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Station or album")
+  static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Music request")
   static var defaultQuery = PlayUtteranceQuery()
 
   var id: String
@@ -92,6 +92,16 @@ struct RoonShortcuts: AppShortcutsProvider {
   static var shortcutTileColor: ShortcutTileColor { .navy }
 
   static var appShortcuts: [AppShortcut] {
+    AppShortcut(
+      intent: SearchAIMusicIntent(),
+      phrases: [
+        "Search music with \(.applicationName)",
+        "Find music with \(.applicationName)",
+        "AI search in \(.applicationName)",
+      ],
+      shortTitle: "Search music",
+      systemImageName: "sparkle.magnifyingglass"
+    )
     AppShortcut(
       intent: PlayInRoomIntent(),
       phrases: [

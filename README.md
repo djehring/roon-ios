@@ -69,20 +69,61 @@ Now Playing is full-bleed cover:
 
 ## Siri
 
-In Shortcuts, open **Roon Remote** and turn on Siri for each shortcut you want
-(Play in a room, Increase volume, Decrease volume, Stop, Play or pause, Next
-track, Previous track, Mute, Unmute). After that:
+House Remote controls playback on Roon equipment. Siri music requests use the
+bridge's AI Search, then send its track list and the named room's zone ID back
+to the bridge. The music plays in that Roon room, not on the iPhone.
 
-> Hey Siri, play Radio 3 in the Kitchen with Roon Remote
-> Hey Siri, turn it up with Roon Remote
-> Hey Siri, stop with Roon Remote
-> Hey Siri, skip with Roon Remote
+On iOS 27, House Remote exposes AI music search and playback to Siri AI using
+Apple's [audio search and playback integration](https://developer.apple.com/documentation/mediaintents/responding-to-audio-search-and-playback-requests).
+Siri's music query goes to the same bridge AI Search used in the app. The returned
+tracks are kept as one collection so a request can play the entire result list.
+**Current status:** the new Siri AI conversation has reached House Remote's AI
+search, presented its Roon room list, and submitted the tracks to the bridge for
+Office. The user confirmed working playback. Spotify is not used or required. See the
+[verification record](docs/siri-ai.md#device-verification).
+
+The verified flow in the **Siri AI conversation interface** is:
+
+> Play British jazz from the 1960s using House Remote.
+
+Then choose the Roon room from the list. Including the room in the initial
+sentence has not yet proved reliable in Siri AI.
+
+Room follow-ups such as **“Play that in Office”** reuse the recent music results
+for up to five minutes. The app strips its own name from complete utterances so
+“in Office with House Remote” still identifies Office. Without recent music,
+a room-only request asks for the music rather than generating unrelated results.
+
+Search opens the AI Search tab for review without starting playback. Playback
+requires an explicit Roon room. If no room reaches House Remote, the play handler
+presents the available rooms before playback. The app never substitutes its
+currently selected room. The chosen room must still be available when playback starts.
+
+The older **House Remote** App Shortcuts remain available on iOS 18 and later.
+They are a separate integration from the Siri AI conversation interface and include **Search
+music** and **Play in a room**, plus volume, stop, play/pause, next/previous track,
+and mute controls. Use **Search music with House Remote** and answer Siri's music
+request prompt. **Play in a room** tries the existing station/album lookup first,
+then AI Search if nothing matches.
+
+> Hey Siri, play Radio 3 in the Kitchen with House Remote
+> Hey Siri, turn it up with House Remote
+> Hey Siri, stop with House Remote
+> Hey Siri, skip with House Remote
 
 Add a room for a different zone than the phone, for example "turn it up in the
-Kitchen with Roon Remote". Volume moves about 10% of that output's range.
+Kitchen with House Remote". Volume moves about 10% of that output's range.
 
-The phone needs to be unlocked on the same Wi-Fi as the bridge. "with Roon"
-can hit the official Roon app or the Watch instead.
+Pair the phone first and keep it on the same network as the bridge. AI requests
+need the bridge's OpenAI API key, just like in-app AI Search; Apple Intelligence
+does not replace that service. Opening search may require unlocking the phone.
+"with Roon" can hit the official Roon app or the Watch instead.
+
+Siri AI playback currently supports play-now and shuffled result lists. Queue
+insertion and repeat requests report that they are unsupported. Requests without
+music details and media URLs return no suggested collection. Recent Siri results
+are stored locally (up to 20 searches), scoped to the bridge, so playback does
+not generate a different list. See [device verification](docs/siri-ai.md).
 
 ## Apple TV
 

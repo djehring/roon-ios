@@ -13,7 +13,7 @@ settings:
   STRING_CATALOG_GENERATE_SYMBOLS: YES
   SWIFT_VERSION: "5.0"
   MARKETING_VERSION: "1.0.0"
-  CURRENT_PROJECT_VERSION: 4
+  CURRENT_PROJECT_VERSION: 6
   DEVELOPMENT_TEAM: 37A49A3WRU
   CODE_SIGN_STYLE: Automatic
   INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
@@ -153,6 +153,8 @@ targets:
       - path: RoonRemote/API/RoonAPIModels.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
+      - path: RoonRemote/AIMusicSearch.swift
+      - path: Shared/PlayRequest.swift
       - path: RoonRemote/Cinema/CinemaMusic.swift
       - path: RoonRemote/Cinema/TimeCapsule.swift
       - path: RoonRemote/Cinema/CapsuleOptions.swift
@@ -321,6 +323,7 @@ targets:
         type: file
       - path: RoonRemote/SearchSelection.swift
         type: file
+      - path: RoonRemote/AIMusicSearch.swift
       - path: RoonRemote/API
     settings:
       base:

@@ -8,7 +8,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    SiriMusicTrace.record("app.started", detail: "build=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") ?? "")")
     NowPlayingBridge.registerLiveActivityActions()
+    RoonShortcuts.updateAppShortcutParameters()
     PhoneWatchSync.shared.activate()
     // Don't call INPreferences here: it requires com.apple.developer.siri, and
     // crashing at launch is worse than deferring Siri auth until the user uses it.
@@ -60,6 +62,7 @@ final class PlayMediaHandler: NSObject, INPlayMediaIntentHandling {
     for intent: INPlayMediaIntent
   ) async -> [INPlayMediaMediaItemResolutionResult] {
     let phrase = Self.phrase(from: intent)
+    SiriMusicTrace.record("sirikit.resolve", detail: phrase)
     let item = INMediaItem(
       identifier: phrase,
       title: phrase.isEmpty ? "House Remote" : phrase,
@@ -71,18 +74,16 @@ final class PlayMediaHandler: NSObject, INPlayMediaIntentHandling {
   }
 
   func handle(intent: INPlayMediaIntent) async -> INPlayMediaIntentResponse {
-    let parsed = PlayRequest.parse(Self.phrase(from: intent))
-    guard !parsed.what.isEmpty else {
+    let phrase = Self.phrase(from: intent)
+    SiriMusicTrace.record("sirikit.play", detail: phrase)
+    guard !phrase.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
       return INPlayMediaIntentResponse(code: .failure, userActivity: nil)
     }
     do {
-      _ = try await MockStore.shared.playInRoom(
-        query: parsed.what,
-        roomName: parsed.room ?? "",
-        zoneId: nil
-      )
+      _ = try await MockStore.shared.playSiriRequest(phrase)
       return INPlayMediaIntentResponse(code: .success, userActivity: nil)
     } catch {
+      SiriMusicTrace.record("sirikit.error", detail: error.localizedDescription)
       return INPlayMediaIntentResponse(code: .failure, userActivity: nil)
     }
   }
