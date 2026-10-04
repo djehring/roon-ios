@@ -41,7 +41,14 @@ Plays with no album information remain visible in Tracks.
 
 Select an album or track to find current Roon candidates. A single result opens
 directly to its details; multiple results show a recording/edition chooser. The
-bridge skips redundant single-child rows with the same title, stopping at playable
+lookup matches the original full title and narrows results using saved artwork
+and artist credits. When a remaster suffix prevents Roon search from finding the
+item, it retries a shorter query but still requires the full recorded title;
+another remaster is not substituted. Album artwork can match even when its album
+credits differ from the recorded track's performer or composer. These remain
+metadata matches rather than permanent recording IDs.
+
+The bridge skips redundant single-child rows with the same title, stopping at playable
 details or a genuine choice. Play Now, Play Next and Queue remain explicit actions
 in the selected playback room. Album details also allow selecting an individual
 track. Resolution uses isolated browse sessions and fresh keys. Opening history
@@ -148,3 +155,15 @@ actions. iPhone and TV simulator screenshots were inspected. The phone build
 succeeded and device inspection confirmed the app running from the new install.
 The foreground-launch command timed out while the phone was locked; its installed
 UI was not inspected through Device Hub.
+
+On 4 October 2026, live read-only checks reproduced an empty album result for
+“Young Americans (2016 Remaster)”: Roon found the exact album only when searched
+as “Young Americans”. The bridge now retries without the remaster suffix while
+retaining full-title matching, and uses artwork and credits to narrow history
+candidates. All 527 bridge tests across 50 suites, TypeScript checks, changed-file
+lint and the production build passed. After updating the local bridge, the saved
+album resolved to David Bowie's remaster and opened its eight tracks. Its recorded
+“Fascination” track and three Cara Dillon history entries each opened a matching
+track detail; the Cara Dillon entries previously offered unrelated artists too.
+All 183 existing history entries survived the restart. Verification used resolve
+and browse requests without playback or queue actions; no native rebuild was needed.
