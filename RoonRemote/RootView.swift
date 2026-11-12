@@ -38,6 +38,11 @@ struct RootView: View {
     .modifier(CinemaPresentation())
     .animation(Motion.sheet, value: store.sessionLabel)
     .animation(.easeOut(duration: 0.18), value: store.volumeHUD)
+    .onChange(of: hSize) {
+      for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+        scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+      }
+    }
   }
 }
 

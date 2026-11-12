@@ -12,11 +12,17 @@ struct RegularNowPlayingView: View {
     GeometryReader { geometry in
       let mode = RegularNowPlayingLayout.mode(for: geometry.size)
 
-      ZStack(alignment: .top) {
-        content(mode: mode, width: geometry.size.width)
-        topControls
-          .padding(.horizontal, 24)
-          .padding(.top, 12)
+      Group {
+        if let folded = foldedLayout(geometry) {
+          foldedContent(folded)
+        } else {
+          ZStack(alignment: .top) {
+            content(mode: mode, width: geometry.size.width)
+            topControls
+              .padding(.horizontal, 24)
+              .padding(.top, 12)
+          }
+        }
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
       // The ambience is a background rather than a stack sibling. A
@@ -54,6 +60,50 @@ struct RegularNowPlayingView: View {
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .padding(48)
     }
+  }
+
+  private func foldedLayout(_ geometry: GeometryProxy) -> FoldedNowPlayingLayout? {
+    guard #available(iOS 27.1, *),
+          let fold = geometry.reservedRegions(kind: .division).first
+    else { return nil }
+    return FoldedNowPlayingLayout(container: geometry.size, fold: fold.frame)
+  }
+
+  @ViewBuilder
+  private func foldedContent(_ layout: FoldedNowPlayingLayout) -> some View {
+    switch layout.pose {
+    case .tabletop:
+      VStack(spacing: 0) {
+        artwork(width: layout.artWidth)
+          .frame(maxWidth: .infinity)
+          .frame(height: layout.artRegion.height)
+        Color.clear.frame(height: layout.foldThickness)
+        foldedControls(alignment: .center)
+          .frame(height: layout.controlsRegion.height)
+      }
+    case .book:
+      HStack(spacing: 0) {
+        artwork(width: layout.artWidth)
+          .frame(width: layout.artRegion.width)
+          .frame(maxHeight: .infinity)
+        Color.clear.frame(width: layout.foldThickness)
+        foldedControls(alignment: .leading)
+          .frame(width: layout.controlsRegion.width)
+      }
+    }
+  }
+
+  private func foldedControls(alignment: HorizontalAlignment) -> some View {
+    ScrollView {
+      VStack(alignment: alignment, spacing: 22) {
+        topControls
+        controls(alignment: alignment)
+      }
+      .frame(maxWidth: 620)
+      .padding(24)
+      .frame(maxWidth: .infinity)
+    }
+    .scrollBounceBehavior(.basedOnSize)
   }
 
   private var topControls: some View {

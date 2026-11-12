@@ -73,6 +73,42 @@ enum RegularNowPlayingLayout: Equatable {
   }
 }
 
+/// Now Playing split around the fold of a half-closed iPhone Duo. Artwork takes
+/// the region away from the hand, top on a table or leading like a book, and
+/// every control moves to the other region, clear of the crease.
+struct FoldedNowPlayingLayout: Equatable {
+  enum Pose: Equatable {
+    case tabletop
+    case book
+  }
+
+  let pose: Pose
+  let artRegion: CGSize
+  let controlsRegion: CGSize
+  let foldThickness: CGFloat
+
+  init?(container: CGSize, fold: CGRect) {
+    if fold.width >= fold.height {
+      pose = .tabletop
+      artRegion = CGSize(width: container.width, height: fold.minY)
+      controlsRegion = CGSize(width: container.width, height: container.height - fold.maxY)
+      foldThickness = fold.height
+    } else {
+      pose = .book
+      artRegion = CGSize(width: fold.minX, height: container.height)
+      controlsRegion = CGSize(width: container.width - fold.maxX, height: container.height)
+      foldThickness = fold.width
+    }
+    guard artRegion.width > 0, artRegion.height > 0,
+          controlsRegion.width > 0, controlsRegion.height > 0
+    else { return nil }
+  }
+
+  var artWidth: CGFloat {
+    max(0, min(520, artRegion.width - 64, artRegion.height - 64))
+  }
+}
+
 enum RegularShellLayout {
   static let persistentSidebarMinimumWidth: CGFloat = 1100
 

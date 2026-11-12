@@ -34,6 +34,16 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
   }
 
+  /// The compact tab layout is portrait-only. A regular-width iPhone window,
+  /// the unfolded iPhone Duo, turns with the device like an iPad.
+  func application(
+    _ application: UIApplication,
+    supportedInterfaceOrientationsFor window: UIWindow?
+  ) -> UIInterfaceOrientationMask {
+    guard UIDevice.current.userInterfaceIdiom == .phone else { return .all }
+    return window?.traitCollection.horizontalSizeClass == .regular ? .allButUpsideDown : .portrait
+  }
+
   func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
     if intent is INPlayMediaIntent {
       return PlayMediaHandler()

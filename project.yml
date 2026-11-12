@@ -90,9 +90,12 @@ targets:
           - _roon-web-stack._tcp
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-        UIRequiresFullScreen: true
+        # Landscape is declared for the unfolded iPhone Duo. AppDelegate keeps
+        # compact iPhone windows in portrait.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

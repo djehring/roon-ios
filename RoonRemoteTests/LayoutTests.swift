@@ -119,6 +119,44 @@ struct LayoutTests {
     )
   }
 
+  @Test("a fold across the display puts artwork above the controls")
+  func tabletopFold() throws {
+    let layout = try #require(
+      FoldedNowPlayingLayout(
+        container: CGSize(width: 900, height: 700),
+        fold: CGRect(x: 0, y: 340, width: 900, height: 20)
+      )
+    )
+    #expect(layout.pose == .tabletop)
+    #expect(layout.artRegion == CGSize(width: 900, height: 340))
+    #expect(layout.controlsRegion == CGSize(width: 900, height: 340))
+    #expect(layout.artWidth == 276, "artwork must fit inside the region above the fold")
+  }
+
+  @Test("a fold down the display puts artwork beside the controls")
+  func bookFold() throws {
+    let layout = try #require(
+      FoldedNowPlayingLayout(
+        container: CGSize(width: 700, height: 900),
+        fold: CGRect(x: 340, y: 0, width: 20, height: 900)
+      )
+    )
+    #expect(layout.pose == .book)
+    #expect(layout.artRegion == CGSize(width: 340, height: 900))
+    #expect(layout.controlsRegion == CGSize(width: 340, height: 900))
+    #expect(layout.artWidth == 276)
+  }
+
+  @Test("a fold at the container edge leaves nothing to split")
+  func foldAtEdge() {
+    #expect(
+      FoldedNowPlayingLayout(
+        container: CGSize(width: 900, height: 700),
+        fold: CGRect(x: 0, y: 0, width: 900, height: 20)
+      ) == nil
+    )
+  }
+
   @Test("regular onboarding is capped to a readable card")
   func regularOnboardingWidth() {
     #expect(Layout.onboardingContentWidth(.regular) == 620)
