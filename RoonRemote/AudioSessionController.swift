@@ -67,6 +67,7 @@ final class AudioSessionController: @unchecked Sendable {
   }
 
   func interruption(began: Bool, shouldResume: Bool) {
+    NowPlayingDiagnostics.record("audio.interruption", detail: "began=\(began) resume=\(shouldResume)")
     queue.async {
       self.interrupted = began || !shouldResume
       self.activeMode = nil
@@ -76,6 +77,7 @@ final class AudioSessionController: @unchecked Sendable {
   }
 
   func mediaServicesReset() {
+    NowPlayingDiagnostics.record("audio.reset")
     queue.async {
       self.driver.reset()
       self.activeMode = nil

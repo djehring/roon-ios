@@ -37,7 +37,7 @@ struct SnapshotProvider: TimelineProvider {
     return SnapshotEntry(
       date: Date(),
       snapshot: snapshot,
-      cover: defaults?.data(forKey: WatchShared.coverKey)
+      cover: snapshot.coverJPEG ?? defaults?.data(forKey: WatchShared.coverKey)
     )
   }
 }

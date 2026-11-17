@@ -24,6 +24,7 @@ final class NowPlayingBridge {
   }
 
   private var lastPublication: Publication?
+  private var lastDiagnosticIdentity: String?
   private var wantsPublish = false
   private var worker: Task<Void, Never>?
 
@@ -94,6 +95,11 @@ final class NowPlayingBridge {
   }
 
   private func apply(snapshot: NowPlayingSnapshot, store: MockStore) {
+    let identity = "\(snapshot.zoneName) | \(snapshot.title) | \(snapshot.artist) | playing=\(snapshot.isPlaying)"
+    if identity != lastDiagnosticIdentity {
+      lastDiagnosticIdentity = identity
+      NowPlayingDiagnostics.record("nowPlaying.received", detail: identity)
+    }
     let track = snapshot.track
     let art = artworkData(for: track, store: store)
     let publication = Publication(snapshot: snapshot, artwork: art)

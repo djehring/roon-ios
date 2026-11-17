@@ -94,6 +94,12 @@ entity resolution, and playback in the main app, where bridge pairing lives.
 
 Verified boundaries:
 
+- A later user request for top Paul Simon hits in Office failed without showing
+  a room list. At 19:43 BST, the trace recorded searches for `top Paul Simon tunes`
+  and `Paul Simon`, each returning ten tracks, but no collection resolution,
+  play-handler invocation, or bridge playback command. The user then confirmed
+  that omitting the room worked. This supports using the subsequent room list;
+  the cause of Siri's different routing with an initial room remains unproven.
 - At 19:12 BST, a fresh conversation in the new Siri AI app received
   `Play British jazz from the 1960s using House Remote.` The trace shows the full
   description reaching AI Search, followed by `collection.resolve`,
@@ -155,8 +161,14 @@ has not been separately verified.
   `TEST_RUNNER_ROON_SIRI_AI_REQUEST`, and optionally set
   `TEST_RUNNER_ROON_SIRI_AI_NEW=1` to create a fresh conversation. Set
   `TEST_RUNNER_ROON_SIRI_INDEX_WAIT=25` when checking asynchronous registration after
-  installing a build. The diagnostic captures a screenshot; passing XCTest only
-  means that automation completed, not that Siri played anything.
+  installing a build. The diagnostic leaves House Remote's launch to Siri by
+  default, to avoid XCTest terminating it during playback. Set
+  `TEST_RUNNER_ROON_SIRI_LAUNCH_APP=1` only when explicitly testing app launch.
+  `TEST_RUNNER_ROON_SIRI_RESPONSE_WAIT` controls the observation time (90 seconds
+  by default, capped at 300). The diagnostic captures a screenshot; passing XCTest
+  only means that automation completed, not that Siri played anything. The latest
+  Paul Simon automation stopped before sending its request because Siri exposed
+  multiple prompt fields; the successful roomless request was user-confirmed.
 - `testNativeAudioIntentPlayback` uses `AppIntentsTesting`, independently of Siri's
   language routing. Enable `TEST_RUNNER_ROON_NATIVE_AUDIO_TEST=1`. This really plays
   music; its default request names Office. Override `TEST_RUNNER_ROON_SIRI_REQUEST`

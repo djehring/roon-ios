@@ -10,6 +10,10 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   private weak var store: MockStore?
   private var lastEncoded: Data?
   private var lastWakeKey: String?
+  private static let publicationDateKey = "watchPublicationDate"
+  private var publication = WatchSnapshotPublication(
+    lastDate: UserDefaults.standard.object(forKey: publicationDateKey) as? Date ?? .distantPast
+  )
 
   func activate(store: MockStore? = nil) {
     if let store { self.store = store }
@@ -22,7 +26,11 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
   @MainActor
   func publish() {
     guard let store else { return }
-    let snapshot = Self.snapshot(from: store)
+    let previousDate = publication.lastDate
+    let snapshot = publication.stamp(Self.snapshot(from: store))
+    if publication.lastDate != previousDate {
+      UserDefaults.standard.set(publication.lastDate, forKey: Self.publicationDateKey)
+    }
     guard let data = try? JSONEncoder().encode(snapshot) else { return }
     let payload = [WatchMessageKey.snapshot: data]
     let session = WCSession.default
@@ -45,24 +53,20 @@ final class PhoneWatchSync: NSObject, WCSessionDelegate {
       }
       lastWakeKey = nil
     } else {
-      _ = wakeWatchIfPlaying(session, snapshot: snapshot, payload: payload)
+      _ = wakeWatchForChange(session, snapshot: snapshot, payload: payload)
     }
   }
 
   /// `transferUserInfo` launches the Watch app in the background when it is not
-  /// already in the foreground. Only fire on play / track changes so volume ticks
+  /// already in the foreground. Only fire on playback / track changes so volume ticks
   /// do not queue a pile of transfers.
-  private func wakeWatchIfPlaying(
+  private func wakeWatchForChange(
     _ session: WCSession,
     snapshot: WatchSnapshot,
     payload: [String: Any]
   ) -> Bool {
     guard session.isPaired, session.isWatchAppInstalled else { return false }
-    guard snapshot.isPlaying else {
-      lastWakeKey = nil
-      return false
-    }
-    let wakeKey = "\(snapshot.zoneId)|\(snapshot.title ?? "")|\(snapshot.imageKey ?? "")"
+    let wakeKey = "\(snapshot.zoneId)|\(snapshot.title ?? "")|\(snapshot.artist ?? "")|\(snapshot.imageKey ?? "")|\(snapshot.isPlaying)|\(snapshot.sessionReady)"
     guard wakeKey != lastWakeKey else { return false }
     lastWakeKey = wakeKey
     session.outstandingUserInfoTransfers.forEach { $0.cancel() }

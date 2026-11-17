@@ -189,18 +189,12 @@ struct VolumeSheet: View {
             } else {
               HStack {
                 Button {
+                  UIImpactFeedbackGenerator(style: .light).impactOccurred()
                   store.toggleMute(output)
                 } label: {
                   Image(systemName: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                 }
-                Slider(
-                  value: Binding(
-                    get: { output.volume },
-                    set: { store.setVolume(output, value: $0) }
-                  ),
-                  in: output.min...max(output.max, output.min + 1)
-                )
-                .tint(Palette.accent)
+                VolumeSlider(output: output)
                 Text("\(Int(output.volume))")
                   .foregroundStyle(Palette.secondary)
                   .frame(width: 36, alignment: .trailing)
@@ -216,6 +210,33 @@ struct VolumeSheet: View {
       .navigationBarTitleDisplayMode(.inline)
     }
     .presentationBackground(Palette.background)
+  }
+}
+
+/// Zone volume slider. Ticks once each time the displayed number changes.
+/// The setter runs only for a drag, so a remote volume update stays silent.
+struct VolumeSlider: View {
+  @Environment(MockStore.self) private var store
+  let output: Output
+
+  @State private var feedback = UISelectionFeedbackGenerator()
+
+  var body: some View {
+    Slider(
+      value: Binding(
+        get: { output.volume },
+        set: { newValue in
+          if Int(newValue) != Int(output.volume) {
+            feedback.selectionChanged()
+            feedback.prepare()
+          }
+          store.setVolume(output, value: newValue)
+        }
+      ),
+      in: output.min...max(output.max, output.min + 1)
+    )
+    .tint(Palette.accent)
+    .onAppear { feedback.prepare() }
   }
 }
 

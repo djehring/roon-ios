@@ -44,8 +44,17 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        Debug:
+          APNS_ENVIRONMENT: sandbox
+          APS_ENVIRONMENT: development
+        Release:
+          APNS_ENVIRONMENT: production
+          APS_ENVIRONMENT: production
     entitlements:
       path: RoonRemote/RoonRemote.entitlements
+      properties:
+        aps-environment: $(APS_ENVIRONMENT)
     info:
       path: RoonRemote/Info.plist
       properties:
@@ -84,6 +93,8 @@ targets:
           House Remote lets you choose a photo album for a personal
           Cinema montage saved on this device.
         NSSupportsLiveActivities: true
+        RoonPushEnvironment: $(APNS_ENVIRONMENT)
+        NSSupportsLiveActivitiesFrequentUpdates: true
         UIBackgroundModes:
           - audio
         NSBonjourServices:
@@ -138,6 +149,8 @@ targets:
       - path: Shared/ArtworkCache.swift
       - path: Shared/CoverScreensaver.swift
       - path: Shared/FindingServerGate.swift
+      - path: Shared/WatchPayload.swift
+      - path: Shared/WatchSnapshotDelivery.swift
       - path: RoonRemote/Layout.swift
       - path: RoonRemote/LibraryIndex.swift
       - path: RoonRemote/Models.swift
@@ -145,6 +158,8 @@ targets:
       - path: RoonRemote/LibraryDragItem.swift
       - path: RoonRemote/PlaybackAdjustment.swift
       - path: RoonRemote/AudioSessionController.swift
+      - path: RoonRemote/NowPlayingDiagnostics.swift
+      - path: RoonRemote/LiveActivityDelivery.swift
       - path: RoonRemote/BrowsePlayback.swift
       - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/QueueTimeline.swift
@@ -309,6 +324,7 @@ targets:
       - path: RoonRemote/NowPlayingBridge.swift
       - path: RoonRemote/NowPlayingSnapshot.swift
       - path: RoonRemote/AudioSessionController.swift
+      - path: RoonRemote/NowPlayingDiagnostics.swift
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/DemoStore.swift
       - path: RoonRemote/Cinema

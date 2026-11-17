@@ -107,6 +107,7 @@ final class MockStore {
   private var holdPinnedUntil: Date?
   private var lastEventAt: Date? = Date()
   private var lastZoneEventAt: [String: Date] = [:]
+  var selectedZoneUpdatedAt: Date? { lastZoneEventAt[selectedZoneId] }
   private var lastLivenessRefreshAt: Date?
   private var livenessTask: Task<Void, Never>?
   private var holdQueueUntil: Date?
@@ -156,6 +157,7 @@ final class MockStore {
       Task { @MainActor in self?.applyConfig(config) }
     }
     client.onEventsFailed = { [weak self] error in
+      NowPlayingDiagnostics.record("events.failed", detail: error.localizedDescription)
       Task { @MainActor in self?.discoveryError = error.localizedDescription }
     }
     client.onHeartbeat = { [weak self] in
@@ -326,6 +328,7 @@ final class MockStore {
 
   func resumeSync() {
     guard client.isPaired, session == .main else { return }
+    NowPlayingDiagnostics.record("events.reconnect")
     lastLivenessRefreshAt = Date()
     client.refreshEvents()
   }
@@ -502,6 +505,11 @@ final class MockStore {
       maximum: output.max,
       delta: delta
     )
+    #if os(iOS)
+    if abs(next - output.volume) >= 0.5 {
+      UISelectionFeedbackGenerator().selectionChanged()
+    }
+    #endif
     setVolume(output, value: next)
     flashVolumeHUD(for: output, value: next)
   }

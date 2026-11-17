@@ -24,6 +24,8 @@ struct WatchQueueRow: Codable, Hashable, Identifiable {
 }
 
 struct WatchSnapshot: Codable, Hashable {
+  /// Assigned by the phone; shared by all delivery channels for this publication.
+  var updatedAt: Date? = nil
   var sessionReady: Bool
   var zoneId: String
   var zoneName: String
@@ -85,6 +87,7 @@ struct WatchSnapshot: Codable, Hashable {
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
+    updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
     sessionReady = try container.decode(Bool.self, forKey: .sessionReady)
     zoneId = try container.decode(String.self, forKey: .zoneId)
     zoneName = try container.decode(String.self, forKey: .zoneName)

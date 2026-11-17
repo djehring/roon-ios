@@ -20,9 +20,11 @@ struct RoonRemoteApp: App {
               store.publishWatchSnapshot()
             }
             .onChange(of: scenePhase) { _, phase in
+              NowPlayingDiagnostics.record("scene", detail: String(describing: phase))
               HardwareVolumeBridge.shared.setActive(phase == .active)
               switch phase {
               case .active:
+                LiveActivityBridge.shared.resume()
                 store.resumeSync()
                 store.publishWatchSnapshot()
               case .inactive, .background:

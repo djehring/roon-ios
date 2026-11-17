@@ -7,11 +7,11 @@ import os.log
 /// and open the Watch app from a tap. Apple does not let a music remote force
 /// the Watch UI to the front; this is the supported path.
 ///
-/// ActivityKit silently drops updates whose encoded ContentState is over 4 KB,
-/// and it also stops applying updates once the hourly budget is gone. Zone
-/// ticks arrive about once a second, so we coalesce to one in-flight publish,
+/// ActivityKit limits encoded ContentState to 4 KB. Local updates require the
+/// app to be running; the hourly push budget does not apply to this local path.
+/// Zone ticks arrive about once a second, so we coalesce to one in-flight publish,
 /// skip when title / artist / zone / play state / art key have not changed,
-/// and never alert on a track change — alerts spend the budget first.
+/// and never alert on a track change.
 @MainActor
 final class LiveActivityBridge {
   static let shared = LiveActivityBridge()
@@ -25,6 +25,18 @@ final class LiveActivityBridge {
   private var worker: Task<Void, Never>?
   private var endTask: Task<Void, Never>?
   private var wantsEnd = false
+  private var publicationGate = LiveActivityPublicationGate()
+  private var observedActivityID: String?
+  private var pushToken: Data?
+  private var observationTasks: [Task<Void, Never>] = []
+  private let pushRegistrar = LiveActivityPushRegistrar(
+    register: LiveActivityPushHTTP.register, remove: LiveActivityPushHTTP.remove)
+
+  func resume() {
+    publicationGate.reset()
+    pushRegistrar.retryNow()
+    publish()
+  }
 
   func publish() {
     wantsPublish = true
@@ -80,7 +92,11 @@ final class LiveActivityBridge {
       lastArtworkKey = nil
       lastArtworkJPEG = nil
     }
-    await upsert(zoneId: snapshot.zoneID, state: state.fittingBudget())
+    guard let observedAt = store.selectedZoneUpdatedAt else { return }
+    await upsert(zoneId: snapshot.zoneID, state: state.fittingBudget(),
+      staleDate: snapshot.staleDate(observedAt: observedAt),
+      observedAt: observedAt,
+      fresh: store.syncState == .sync && Date().timeIntervalSince(observedAt) < (snapshot.isPlaying ? 15 : 600))
   }
 
   private func artworkJPEG(
@@ -137,17 +153,33 @@ final class LiveActivityBridge {
 
   private func upsert(
     zoneId: String,
-    state: RoonNowPlayingAttributes.ContentState
+    state: RoonNowPlayingAttributes.ContentState,
+    staleDate: Date,
+    observedAt: Date,
+    fresh: Bool
   ) async {
-    let content = ActivityContent(state: state, staleDate: nil, relevanceScore: 100)
-    let live = Activity<RoonNowPlayingAttributes>.activities.filter {
+    let foreground = UIApplication.shared.applicationState == .active
+    let content = ActivityContent(state: state, staleDate: staleDate, relevanceScore: 100)
+    var live = Activity<RoonNowPlayingAttributes>.activities.filter {
       $0.activityState == .active || $0.activityState == .stale
     }
+    // Existing installations can have a local-only card. Replace it once in
+    // the foreground, where requesting a push-enabled activity is permitted.
+    if foreground, fresh {
+      for activity in live where activity.attributes.pushEnabled != true {
+        await activity.end(nil, dismissalPolicy: .immediate)
+      }
+      live.removeAll { $0.attributes.pushEnabled != true }
+    }
     if let activity = live.first {
-      // Compare with ActivityKit, not a process-local fingerprint. The system
-      // can end/reset an activity without the selected track changing.
-      if activity.content.state != state || activity.activityState == .stale {
-        await activity.update(content)
+      observe(activity)
+      registerPush(activity: activity, zoneID: zoneId)
+      // Keep a bounded local fallback when the bridge cannot reach APNs. Use
+      // the observation time so a delayed snapshot cannot supersede newer data.
+      if fresh,
+        publicationGate.shouldPublish(id: activity.id, content: state, staleDate: staleDate) {
+        await activity.update(content, alertConfiguration: nil, timestamp: observedAt)
+        NowPlayingDiagnostics.record("activity.submitted", detail: "\(state.zoneName) | \(state.title) | playing=\(state.isPlaying)")
       }
       for duplicate in live.dropFirst() {
         await duplicate.end(nil, dismissalPolicy: .immediate)
@@ -156,13 +188,57 @@ final class LiveActivityBridge {
     }
     // ActivityKit only permits starting an activity in the foreground. Retry
     // on activation rather than logging a failed request for every zone tick.
-    guard UIApplication.shared.applicationState == .active else { return }
+    guard foreground, fresh else { return }
     do {
-      let attributes = RoonNowPlayingAttributes(zoneId: zoneId)
-      _ = try Activity.request(attributes: attributes, content: content, pushType: nil)
+      let attributes = RoonNowPlayingAttributes(zoneId: zoneId, pushEnabled: true)
+      let activity = try Activity.request(attributes: attributes, content: content, pushType: .token)
+      _ = publicationGate.shouldPublish(id: activity.id, content: state, staleDate: staleDate)
+      observe(activity)
+      registerPush(activity: activity, zoneID: zoneId)
+      NowPlayingDiagnostics.record("activity.started", detail: "\(state.zoneName) | \(state.title)")
     } catch {
+      NowPlayingDiagnostics.record("activity.failed", detail: error.localizedDescription)
       Self.log.error("live activity failed: \(error.localizedDescription, privacy: .public)")
     }
+  }
+
+  private func observe(_ activity: Activity<RoonNowPlayingAttributes>) {
+    guard observedActivityID != activity.id else { return }
+    observationTasks.forEach { $0.cancel() }
+    observedActivityID = activity.id
+    pushToken = activity.pushToken
+    observationTasks = [
+      Task { [weak self] in
+        for await token in activity.pushTokenUpdates {
+          guard !Task.isCancelled, let self, self.observedActivityID == activity.id else { return }
+          self.pushToken = token
+          self.publish()
+        }
+      },
+      Task { [weak self] in
+        for await status in activity.activityStateUpdates {
+          guard !Task.isCancelled, let self, self.observedActivityID == activity.id else { return }
+          if status == .dismissed || status == .ended {
+            self.pushRegistrar.update(nil)
+            return
+          }
+        }
+      },
+      Task {
+        for await observed in activity.contentUpdates {
+          guard !Task.isCancelled else { return }
+          NowPlayingDiagnostics.record("activity.observed", detail: "\(observed.state.zoneName) | \(observed.state.title)")
+        }
+      },
+    ]
+  }
+
+  private func registerPush(activity: Activity<RoonNowPlayingAttributes>, zoneID: String) {
+    guard let token = pushToken, let baseURL = MockStore.shared.client.liveActivityPushBaseURL,
+      let environment = Bundle.main.object(forInfoDictionaryKey: "RoonPushEnvironment") as? String,
+      ["sandbox", "production"].contains(environment) else { return }
+    pushRegistrar.update(LiveActivityPushTarget(baseURL: baseURL, activityID: activity.id,
+      pushToken: token.map { String(format: "%02x", $0) }.joined(), zoneID: zoneID, environment: environment))
   }
 
   private func scheduleEnd() {
@@ -183,6 +259,12 @@ final class LiveActivityBridge {
     wantsEnd = false
     lastArtworkKey = nil
     lastArtworkJPEG = nil
+    publicationGate.reset()
+    observationTasks.forEach { $0.cancel() }
+    observationTasks.removeAll()
+    observedActivityID = nil
+    pushToken = nil
+    pushRegistrar.update(nil)
     for activity in Activity<RoonNowPlayingAttributes>.activities {
       await activity.end(nil, dismissalPolicy: .immediate)
     }

@@ -9,21 +9,71 @@ final class WatchSessionRelay: NSObject, WCSessionDelegate {
   static let shared = WatchSessionRelay()
   private static let log = Logger(subsystem: "com.djehring.roonremote.watchkitapp", category: "watch")
 
-  var onSnapshot: (([String: Any]) -> Void)?
+  // Snapshot persistence must work on background launch before a SwiftUI scene exists.
+  private let storage = WatchSnapshotStorage(defaults: UserDefaults(suiteName: WatchShared.suiteName)!)
+  private let background = WatchBackgroundUpdates()
+  private var pendingObservation: NSKeyValueObservation?
+  private var activationObservation: NSKeyValueObservation?
+  var onSnapshot: ((WatchSnapshot) -> Void)?
   var onReachable: ((Bool) -> Void)?
+  var latestSnapshot: WatchSnapshot? { storage.snapshot }
 
   func activate() {
     guard WCSession.isSupported() else { return }
     let session = WCSession.default
     session.delegate = self
-    session.activate()
+    if pendingObservation == nil {
+      pendingObservation = session.observe(\.hasContentPending) { [weak self] _, _ in
+        DispatchQueue.main.async { self?.completeBackgroundTasks() }
+      }
+      activationObservation = session.observe(\.activationState) { [weak self] _, _ in
+        DispatchQueue.main.async { self?.completeBackgroundTasks() }
+      }
+    }
+    if session.activationState != .activated { session.activate() }
   }
 
   func pull() {
-    let context = WCSession.default.receivedApplicationContext
-    if context.isEmpty { return }
-    NSLog("watch pull context count=%lu", context.count)
-    onSnapshot?(context)
+    onReachable?(WCSession.default.isReachable)
+    receive(WCSession.default.receivedApplicationContext)
+    if let snapshot = storage.snapshot { onSnapshot?(snapshot) }
+  }
+
+  func handle(_ task: WKWatchConnectivityRefreshBackgroundTask) {
+    background.retain { task.setTaskCompletedWithSnapshot(false) }
+    activate()
+    pull()
+    completeBackgroundTasks()
+  }
+
+  private func completeBackgroundTasks() {
+    let session = WCSession.default
+    background.completeIfReady(activated: session.activationState == .activated,
+      hasContentPending: session.hasContentPending)
+  }
+
+  private func receive(_ message: [String: Any]) {
+    guard let data = message[WatchMessageKey.snapshot] as? Data else { return }
+    do {
+      let next = try JSONDecoder().decode(WatchSnapshot.self, from: data)
+      guard case let .saved(reloadWidget) = try storage.receive(next) else { return }
+      if reloadWidget { WidgetCenter.shared.reloadAllTimelines() }
+      Self.log.info("saved snapshot zone=\(next.zoneId, privacy: .public) updated=\(next.updatedAt?.timeIntervalSince1970 ?? 0) widgetReload=\(reloadWidget)")
+    } catch {
+      Self.log.error("snapshot could not be saved: \(error.localizedDescription, privacy: .public)")
+    }
+  }
+
+  private func enqueue(_ message: [String: Any], reply: (([String: Any]) -> Void)? = nil) {
+    // Register work before returning to WCSession, which may now clear hasContentPending.
+    background.beginDelivery()
+    DispatchQueue.main.async {
+      self.receive(message)
+      if let saved = self.storage.snapshot { self.onSnapshot?(saved) }
+      reply?(["ok": true])
+      self.background.endDelivery()
+      self.completeBackgroundTasks()
+    }
   }
 
   func session(
@@ -31,12 +81,18 @@ final class WatchSessionRelay: NSObject, WCSessionDelegate {
     activationDidCompleteWith activationState: WCSessionActivationState,
     error: Error?
   ) {
-    Self.log.info(
-      "watch session \(activationState.rawValue) reachable=\(session.isReachable) companion=\(session.isCompanionAppInstalled) error=\(error?.localizedDescription ?? "none", privacy: .public)"
-    )
+    Self.log.info("watch session \(activationState.rawValue) reachable=\(session.isReachable) error=\(error?.localizedDescription ?? "none", privacy: .public)")
+    background.beginDelivery()
     DispatchQueue.main.async {
       self.onReachable?(session.isReachable)
       self.pull()
+      self.background.endDelivery()
+      if error != nil {
+        // Activation failed; there is no delivery to wait for on this attempt.
+        self.background.completeIfReady(activated: true, hasContentPending: false)
+      } else {
+        self.completeBackgroundTasks()
+      }
     }
   }
 
@@ -45,16 +101,15 @@ final class WatchSessionRelay: NSObject, WCSessionDelegate {
   }
 
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-    NSLog("watch didReceiveApplicationContext count=%lu", applicationContext.count)
-    DispatchQueue.main.async { self.onSnapshot?(applicationContext) }
+    enqueue(applicationContext)
   }
 
   func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
-    DispatchQueue.main.async { self.onSnapshot?(userInfo) }
+    enqueue(userInfo)
   }
 
   func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
-    DispatchQueue.main.async { self.onSnapshot?(message) }
+    enqueue(message)
   }
 
   func session(
@@ -62,17 +117,19 @@ final class WatchSessionRelay: NSObject, WCSessionDelegate {
     didReceiveMessage message: [String: Any],
     replyHandler: @escaping ([String: Any]) -> Void
   ) {
-    DispatchQueue.main.async { self.onSnapshot?(message) }
-    replyHandler(["ok": true])
+    enqueue(message, reply: replyHandler)
   }
 }
 
 final class WatchAppDelegate: NSObject, WKApplicationDelegate {
+  func applicationDidFinishLaunching() {
+    WatchSessionRelay.shared.activate()
+  }
+
   func handle(_ backgroundTasks: Set<WKRefreshBackgroundTask>) {
     for task in backgroundTasks {
       if let wc = task as? WKWatchConnectivityRefreshBackgroundTask {
-        WatchSessionRelay.shared.pull()
-        wc.setTaskCompletedWithSnapshot(false)
+        WatchSessionRelay.shared.handle(wc)
       } else {
         task.setTaskCompletedWithSnapshot(false)
       }
@@ -134,7 +191,6 @@ final class WatchStore {
     ) && !snapshot.sessionReady
   }
 
-  @ObservationIgnored private var lastImageKey: String?
   @ObservationIgnored private var crownUntil: Date?
   @ObservationIgnored private var volumeTask: Task<Void, Never>?
   @ObservationIgnored private var pinnedTitle: String?
@@ -142,11 +198,12 @@ final class WatchStore {
 
   init() {
     let relay = WatchSessionRelay.shared
-    relay.onSnapshot = { [weak self] message in
-      Task { @MainActor in self?.apply(message) }
+    relay.onSnapshot = { [weak self] snapshot in
+      MainActor.assumeIsolated { self?.apply(snapshot) }
     }
+    if let saved = relay.latestSnapshot { apply(saved) }
     relay.onReachable = { [weak self] reachable in
-      Task { @MainActor in self?.phoneReachable = reachable }
+      MainActor.assumeIsolated { self?.phoneReachable = reachable }
     }
   }
 
@@ -240,45 +297,13 @@ final class WatchStore {
     }
   }
 
-  private func apply(_ message: [String: Any]) {
-    guard let raw = message[WatchMessageKey.snapshot] else {
-      NSLog("watch apply missing snapshot, keys=%@", Array(message.keys) as NSArray)
-      return
-    }
-    let data: Data?
-    if let value = raw as? Data {
-      data = value
-    } else if let value = raw as? NSData {
-      data = value as Data
-    } else {
-      NSLog("watch apply snapshot type=%@", String(describing: type(of: raw)))
-      return
-    }
-    guard let data else { return }
-    do {
-      let next = try JSONDecoder().decode(WatchSnapshot.self, from: data)
-      let resolved = resolve(next)
-      snapshot = resolved
-      phoneReachable = true
-      if resolved.sessionReady {
-        isAwaitingServer = false
-      }
-      if let jpeg = resolved.coverJPEG {
-        cover = jpeg
-        lastImageKey = resolved.imageKey
-      } else if resolved.imageKey != lastImageKey {
-        cover = nil
-        lastImageKey = resolved.imageKey
-      }
-      let ignoringCrown = crownUntil.map { Date() < $0 } ?? false
-      if !ignoringCrown {
-        volume = resolved.volume
-      }
-      persist(resolved)
-      NSLog("watch snapshot ready=%d title=%@", resolved.sessionReady, resolved.title ?? "nil")
-    } catch {
-      NSLog("watch decode failed: %@", error.localizedDescription)
-    }
+  private func apply(_ next: WatchSnapshot) {
+    let resolved = resolve(next)
+    snapshot = resolved
+    if resolved.sessionReady { isAwaitingServer = false }
+    cover = resolved.coverJPEG
+    let ignoringCrown = crownUntil.map { Date() < $0 } ?? false
+    if !ignoringCrown { volume = resolved.volume }
   }
 
   private func resolve(_ next: WatchSnapshot) -> WatchSnapshot {
@@ -321,20 +346,5 @@ final class WatchStore {
         self?.controlError = "Couldn't reach iPhone. Open House Remote on your iPhone and try again."
       }
     })
-  }
-
-  private func persist(_ snapshot: WatchSnapshot) {
-    var stored = snapshot
-    stored.coverJPEG = nil
-    let defaults = UserDefaults(suiteName: WatchShared.suiteName)
-    if let data = try? JSONEncoder().encode(stored) {
-      defaults?.set(data, forKey: WatchShared.snapshotKey)
-    }
-    if let cover {
-      defaults?.set(cover, forKey: WatchShared.coverKey)
-    } else if snapshot.imageKey == nil {
-      defaults?.removeObject(forKey: WatchShared.coverKey)
-    }
-    WidgetCenter.shared.reloadAllTimelines()
   }
 }

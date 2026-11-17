@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
   ) -> Bool {
     SiriMusicTrace.record("app.started", detail: "build=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") ?? "")")
     NowPlayingBridge.registerLiveActivityActions()
+    NowPlayingDiagnostics.record("app.started")
     RoonShortcuts.updateAppShortcutParameters()
     PhoneWatchSync.shared.activate()
     // Don't call INPreferences here: it requires com.apple.developer.siri, and
@@ -22,12 +23,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
       application.endBackgroundTask(backgroundTask)
     }
     backgroundTask = application.beginBackgroundTask(withName: "roon-now-playing") {
+      NowPlayingDiagnostics.record("background.timeExpired")
       application.endBackgroundTask(self.backgroundTask)
       self.backgroundTask = .invalid
     }
   }
 
   func applicationWillEnterForeground(_ application: UIApplication) {
+    NowPlayingDiagnostics.record("app.foreground")
     if backgroundTask != .invalid {
       application.endBackgroundTask(backgroundTask)
       backgroundTask = .invalid

@@ -7,7 +7,7 @@ import WidgetKit
 struct RoonNowPlayingLiveActivity: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: RoonNowPlayingAttributes.self) { context in
-      NowPlayingActivityContent(state: context.state)
+      NowPlayingActivityContent(state: context.state, isStale: context.isStale)
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
@@ -26,16 +26,21 @@ struct RoonNowPlayingLiveActivity: Widget {
         }
         DynamicIslandExpandedRegion(.trailing) {
           playPauseButton(state: context.state, size: 36)
+            .disabled(context.isStale)
         }
         DynamicIslandExpandedRegion(.bottom) {
-          Text(context.state.zoneName)
+          Text(context.isStale ? "Open app to refresh" : context.state.zoneName)
             .font(.caption)
             .foregroundStyle(.secondary)
         }
       } compactLeading: {
         islandGlyph(state: context.state, size: 24)
       } compactTrailing: {
-        IslandPlayingWave(isPlaying: context.state.isPlaying)
+        if context.isStale {
+          Image(systemName: "clock").accessibilityLabel("Playback information is out of date")
+        } else {
+          IslandPlayingWave(isPlaying: context.state.isPlaying)
+        }
       } minimal: {
         islandGlyph(state: context.state, size: 20)
       }
@@ -47,18 +52,19 @@ struct RoonNowPlayingLiveActivity: Widget {
 private struct NowPlayingActivityContent: View {
   @Environment(\.activityFamily) private var activityFamily
   var state: RoonNowPlayingAttributes.ContentState
+  var isStale: Bool
 
   var body: some View {
     switch activityFamily {
     case .small:
-      SmallNowPlayingBanner(state: state)
+      SmallNowPlayingBanner(state: state, isStale: isStale)
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
     case .medium:
-      NowPlayingBanner(state: state)
+      NowPlayingBanner(state: state, isStale: isStale)
         .padding(16)
     @unknown default:
-      NowPlayingBanner(state: state)
+      NowPlayingBanner(state: state, isStale: isStale)
         .padding(16)
     }
   }
@@ -66,6 +72,7 @@ private struct NowPlayingActivityContent: View {
 
 private struct SmallNowPlayingBanner: View {
   var state: RoonNowPlayingAttributes.ContentState
+  var isStale: Bool
 
   var body: some View {
     // Keep the title above the artwork and controls so they cannot squeeze it
@@ -81,13 +88,14 @@ private struct SmallNowPlayingBanner: View {
           .accessibilityHidden(true)
         VStack(alignment: .leading, spacing: 1) {
           Text(state.artist)
-          Text(state.zoneName)
+          Text(isStale ? "Open app to refresh" : state.zoneName)
             .foregroundStyle(.secondary)
         }
         .font(.caption2)
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         playPauseButton(state: state, size: 32)
+          .disabled(isStale)
       }
     }
   }
@@ -95,6 +103,7 @@ private struct SmallNowPlayingBanner: View {
 
 private struct NowPlayingBanner: View {
   var state: RoonNowPlayingAttributes.ContentState
+  var isStale: Bool
 
   var body: some View {
     HStack(spacing: 12) {
@@ -107,12 +116,13 @@ private struct NowPlayingBanner: View {
           .font(.caption)
           .foregroundStyle(.secondary)
           .lineLimit(1)
-        Text(state.zoneName)
+        Text(isStale ? "Open app to refresh" : state.zoneName)
           .font(.caption2)
           .foregroundStyle(.secondary)
       }
       Spacer()
       playPauseButton(state: state)
+        .disabled(isStale)
     }
   }
 }

@@ -22,4 +22,14 @@ struct NowPlayingSnapshot: Equatable {
   }
 
   var artist: String { track?.artist ?? "" }
+
+  /// Expect a replacement around the track boundary. Unknown-length streams
+  /// and paused rooms use a ten-minute freshness lease instead.
+  func staleDate(observedAt: Date) -> Date {
+    guard isPlaying, let track, let duration = track.durationSeconds, duration > 0 else {
+      return observedAt.addingTimeInterval(600)
+    }
+    let remaining = duration * (1 - min(1, max(0, track.progress)))
+    return observedAt.addingTimeInterval(min(600, max(30, remaining + 45)))
+  }
 }

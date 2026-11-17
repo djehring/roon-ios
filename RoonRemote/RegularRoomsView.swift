@@ -158,6 +158,7 @@ struct RegularRoomsView: View {
       if !output.isFixed {
         HStack(spacing: 12) {
           Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             store.toggleMute(output)
           } label: {
             Image(systemName: output.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
@@ -166,14 +167,7 @@ struct RegularRoomsView: View {
           .buttonStyle(.plain)
           .accessibilityLabel(output.muted ? "Unmute" : "Mute")
 
-          Slider(
-            value: Binding(
-              get: { output.volume },
-              set: { store.setVolume(output, value: $0) }
-            ),
-            in: output.min...max(output.max, output.min + 1)
-          )
-          .tint(Palette.accent)
+          VolumeSlider(output: output)
         }
       }
     }

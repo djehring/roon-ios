@@ -54,9 +54,14 @@ See [Recently played](docs/recently-played.md) for counting, replay and rollout.
 
 ## Apple Watch
 
-Companion of the iPhone app (the Watch does not talk to the bridge). Keep Roon
-open on the phone. When a zone is playing, a Live Activity appears on the Watch
-Smart Stack. Tap it to open the Watch app.
+Companion of the iPhone app (the Watch does not talk to the bridge). Open House
+Remote on the phone with a zone playing to start its Live Activity on the Watch
+Smart Stack. With APNs configured on the bridge, track updates can arrive while
+the phone app is suspended. Tap the card to open the Watch app.
+
+Watch updates are saved by its background receiver even when the Watch app's
+screen is closed. See [Now Playing updates](docs/now-playing-updates.md) for the
+Live Activity/complication update paths, background limits and device diagnostics.
 
 Now Playing is full-bleed cover:
 
@@ -87,7 +92,8 @@ The verified flow in the **Siri AI conversation interface** is:
 > Play British jazz from the 1960s using House Remote.
 
 Then choose the Roon room from the list. Including the room in the initial
-sentence has not yet proved reliable in Siri AI.
+sentence has not yet proved reliable in Siri AI. The user also confirmed
+`Play top Paul Simon hits using House Remote` worked after omitting `in Office`.
 
 Room follow-ups such as **“Play that in Office”** reuse the recent music results
 for up to five minutes. The app strips its own name from complete utterances so

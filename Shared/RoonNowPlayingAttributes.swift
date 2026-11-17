@@ -39,5 +39,7 @@ struct RoonNowPlayingAttributes: ActivityAttributes {
   }
 
   var zoneId: String
+  /// Older local-only activities omit this attribute and are migrated on launch.
+  var pushEnabled: Bool? = nil
 }
 #endif

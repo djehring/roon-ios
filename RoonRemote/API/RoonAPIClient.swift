@@ -78,6 +78,11 @@ final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
 
   var storedClientId: String? { clientId }
 
+  var liveActivityPushBaseURL: URL? {
+    guard isPaired, let clientId else { return nil }
+    return try? urlComponents("/api/\(clientId)/live-activities").url
+  }
+
   func setBridge(host: String, port: Int) {
     self.host = host
     self.port = port

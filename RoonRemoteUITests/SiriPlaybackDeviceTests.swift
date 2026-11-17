@@ -31,7 +31,11 @@ final class SiriPlaybackDeviceTests: XCTestCase {
 
   @MainActor func testSiriAIConversationDiagnostic() throws {
     try XCTSkipUnless(ProcessInfo.processInfo.environment["ROON_SIRI_INSPECT"] == "1")
-    XCUIApplication().launch()
+    // Leave House Remote's lifecycle to Siri by default. Launching it through
+    // XCTest makes teardown terminate it, potentially interrupting bridge playback.
+    if ProcessInfo.processInfo.environment["ROON_SIRI_LAUNCH_APP"] == "1" {
+      XCUIApplication().launch()
+    }
     // Installing a development build triggers asynchronous Siri tool indexing.
     // Use a delay only when investigating that registration boundary on-device.
     if let delay = ProcessInfo.processInfo.environment["ROON_SIRI_INDEX_WAIT"].flatMap(Double.init) {
@@ -47,7 +51,12 @@ final class SiriPlaybackDeviceTests: XCTestCase {
       prompt.tap()
       prompt.typeText(request)
       siriAI.buttons["sendButton"].tap()
-      Thread.sleep(forTimeInterval: 25)
+      let responseWait = ProcessInfo.processInfo.environment["ROON_SIRI_RESPONSE_WAIT"]
+        .flatMap(Double.init) ?? 90
+      let deadline = Date().addingTimeInterval(min(max(responseWait, 0), 300))
+      while Date() < deadline {
+        Thread.sleep(forTimeInterval: min(5, max(0, deadline.timeIntervalSinceNow)))
+      }
       siriAI.activate()
       let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
       screenshot.name = "Siri AI response (diagnostic only)"
