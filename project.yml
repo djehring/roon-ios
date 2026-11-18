@@ -64,7 +64,8 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         CFBundleSpokenName: House Remote
         INAlternativeAppNames:
-          - INAlternativeAppName: House Remote
+          - INAlternativeAppName: Roon
+            INAlternativeAppNamePronunciationHint: roon
         INIntentsSupported:
           - INPlayMediaIntent
         INSupportedMediaCategories:
@@ -172,6 +173,7 @@ targets:
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/AIMusicSearch.swift
+      - path: RoonRemote/MusicRequestInterpreter.swift
       - path: Shared/PlayRequest.swift
       - path: RoonRemote/Cinema/CinemaMusic.swift
       - path: RoonRemote/Cinema/TimeCapsule.swift
@@ -343,6 +345,7 @@ targets:
       - path: RoonRemote/SearchSelection.swift
         type: file
       - path: RoonRemote/AIMusicSearch.swift
+      - path: RoonRemote/MusicRequestInterpreter.swift
       - path: RoonRemote/API
     settings:
       base:

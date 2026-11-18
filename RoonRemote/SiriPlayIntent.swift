@@ -3,7 +3,7 @@ import Foundation
 
 struct PlayInRoomIntent: AudioPlaybackIntent {
   static var title: LocalizedStringResource = "Play in a room"
-  static var description = IntentDescription("Play a radio station or album, or find music with AI Search, in a Roon room.")
+  static var description = IntentDescription("Play a radio station, album, artist, playlist or genre, or find music with AI Search, in a Roon room.")
   static var openAppWhenRun = false
 
   @Parameter(
@@ -19,12 +19,12 @@ struct PlayInRoomIntent: AudioPlaybackIntent {
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
     SiriMusicTrace.record("shortcut.play", detail: request.id)
-    let parsed = PlayRequest.parse(request.id, roomNames: await RoonSiriSupport.roomNames())
-    guard parsed.room != nil else {
+    do {
+      let spoken = try await MockStore.shared.playSiriRequest(request.id)
+      return .result(dialog: IntentDialog(stringLiteral: spoken))
+    } catch SiriMusicError.roomRequired {
       throw $request.needsValueError("What should I play, and in which room? For example, jazz in Office.")
     }
-    let spoken = try await MockStore.shared.playSiriRequest(request.id)
-    return .result(dialog: IntentDialog(stringLiteral: spoken))
   }
 }
 

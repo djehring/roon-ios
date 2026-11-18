@@ -109,6 +109,40 @@ struct FoldedNowPlayingLayout: Equatable {
   }
 }
 
+/// How AI Search divides a regular-width column.
+///
+/// The detail pane only earns its space once a result exists to fill it and
+/// the query column can still hold its field, mic, and Go button side by side.
+/// An unfolded iPhone is barely wider than those two minimums, so an
+/// always-on detail pane spent half that width on a placeholder and squeezed
+/// the query field until its text truncated.
+enum AISearchLayout: Equatable {
+  case single
+  case split
+
+  static let queryMinimumWidth: CGFloat = 380
+  static let queryIdealWidth: CGFloat = 620
+  static let detailMinimumWidth: CGFloat = 420
+
+  static var splitMinimumWidth: CGFloat { queryMinimumWidth + detailMinimumWidth }
+
+  static func mode(containerWidth: CGFloat, hasResults: Bool) -> Self {
+    hasResults && containerWidth >= splitMinimumWidth ? .split : .single
+  }
+
+  /// Width for the query column. A single column keeps song rows to a
+  /// readable measure rather than running the width of a landscape iPad.
+  static func queryWidth(containerWidth: CGFloat, mode: Self) -> CGFloat {
+    let available = max(0, containerWidth)
+    switch mode {
+    case .single:
+      return min(available, Layout.readingWidth)
+    case .split:
+      return max(queryMinimumWidth, min(queryIdealWidth, available - detailMinimumWidth))
+    }
+  }
+}
+
 enum RegularShellLayout {
   static let persistentSidebarMinimumWidth: CGFloat = 1100
 

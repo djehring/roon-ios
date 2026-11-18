@@ -34,6 +34,26 @@ No full-library Spotlight indexing or audio URL resolution is included. Existing
 App Shortcuts remain available on iOS 18–26; their play action falls back to AI
 Search after the existing station/album resolver finds no match.
 
+## Play in a room interpretation
+
+`PlayInRoomIntent`, SiriKit's `INPlayMediaIntent` and the Watch share
+`MusicRequestInterpreter`. On iOS 26+ with Apple Intelligence, the on-device
+Foundation model classifies the request as a radio station, album, artist,
+playlist, genre or description, and picks out the music and room. The model's
+music and room are accepted only when they consist of spoken words; otherwise
+the word-based rules in `MusicRequestHeuristics` apply. Those rules also run
+when the model is unavailable or takes longer than four seconds.
+
+A known kind plays only that kind of library item, then falls back to AI Search.
+An unknown kind tries stations, albums, playlists, artists and genres in that
+order. Descriptions go straight to AI Search with the complete spoken text.
+Spoken numbers match digits, so "Radio Three" plays "BBC Radio 3". A partial
+room after "in" or "on" ("in the kitchen") selects the only room containing
+those words. A trailing room without a preposition must match exactly.
+
+The AI Search tab shows a dismissible Siri tip for the shortcut, and Settings
+links to House Remote's page in the Shortcuts app.
+
 Apple references:
 
 - [Responding to audio search and playback requests](https://developer.apple.com/documentation/mediaintents/responding-to-audio-search-and-playback-requests)
@@ -93,6 +113,13 @@ Build 6 includes the native audio schemas and explicitly executes search,
 entity resolution, and playback in the main app, where bridge pairing lives.
 
 Verified boundaries:
+
+- On 2026-11-17, `Play radio 3 with House Remote` returned one library item, showed
+  the room list, and BBC Radio 3 was confirmed playing in Office. Naming Office in
+  the request again failed before playback: Siri removed the room from the search
+  text and answered "I can't play that right now". Returning the item once per
+  room as well, so that Siri could match the spoken room, made Siri send the
+  request to Spotify instead. The search returns one item.
 
 - A later user request for top Paul Simon hits in Office failed without showing
   a room list. At 19:43 BST, the trace recorded searches for `top Paul Simon tunes`

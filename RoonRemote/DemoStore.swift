@@ -194,6 +194,15 @@ extension MockStore {
       libraryLaunchHierarchy = hierarchy
       selectedTab = .library
     }
+    if let segment = ProcessInfo.processInfo.environment["ROON_SEARCH_PREVIEW_SEGMENT"],
+       let parsed = SearchSegment(rawValue: segment) {
+      searchSegment = parsed
+      selectedTab = .search
+    }
+    if ProcessInfo.processInfo.environment["ROON_SEARCH_PREVIEW_EMPTY"] == "1" {
+      aiResults = []
+      recognizedAlbums = []
+    }
   }
 
   /// Exercises the same feedback/navigation path without controlling a real room.

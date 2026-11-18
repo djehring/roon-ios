@@ -231,6 +231,21 @@ final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
   }
 
+  func interpretMusicRequest(_ text: String, rooms: [String]) async throws -> MusicPlayRequest {
+    struct Interpretation: Decodable { var kind: String; var music: String; var room: String }
+    let clientId = try requireClient()
+    let request = try jsonRequest(
+      path: "/api/\(clientId)/music-request",
+      method: "POST",
+      object: ["text": text, "rooms": rooms]
+    )
+    let (data, response) = try await data(for: request, using: aiSession)
+    try throwIfOpenAI(response, data: data)
+    let interpretation = try decoder.decode(Interpretation.self, from: data)
+    return MusicPlayRequest(query: interpretation.music, room: interpretation.room,
+      kind: MusicPlayRequest.Kind(rawValue: interpretation.kind))
+  }
+
   func playTracks(zoneId: String, tracks: [[String: String]]) async throws -> [SuggestedTrackPayload] {
     let clientId = try requireClient()
     let request = try jsonRequest(

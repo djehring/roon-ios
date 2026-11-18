@@ -82,6 +82,8 @@ struct SiriMusicCollectionQuery: EntityStringQuery {
   func entities(matching string: String) async throws -> [SiriMusicCollection] {
     SiriMusicTrace.record("collection.match", detail: string)
     do {
+      // One result only: offering the same music in every room made Siri hand
+      // the request to another app instead of playing any of them.
       return [SiriMusicCollection(try await MockStore.shared.searchMusicForSiri(string))]
     } catch let error as SiriMusicError {
       throw AppIntentError(wrapping: error)
