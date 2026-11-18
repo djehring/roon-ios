@@ -613,6 +613,7 @@ final class MockStore {
     Task {
       defer { aiLoading = false }
       do {
+        if try await playSearchCommand(query) { return }
         let items = try await AIMusicSearch.search(query, using: client.aiSearch)
         guard isCurrentAIQuery(query) else { return }
         aiSearchContext = searchContext
@@ -625,6 +626,22 @@ final class MockStore {
         aiError = error.localizedDescription
       }
     }
+  }
+
+  /// Plays "Play Radio 3 in the Kitchen" directly. A bare description without
+  /// a room, such as "Miles Davis", stays a search with reviewable results.
+  private func playSearchCommand(_ query: String) async throws -> Bool {
+    let command = MusicRequestHeuristics.command(query)
+    let rooms = zones.map(\.name)
+    guard command != nil || MusicRequestHeuristics.splitRoom(query, roomNames: rooms).room != nil else { return false }
+    let request = await MusicRequestInterpreter.interpret(command ?? query, roomNames: rooms, bridge: musicRequestBridge)
+    guard isCurrentAIQuery(query), !request.query.isEmpty, command != nil || request.room != nil,
+          let zone = zones.first(where: { $0.name == request.room }) ?? zones.first(where: { $0.id == selectedZoneId })
+    else { return false }
+    SiriMusicTrace.record("search.command", detail: "kind=\(request.kind?.rawValue ?? "any"), query=\(request.query), room=\(zone.name)")
+    _ = try await playInRoom(request, roomName: zone.name, zoneId: zone.id)
+    selectedTab = .nowPlaying
+    return true
   }
 
   private func isCurrentAIQuery(_ query: String) -> Bool {
@@ -812,13 +829,24 @@ final class MockStore {
     }
   }
 
+  private var musicRequestBridge: MusicRequestInterpreter.Bridge {
+    let client = client
+    return { text, rooms in try await client.interpretMusicRequest(text, rooms: rooms) }
+  }
+
   func playInRoom(query: String, roomName: String, zoneId: String?) async throws -> String {
-    SiriMusicTrace.record("legacy.play", detail: query)
+    let classified = MusicRequestHeuristics.classify(query)
+    let request = MusicPlayRequest(query: classified.query, room: roomName, kind: classified.kind)
+    return try await playInRoom(request, roomName: roomName, zoneId: zoneId)
+  }
+
+  private func playInRoom(_ request: MusicPlayRequest, roomName: String, zoneId: String?) async throws -> String {
+    SiriMusicTrace.record("legacy.play", detail: "kind=\(request.kind?.rawValue ?? "any"), query=\(request.query)")
     let zone = try await zoneForSiri(named: roomName, zoneId: zoneId)
     selectZone(zone.id)
     let result: Result<String, Error> = await withBrowseSession {
       do {
-        return .success(try await self.performPlayQuery(query, zoneId: zone.id))
+        return .success(try await self.performPlayQuery(request, zoneId: zone.id))
       } catch {
         return .failure(error)
       }
@@ -826,9 +854,9 @@ final class MockStore {
     do {
       return "Playing \(try result.get()) in \(zone.name)."
     } catch PlayInRoomError.notFound {
-      // Exact station/album requests retain the existing fast path. Descriptive
-      // music requests use the same AI search as the Search tab.
-      let selection = try await makeSiriMusicSelection(query: query, zone: zone)
+      // Named stations, albums, playlists, artists and genres use the fast
+      // library path. Descriptive requests use the Search tab's AI search.
+      let selection = try await makeSiriMusicSelection(query: request.query, zone: zone)
       return try await playSiriMusicSelection(selection)
     }
   }
@@ -836,13 +864,14 @@ final class MockStore {
   func playSiriRequest(_ phrase: String) async throws -> String {
     guard client.isPaired else { throw PlayInRoomError.unpaired }
     let rooms = await waitForZones()
-    let request = PlayRequest.parse(phrase, roomNames: rooms.map(\.name))
-    guard !request.what.isEmpty else { throw SiriMusicError.emptyQuery }
-    let namedRoom = request.room ?? ""
-    guard !namedRoom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+    let request = await MusicRequestInterpreter.interpret(phrase, roomNames: rooms.map(\.name), bridge: musicRequestBridge)
+    SiriMusicTrace.record("request.interpreted",
+      detail: "kind=\(request.kind?.rawValue ?? "any"), query=\(request.query), room=\(request.room ?? "")")
+    guard !request.query.isEmpty else { throw SiriMusicError.emptyQuery }
+    guard let room = request.room, !room.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
       throw SiriMusicError.roomRequired
     }
-    return try await playInRoom(query: request.what, roomName: namedRoom, zoneId: nil)
+    return try await playInRoom(request, roomName: room, zoneId: nil)
   }
 
   func showAISearchFromSiri(_ query: String) throws {
@@ -879,7 +908,29 @@ final class MockStore {
       SiriMusicTrace.record("search.followup", detail: "query=\(selection.context.query), room=\(selection.roomName)")
       return selection
     }
+    let interpreted = await MusicRequestInterpreter.interpret(phrase, roomNames: rooms.map(\.name), bridge: musicRequestBridge)
+    if let kind = interpreted.kind, kind != .described, !interpreted.query.isEmpty {
+      let named = zone ?? rooms.first { $0.name == interpreted.room }
+      return try makeSiriLibrarySelection(title: request.query, query: interpreted.query, kind: kind, zone: named)
+    }
     return try await makeSiriMusicSelection(query: request.query, zone: zone)
+  }
+
+  private func makeSiriLibrarySelection(
+    title: String, query: String, kind: MusicPlayRequest.Kind, zone: Zone?
+  ) throws -> SiriMusicSelection {
+    let scope = siriMusicBridgeScope
+    if let selection = SiriMusicSelections.shared.recentSelection(query: title, zoneId: zone?.id ?? "", bridgeScope: scope),
+       selection.library == kind, selection.libraryQuery == query, zone == nil || selection.hasRoom {
+      SiriMusicTrace.record("search.reused", detail: selection.id)
+      return selection
+    }
+    let selection = SiriMusicSelection(context: CapsuleSearchContext(query: title), tracks: [],
+      zoneId: zone?.id ?? "", roomName: zone?.name ?? "", bridgeScope: scope,
+      roomWasExplicit: zone != nil, libraryKind: kind.rawValue, libraryQuery: query)
+    try SiriMusicSelections.shared.save(selection)
+    SiriMusicTrace.record("search.library", detail: "id=\(selection.id), kind=\(kind.rawValue), title=\(title), query=\(query), room=\(selection.roomName)")
+    return selection
   }
 
   func siriRoomChoices(for selection: SiriMusicSelection) async throws -> [SiriMusicSelection] {
@@ -904,7 +955,16 @@ final class MockStore {
       SiriMusicTrace.record("search.reused", detail: selection.id)
       return selection
     }
-    let tracks = try await AIMusicSearch.search(context.query, using: client.aiSearch)
+    let startedAt = Date()
+    let tracks: [SuggestedTrack]
+    do {
+      tracks = try await AIMusicSearch.search(context.query, using: client.aiSearch)
+    } catch {
+      SiriMusicTrace.record("search.failed",
+        detail: "after=\(Int(Date().timeIntervalSince(startedAt)))s, cancelled=\(Task.isCancelled), \(error)")
+      throw error
+    }
+    SiriMusicTrace.record("search.finished", detail: "after=\(Int(Date().timeIntervalSince(startedAt)))s, tracks=\(tracks.count)")
     guard tracks.contains(where: { $0.error == nil }) else { throw SiriMusicError.noResults }
     guard scope == siriMusicBridgeScope else { throw SiriMusicError.expiredSelection }
     let selection = SiriMusicSelection(context: context, tracks: tracks, zoneId: zone?.id ?? "",
@@ -924,6 +984,9 @@ final class MockStore {
     let rooms = await waitForZones()
     guard let zone = rooms.first(where: { $0.id == selection.zoneId }) else {
       throw PlayInRoomError.noRoom(selection.roomName)
+    }
+    if let kind = selection.library {
+      return try await playSiriLibrarySelection(selection.libraryQuery ?? selection.context.query, kind: kind, zone: zone)
     }
     let tracks = shuffled ? selection.tracks.shuffled() : selection.tracks
     let requestedAt = Date()
@@ -953,6 +1016,30 @@ final class MockStore {
     resumeSync()
     try await confirmSiriPlayback(zone: zone, tracks: playback.tracks, requestedAt: requestedAt)
     return playback.dialog(room: zone.name)
+  }
+
+  private func playSiriLibrarySelection(_ query: String, kind: MusicPlayRequest.Kind, zone: Zone) async throws -> String {
+    let request = MusicPlayRequest(query: query, room: zone.name, kind: kind)
+    let requestedAt = Date()
+    let result: Result<String, Error> = await withBrowseSession {
+      do {
+        return .success(try await self.performPlayQuery(request, zoneId: zone.id))
+      } catch {
+        return .failure(error)
+      }
+    }
+    let title: String
+    do {
+      title = try result.get()
+    } catch PlayInRoomError.notFound {
+      SiriMusicTrace.record("library.notFound", detail: "kind=\(kind.rawValue), query=\(query)")
+      return try await playSiriMusicSelection(try await makeSiriMusicSelection(query: query, zone: zone))
+    }
+    selectZone(zone.id)
+    selectedTab = .nowPlaying
+    resumeSync()
+    try await confirmSiriPlayback(zone: zone, tracks: [], requestedAt: requestedAt)
+    return "Playing \(title) in \(zone.name)."
   }
 
   private func confirmSiriPlayback(zone: Zone, tracks: [SuggestedTrack], requestedAt: Date) async throws {
@@ -1537,25 +1624,65 @@ final class MockStore {
     return ranked.max(by: { $0.score < $1.score }).flatMap { $0.score >= 50 ? $0.zone : nil }
   }
 
-  private func performPlayQuery(_ query: String, zoneId: String) async throws -> String {
-    if let radio = await findBest(query, hierarchy: "internet_radio", zoneId: zoneId) {
-      try await playMatched(radio, hierarchy: "internet_radio", zoneId: zoneId)
-      return radio.title
+  private func performPlayQuery(_ request: MusicPlayRequest, zoneId: String) async throws -> String {
+    for kind in request.lookups {
+      if let title = try await playLibraryMatch(kind, query: request.query, zoneId: zoneId) {
+        SiriMusicTrace.record("library.play", detail: "kind=\(kind.rawValue), title=\(title)")
+        return title
+      }
     }
-    if let live = await findLiveRadio(query, zoneId: zoneId) {
-      try await playMatched(live, hierarchy: "browse", zoneId: zoneId)
-      return live.title
+    throw PlayInRoomError.notFound(request.query)
+  }
+
+  private func playLibraryMatch(_ kind: MusicPlayRequest.Kind, query: String, zoneId: String) async throws -> String? {
+    switch kind {
+    case .radio:
+      let station = RoonVoiceMatch.digits(query)
+      if let radio = await findBest(station, hierarchy: "internet_radio", zoneId: zoneId) {
+        try await playMatched(radio, hierarchy: "internet_radio", zoneId: zoneId)
+        return radio.title
+      }
+      if let live = await findLiveRadio(station, zoneId: zoneId) {
+        try await playMatched(live, hierarchy: "browse", zoneId: zoneId)
+        return live.title
+      }
+    case .album:
+      // "Rumours by Fleetwood Mac" names the artist too; prefer that album over covers.
+      func score(_ album: LibraryAlbumItem) -> Int {
+        max(RoonVoiceMatch.score(album.title, query: query),
+          RoonVoiceMatch.score("\(album.title) \(album.subtitle ?? "")", query: query))
+      }
+      if let albums = try? await client.searchAlbums(zoneId: zoneId, query: query),
+         let album = albums.max(by: { score($0) < score($1) }),
+         score(album) >= 50
+      {
+        try await client.playItem(zoneId: zoneId, itemKey: album.itemKey, actionTitle: "Play Now")
+        return album.title
+      }
+    case .playlist, .genre:
+      let hierarchy = kind == .playlist ? "playlists" : "genres"
+      if let match = await findBest(query, hierarchy: hierarchy, zoneId: zoneId) {
+        try await playMatched(match, hierarchy: hierarchy, zoneId: zoneId)
+        return match.title
+      }
+    case .artist:
+      if let artist = await findSearchResult(query, section: "Artists", zoneId: zoneId) {
+        try await playMatched(artist, hierarchy: "search", zoneId: zoneId)
+        return artist.title
+      }
+    case .described:
+      break
     }
-    if let albums = try? await client.searchAlbums(zoneId: zoneId, query: query),
-       let album = albums.max(by: {
-         RoonVoiceMatch.score($0.title, query: query) < RoonVoiceMatch.score($1.title, query: query)
-       }),
-       RoonVoiceMatch.score(album.title, query: query) >= 50
-    {
-      try await client.playItem(zoneId: zoneId, itemKey: album.itemKey, actionTitle: "Play Now")
-      return album.title
-    }
-    throw PlayInRoomError.notFound(query)
+    return nil
+  }
+
+  private func findSearchResult(_ query: String, section: String, zoneId: String) async -> BrowseNode? {
+    let results = await performLoadLibrary(hierarchy: "search", itemKey: nil, input: query, zoneId: zoneId)
+    guard let row = results.items.first(where: {
+      $0.title.compare(section, options: .caseInsensitive) == .orderedSame
+    }), let key = row.itemKey else { return nil }
+    let page = await performLoadLibrary(hierarchy: "search", itemKey: key, input: nil, zoneId: zoneId)
+    return bestNode(query, in: page.items)
   }
 
   private func findBest(_ query: String, hierarchy: String, zoneId: String) async -> BrowseNode? {

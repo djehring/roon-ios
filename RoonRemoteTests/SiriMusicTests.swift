@@ -265,4 +265,23 @@ struct SiriMusicTests {
     zone.track?.artist = "Artist"
     #expect(!SiriPlaybackConfirmation.isPlaying(zone, tracks: [track("First", error: "Unavailable")], eventAt: requestedAt, requestedAt: requestedAt))
   }
+
+  @Test func libraryPlaybackNeedsOnlyFreshPlayingEvent() {
+    let requestedAt = Date()
+    var zone = Zone(id: "office", name: "Office", track: nil, state: .playing)
+    #expect(SiriPlaybackConfirmation.isPlaying(zone, tracks: [], eventAt: requestedAt, requestedAt: requestedAt))
+    #expect(!SiriPlaybackConfirmation.isPlaying(zone, tracks: [], eventAt: requestedAt.addingTimeInterval(-1), requestedAt: requestedAt))
+    zone.state = .loading
+    #expect(!SiriPlaybackConfirmation.isPlaying(zone, tracks: [], eventAt: requestedAt, requestedAt: requestedAt))
+  }
+
+  @Test func librarySelectionKeepsItsKindInTheRoomChoice() throws {
+    let selection = SiriMusicSelection(context: CapsuleSearchContext(query: "radio three"), tracks: [],
+      zoneId: "", roomName: "", bridgeScope: "bridge", libraryKind: "radio")
+    let choice = selection.inRoom(Zone(id: "office", name: "Office", track: nil, state: .stopped))
+    #expect(choice.library == .radio)
+    #expect(choice.hasRoom)
+    let restored = try JSONDecoder().decode(SiriMusicSelection.self, from: JSONEncoder().encode(choice))
+    #expect(restored.library == .radio)
+  }
 }

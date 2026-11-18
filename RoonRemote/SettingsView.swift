@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WatchConnectivity
 
@@ -71,8 +72,10 @@ struct SettingsList: View {
         }
       }
       Section("Siri") {
-        Text("In Shortcuts, open House Remote and turn on Siri for each shortcut you want. Then: Hey Siri, play Radio 3 in the Kitchen with House Remote. Same idea for turn it up, turn it down, stop, pause, skip, previous, mute, and unmute. Add a room if you want a different zone than the phone. Keep this iPhone unlocked on Wi-Fi.")
+        Text("Say: Hey Siri, play Radio 3 in the Kitchen with Roon (or with House Remote). Stations, albums, artists, playlists and genres play straight from Roon; anything else, such as chilled 60s jazz, uses AI Search. Same idea for turn it up, turn it down, stop, pause, skip, previous, mute, and unmute. Add a room if you want a different zone than the phone. Keep this iPhone unlocked on Wi-Fi.")
           .foregroundStyle(Palette.secondary)
+        ShortcutsLink()
+          .shortcutsLinkStyle(.automaticOutline)
       }
       if WCSession.isSupported() {
         Section("Watch") {

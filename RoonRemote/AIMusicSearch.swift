@@ -7,10 +7,15 @@ struct SiriMusicRequest {
   var roomName: String?
   var isFollowUp: Bool
 
+  /// Siri accepts "Roon" as well as the display name; see `INAlternativeAppNames`.
+  static func removingAppName(_ raw: String) -> String {
+    let suffix = #"\s+(?:with|using|on|in)\s+(?:the\s+)?(?:House\s+Remote|Roon)(?:\s+app)?[.!?]?$"#
+    return raw.trimmingCharacters(in: .whitespacesAndNewlines)
+      .replacingOccurrences(of: suffix, with: "", options: [.regularExpression, .caseInsensitive])
+  }
+
   static func parse(_ raw: String, roomNames: [String]) -> Self {
-    var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-    let suffix = #"\s+(?:with|using|on|in)\s+(?:the\s+)?House\s+Remote(?:\s+app)?[.!?]?$"#
-    text = text.replacingOccurrences(of: suffix, with: "", options: [.regularExpression, .caseInsensitive])
+    let text = removingAppName(raw)
     for room in roomNames.sorted(by: { $0.count > $1.count }) {
       if [room, "in \(room)", "in the \(room)", "on \(room)", "on the \(room)"].contains(where: {
         text.compare($0, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
@@ -133,6 +138,13 @@ struct SiriMusicSelection: Codable, Identifiable {
   // Older cached results may contain a room chosen implicitly by the app.
   // Only a room explicitly supplied by the user is eligible for playback.
   var roomWasExplicit: Bool? = nil
+  /// A named station, album, artist, playlist or genre has no AI tracks; Roon
+  /// looks it up once the room is known. `context.query` keeps Siri's search
+  /// text as the title, since Siri didn't play items titled differently.
+  var libraryKind: String? = nil
+  var libraryQuery: String? = nil
+
+  var library: MusicPlayRequest.Kind? { libraryKind.flatMap(MusicPlayRequest.Kind.init(rawValue:)) }
 
   var hasRoom: Bool { roomWasExplicit == true && !zoneId.isEmpty && !roomName.isEmpty }
 
@@ -203,9 +215,12 @@ final class SiriMusicSelections {
 }
 
 enum SiriPlaybackConfirmation {
+  /// With no tracks, as for a radio station, any fresh playback in the room counts.
   static func isPlaying(_ zone: Zone?, tracks: [SuggestedTrack], eventAt: Date?, requestedAt: Date) -> Bool {
-    guard let zone, zone.state == .playing, let current = zone.track,
+    guard let zone, zone.state == .playing,
           let eventAt, eventAt >= requestedAt else { return false }
+    if tracks.isEmpty { return true }
+    guard let current = zone.track else { return false }
     return tracks.contains {
       $0.error == nil && RoonVoiceMatch.titlesMatch(current.title, $0.title)
         && AISearchPlayback.artistsAlign($0.artist, current.artist)

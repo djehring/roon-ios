@@ -361,6 +361,22 @@ enum RoonVoiceMatch {
       .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
       .trimmingCharacters(in: .whitespacesAndNewlines)
       .lowercased()
+      .split(separator: " ")
+      .map { numbers[String($0)] ?? String($0) }
+      .joined(separator: " ")
+  }
+
+  /// "Radio Three" and "6 Music" are how people say "BBC Radio 3" and "BBC Radio 6 Music".
+  private static let numbers = [
+    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+    "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+  ]
+
+  /// Roon's own search doesn't equate spoken numbers with digits.
+  static func digits(_ query: String) -> String {
+    query.split(separator: " ")
+      .map { numbers[$0.lowercased()] ?? String($0) }
+      .joined(separator: " ")
   }
 
   static func room(_ name: String, spoken: String) -> Bool {
@@ -372,6 +388,8 @@ enum RoonVoiceMatch {
     let queryText = normalize(query)
     if titleText.isEmpty || queryText.isEmpty { return 0 }
     if titleText == queryText { return 100 }
+    // A spoken "Bath Time 3" is the playlist "Bathtime 3".
+    if compact(titleText) == compact(queryText) { return 95 }
     if titleText.hasPrefix(queryText) || queryText.hasPrefix(titleText) { return 90 }
     if titleText.contains(queryText) { return 80 }
     let ignored: Set<String> = ["the", "bbc", "a", "fm", "uk"]

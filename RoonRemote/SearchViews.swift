@@ -1,3 +1,4 @@
+import AppIntents
 import AVFoundation
 import PhotosUI
 import SwiftUI
@@ -36,6 +37,7 @@ struct AISearchView: View {
   @Environment(MockStore.self) private var store
   @State private var recorder = VoiceRecorder()
   @State private var selectedResultID: SuggestedTrack.ID?
+  @AppStorage("showsPlayInRoomSiriTip") private var showsSiriTip = true
   @FocusState private var queryFocused: Bool
 
   var body: some View {
@@ -91,6 +93,8 @@ struct AISearchView: View {
     // A row only selects something when a detail pane is there to show it.
     let selects = mode == .split
     return VStack(spacing: 12) {
+      SiriTipView(intent: PlayInRoomIntent(), isVisible: $showsSiriTip)
+        .padding(.horizontal, 16)
       HStack {
         TextField("What would you like to listen to?", text: $store.aiQuery)
           .textFieldStyle(.plain)
