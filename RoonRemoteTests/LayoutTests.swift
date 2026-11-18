@@ -73,6 +73,58 @@ struct LayoutTests {
     )
   }
 
+  @Test("AI Search keeps one column until a result can fill the detail pane")
+  func aiSearchStaysSingleWithoutResults() {
+    #expect(AISearchLayout.mode(containerWidth: 1366, hasResults: false) == .single)
+    #expect(
+      AISearchLayout.mode(
+        containerWidth: AISearchLayout.splitMinimumWidth,
+        hasResults: true
+      ) == .split
+    )
+  }
+
+  @Test("AI Search keeps one column on an unfolded iPhone detail column")
+  func aiSearchStaysSingleWhenNarrow() {
+    // The detail column left beside a 290pt sidebar on a 1024pt display.
+    #expect(AISearchLayout.mode(containerWidth: 711, hasResults: true) == .single)
+    #expect(
+      AISearchLayout.mode(
+        containerWidth: AISearchLayout.splitMinimumWidth - 1,
+        hasResults: true
+      ) == .single
+    )
+  }
+
+  @Test("a single AI Search column keeps song rows to a readable measure")
+  func aiSearchSingleColumnWidth() {
+    #expect(
+      AISearchLayout.queryWidth(containerWidth: 711, mode: .single) == 711
+    )
+    #expect(
+      AISearchLayout.queryWidth(containerWidth: 1366, mode: .single) == Layout.readingWidth
+    )
+    #expect(AISearchLayout.queryWidth(containerWidth: -1, mode: .single) == 0)
+  }
+
+  @Test("a split AI Search column never squeezes the query controls")
+  func aiSearchSplitColumnWidth() {
+    #expect(
+      AISearchLayout.queryWidth(
+        containerWidth: AISearchLayout.splitMinimumWidth,
+        mode: .split
+      ) == AISearchLayout.queryMinimumWidth
+    )
+    #expect(
+      AISearchLayout.queryWidth(containerWidth: 1366, mode: .split)
+        == AISearchLayout.queryIdealWidth
+    )
+    #expect(
+      AISearchLayout.queryWidth(containerWidth: 1366, mode: .split)
+        <= 1366 - AISearchLayout.detailMinimumWidth
+    )
+  }
+
   @Test("the shell keeps its sidebar only when there is room for both columns")
   func persistentSidebarBreakpoint() {
     #expect(!RegularShellLayout.prefersPersistentSidebar(containerWidth: 1024))

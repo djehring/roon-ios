@@ -41,16 +41,35 @@ struct AISearchView: View {
   var body: some View {
     Group {
       if regularWidth {
-        HStack(spacing: 0) {
-          searchContent
-            .frame(maxWidth: 620)
-          Divider()
-            .background(Palette.hairline)
-          resultDetail
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        GeometryReader { geometry in
+          let mode = AISearchLayout.mode(
+            containerWidth: geometry.size.width,
+            hasResults: !store.aiResults.isEmpty
+          )
+          HStack(spacing: 0) {
+            searchContent(mode: mode)
+              .frame(
+                width: AISearchLayout.queryWidth(
+                  containerWidth: geometry.size.width,
+                  mode: mode
+                )
+              )
+            if mode == .split {
+              Divider()
+                .background(Palette.hairline)
+              resultDetail
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+          }
+          .frame(
+            maxWidth: .infinity,
+            maxHeight: .infinity,
+            alignment: mode == .split ? .topLeading : .top
+          )
+          .animation(Motion.sheet, value: mode)
         }
       } else {
-        searchContent
+        searchContent(mode: .single)
       }
     }
     .toolbar {
@@ -67,8 +86,10 @@ struct AISearchView: View {
     }
   }
 
-  private var searchContent: some View {
+  private func searchContent(mode: AISearchLayout) -> some View {
     @Bindable var store = store
+    // A row only selects something when a detail pane is there to show it.
+    let selects = mode == .split
     return VStack(spacing: 12) {
       HStack {
         TextField("What would you like to listen to?", text: $store.aiQuery)
@@ -123,6 +144,8 @@ struct AISearchView: View {
         Spacer()
         ProgressView().tint(Palette.accent)
         Spacer()
+      } else if store.aiResults.isEmpty {
+        emptyPrompt
       } else {
         List {
           ForEach($store.aiResults) { $track in
@@ -146,19 +169,19 @@ struct AISearchView: View {
                 }
               }
               Spacer(minLength: 0)
-              if regularWidth, track.id == resolvedResultID {
+              if selects, track.id == resolvedResultID {
                 Image(systemName: "checkmark.circle.fill")
                   .foregroundStyle(Palette.accent)
               }
             }
             .contentShape(Rectangle())
             .onTapGesture {
-              if regularWidth {
+              if selects {
                 selectedResultID = track.id
               }
             }
             .listRowBackground(
-              regularWidth && track.id == resolvedResultID
+              selects && track.id == resolvedResultID
                 ? Palette.accent.opacity(0.12)
                 : Palette.surface
             )
@@ -170,6 +193,15 @@ struct AISearchView: View {
         .scrollDismissesKeyboard(.interactively)
       }
     }
+  }
+
+  private var emptyPrompt: some View {
+    ContentUnavailableView(
+      "Ask for some music",
+      systemImage: "sparkles",
+      description: Text("Describe a mood, artist, era, or anything else you want to hear.")
+    )
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 
   @ViewBuilder
@@ -209,11 +241,7 @@ struct AISearchView: View {
         .padding(36)
       }
     } else {
-      ContentUnavailableView(
-        "Ask for some music",
-        systemImage: "sparkles",
-        description: Text("Describe a mood, artist, era, or anything else you want to hear.")
-      )
+      emptyPrompt
     }
   }
 
