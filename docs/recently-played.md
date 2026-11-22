@@ -42,11 +42,27 @@ Plays with no album information remain visible in Tracks.
 Select an album or track to find current Roon candidates. A single result opens
 directly to its details; multiple results show a recording/edition chooser. The
 lookup matches the original full title and narrows results using saved artwork
-and artist credits. When a remaster suffix prevents Roon search from finding the
-item, it retries a shorter query but still requires the full recorded title;
-another remaster is not substituted. Album artwork can match even when its album
-credits differ from the recorded track's performer or composer. These remain
-metadata matches rather than permanent recording IDs.
+and artist credits. Album artwork can match even when its album credits differ
+from the recorded track's performer or composer. These remain metadata matches
+rather than permanent recording IDs.
+
+An album is searched for by its full title. When that finds nothing the bridge
+retries without a remaster suffix, then with the leading recorded credit ahead of
+the title, and finally with that credit alone: Roon's search often returns an
+album only when its performer is named. Every candidate is still compared against
+the full recorded title, so another remaster or another artist is never
+substituted.
+
+A track is found through its album rather than through Roon's search index. Roon
+names a recording in search by its catalogue title, while transport reports the
+album's own track title, so searching for a played title finds nothing for most
+classical and compilation plays. The bridge identifies the recorded album first
+and reads the played title off its track listing, which also keeps the edition
+that actually played. Candidates keep their listed position, including the disc
+number on a multi-disc album, because that is often all that separates repeated
+titles on one album. Roon's search index is consulted only when the album cannot
+be identified. When the album is found but does not list the recording, the
+screen says so instead of offering unrelated music.
 
 The bridge skips redundant single-child rows with the same title, stopping at playable
 details or a genuine choice. Play Now, Play Next and Queue remain explicit actions
@@ -167,3 +183,23 @@ album resolved to David Bowie's remaster and opened its eight tracks. Its record
 track detail; the Cara Dillon entries previously offered unrelated artists too.
 All 183 existing history entries survived the restart. Verification used resolve
 and browse requests without playback or queue actions; no native rebuild was needed.
+
+On 22 November 2026, live checks against the recorded history showed that most
+entries did not reach playable music. Of the 25 most recent tracks only 3 were
+found, because Roon's search index names a recording by its catalogue title:
+“Enigma Variations: X. Intermezzo - Dorabella - Allegretto” as played is
+“Variations on an Original Theme, Op. 36 "Enigma": X. Intermezzo. Dorabella
+(Allegretto)” in search. Of the 25 most recent albums, 9 were missed, including
+ones Roon returned only when its performer was named. The bridge now identifies
+the recorded album first and reads the played title from its listing, retries an
+album search with its leading credit, and reads a multi-disc track position
+(“2-7 ”) as well as “7. ”. The same 25 tracks now resolve 25 of 25 and the same
+25 albums 21 of 25; across 40 randomly sampled plays each, 37 of 40 tracks and
+36 of 40 albums resolved, the slowest in 6.8 seconds. Every resolved track
+opened a playable Roon track page. The remaining misses are albums absent from
+both the library and Roon's search index under any query tried, confirmed by
+artwork key; they still report that the music could not be found. All 620 bridge
+tests across 59 suites, TypeScript checks, changed-file lint and the production
+build passed. The local bridge was rebuilt and restarted, keeping its 458
+recorded plays. Verification used resolve and browse requests only, with no
+playback or queue actions, and no native rebuild was needed.
