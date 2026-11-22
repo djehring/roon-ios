@@ -46,6 +46,7 @@ struct RegularRootView: View {
                 path: $path
               )
             }
+            .stripControls()
             .toolbar {
               // iPadOS 27 supplies its own reveal button when the sidebar is
               // hidden. Keep the older-OS workaround from duplicating it.

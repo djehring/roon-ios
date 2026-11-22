@@ -61,29 +61,70 @@ struct MainTabs: View {
   var body: some View {
     @Bindable var store = store
     TabView(selection: $store.selectedTab) {
-      NowPlayingView()
-        .tabItem {
-          Label("Now Playing", systemImage: "play.square.fill")
+      ForEach(AppTab.compactOrder, id: \.self) { tab in
+        Tab(tab.title, systemImage: tab.symbol, value: tab) {
+          destination(tab)
         }
-        .tag(AppTab.nowPlaying)
-      LibraryRootView()
-        .tabItem {
-          Label("Library", systemImage: "square.stack.fill")
-        }
-        .tag(AppTab.library)
-      SearchTabView()
-        .tabItem {
-          Label("Search", systemImage: "magnifyingglass")
-        }
-        .tag(AppTab.search)
-      SettingsView()
-        .tabItem {
-          Label("Settings", systemImage: "gearshape")
-        }
-        .tag(AppTab.settings)
+      }
     }
     .toolbarBackground(.visible, for: .tabBar)
     .toolbarBackground(Palette.surface, for: .tabBar)
     .background(Palette.background)
+  }
+
+  @ViewBuilder
+  private func destination(_ tab: AppTab) -> some View {
+    switch tab {
+    case .nowPlaying:
+      NowPlayingView()
+    case .rooms:
+      NavigationStack {
+        RegularRoomsView()
+      }
+    case .library:
+      LibraryRootView()
+    case .search:
+      SearchTabView()
+    case .settings:
+      SettingsView()
+    }
+  }
+}
+
+/// Destinations for the trailing edge of the navigation bar. On the iPhone
+/// Duo in landscape, iOS moves that edge into the column beside the sensor
+/// housing, so these fill the strip that otherwise held only the clock.
+/// Elsewhere they sit at the top trailing corner as usual. Only the regular
+/// layout uses them: the compact layout's tabs already list every destination.
+struct StripControls: ToolbarContent {
+  let store: MockStore
+
+  var body: some ToolbarContent {
+    ToolbarItemGroup(placement: .topBarTrailing) {
+      ForEach(StripControls.destinations, id: \.self) { tab in
+        Button(tab.title, systemImage: tab.symbol) {
+          store.selectedTab = tab
+        }
+      }
+    }
+  }
+
+  /// Search first, then the remaining Navigate menu entries.
+  static let destinations: [AppTab] = [.search, .nowPlaying, .rooms, .library, .settings]
+}
+
+extension View {
+  func stripControls() -> some View {
+    modifier(StripControlsModifier())
+  }
+}
+
+private struct StripControlsModifier: ViewModifier {
+  @Environment(MockStore.self) private var store
+
+  func body(content: Content) -> some View {
+    content.toolbar {
+      StripControls(store: store)
+    }
   }
 }

@@ -237,4 +237,29 @@ struct LayoutTests {
     #expect(Layout.onboardingTitleSize(.compact) == 28)
     #expect(Layout.onboardingTitleSize(.regular) > Layout.onboardingTitleSize(.compact))
   }
+
+  @Test("the closed iPhone Duo's tabs reach every destination the Navigate menu offers")
+  func compactTabsCoverEveryDestination() {
+    // The outer screen is compact and draws these tabs. A tab missing here is a
+    // destination that folding the device takes away.
+    #expect(Set(AppTab.compactOrder) == Set(AppTab.allCases))
+    #expect(AppTab.compactOrder.count == AppTab.allCases.count, "no tab may appear twice")
+  }
+
+  @Test("compact tabs match the regular sidebar's titles and symbols")
+  func compactTabsMatchSidebarRows() {
+    let rows = SidebarSection.all(library: []).flatMap(\.rows)
+    for tab in AppTab.compactOrder {
+      guard let row = rows.first(where: { $0.item.tab == tab && $0.title == tab.title }) else {
+        // Library and Search have no single sidebar row; each splits into
+        // several, so only the destinations with one row need to agree.
+        continue
+      }
+      #expect(row.symbol == tab.symbol, "\(tab) should look the same folded and unfolded")
+    }
+    for tab in [AppTab.nowPlaying, .rooms, .settings] {
+      #expect(rows.contains { $0.item.tab == tab && $0.title == tab.title })
+    }
+  }
 }
+

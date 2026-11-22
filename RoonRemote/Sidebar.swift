@@ -115,3 +115,31 @@ extension SidebarSection {
     ]
   }
 }
+
+extension AppTab {
+  /// Tabs in the compact layout, which the closed iPhone Duo and every
+  /// compact-width window use. It carries every destination the Navigate menu
+  /// and the regular-width sidebar offer, so folding the device never strands
+  /// the person without a way to reach one.
+  static let compactOrder: [AppTab] = [.nowPlaying, .rooms, .library, .search, .settings]
+
+  var title: String {
+    switch self {
+    case .nowPlaying: "Now Playing"
+    case .rooms: "Rooms"
+    case .library: "Library"
+    case .search: "Search"
+    case .settings: "Settings"
+    }
+  }
+
+  var symbol: String {
+    switch self {
+    case .nowPlaying: "play.square.fill"
+    case .rooms: "hifispeaker.2.fill"
+    case .library: "square.stack.fill"
+    case .search: "magnifyingglass"
+    case .settings: "gearshape"
+    }
+  }
+}
