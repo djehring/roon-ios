@@ -28,6 +28,11 @@ Simulator can pair if you type the bridge `host:port` during onboarding.
 
 `client_id` is stored in the Keychain. Unpair from Settings.
 
+If Roon removes or recreates the saved room, the next synced room list selects
+the first available room and saves its current ID. This keeps browsing and
+controls aligned with the displayed room without requiring another pairing.
+Temporary server reconnects preserve the saved selection until sync completes.
+
 Playing a track, album, or playlist from Library shows a playback confirmation
 with the selected room, then opens Now Playing on iPhone, iPad, and Apple TV.
 Queue and Play Next keep the browse screen open. Failed actions show an error

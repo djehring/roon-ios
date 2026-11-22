@@ -31,7 +31,7 @@ struct SearchTabView: View {
   }
 }
 
-struct AISearchView: View {
+struct LegacyAISearchView: View {
   var regularWidth = false
 
   @Environment(MockStore.self) private var store

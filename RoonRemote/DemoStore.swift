@@ -203,6 +203,25 @@ extension MockStore {
       aiResults = []
       recognizedAlbums = []
     }
+    if ProcessInfo.processInfo.environment["ROON_DISCOVERY_PREVIEW"] == "albums" {
+      aiQuery = "Find recordings of Elgar’s Enigma Variations"
+      aiSearchContext = CapsuleSearchContext(query: aiQuery)
+      aiResults = []
+      let title = "Elgar: Enigma Variations, In the South, Serenade for Strings"
+      let tracks = (0..<19).map { index in
+        CapsuleTrack(artist: "Vasily Petrenko, Royal Liverpool Philharmonic Orchestra",
+          track: index < 4 ? "Companion work \(index + 1)" : index == 4 ? "Enigma: Theme" : "Enigma: Variation \(index - 4)",
+          album: title, roonPath: CinemaMusicPath(hierarchy: "search", steps: [CinemaMusicStep(title: title, index: index)]))
+      }
+      discoveryResponse = MusicDiscoveryResponse(mode: "albums", query: aiQuery,
+        message: "Albums containing the complete Enigma Variations.", results: [
+          MusicDiscoveryResult(id: "preview-album", kind: "album", title: title,
+            artist: "Vasily Petrenko, Royal Liverpool Philharmonic Orchestra", album: title,
+            available: true, tracks: tracks, workTracks: Array(tracks.dropFirst(4)), workTitle: "Enigma Variations")
+        ])
+      selectedTab = .search
+      searchSegment = .ai
+    }
   }
 
   /// Exercises the same feedback/navigation path without controlling a real room.

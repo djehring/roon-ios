@@ -17,7 +17,7 @@ struct RegularNowPlayingView: View {
           foldedContent(folded)
         } else {
           ZStack(alignment: .top) {
-            content(mode: mode, width: geometry.size.width)
+            content(mode: mode, size: geometry.size)
             topControls
               .padding(.horizontal, 24)
               .padding(.top, 12)
@@ -37,12 +37,12 @@ struct RegularNowPlayingView: View {
   }
 
   @ViewBuilder
-  private func content(mode: RegularNowPlayingLayout, width: CGFloat) -> some View {
+  private func content(mode: RegularNowPlayingLayout, size: CGSize) -> some View {
     switch mode {
     case .stacked:
       ScrollView {
         VStack(spacing: 30) {
-          artwork(width: RegularNowPlayingLayout.artWidth(containerWidth: width, mode: mode))
+          artwork(width: RegularNowPlayingLayout.artWidth(containerWidth: size.width, mode: mode))
           controls(alignment: .center)
             .frame(maxWidth: 620)
         }
@@ -52,13 +52,25 @@ struct RegularNowPlayingView: View {
         .padding(.bottom, 28)
       }
     case .sideBySide:
+      // Leave room for the header. Long metadata keeps its full height,
+      // with playback controls reachable by scrolling on shorter displays.
+      let contentHeight = max(0, size.height - 72 - 28)
       HStack(spacing: 56) {
-        artwork(width: RegularNowPlayingLayout.artWidth(containerWidth: width, mode: mode))
-        controls(alignment: .leading)
-          .frame(maxWidth: 620, alignment: .leading)
+        artwork(width: min(
+          RegularNowPlayingLayout.artWidth(containerWidth: size.width, mode: mode),
+          contentHeight
+        ))
+        ScrollView {
+          controls(alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: contentHeight, alignment: .leading)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: 620)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .padding(48)
+      .padding(.horizontal, 48)
+      .padding(.top, 72)
+      .padding(.bottom, 28)
     }
   }
 
@@ -225,12 +237,14 @@ struct RegularNowPlayingView: View {
         Text(track.title)
           .font(.system(size: 44, weight: .bold))
           .multilineTextAlignment(textAlignment)
-          .lineLimit(2)
+          .fixedSize(horizontal: false, vertical: true)
         NowPlayingArtistLinks(track: track, alignment: alignment)
           .font(.title2)
         Text(track.album)
           .font(.title3)
           .foregroundStyle(Palette.tertiary)
+          .multilineTextAlignment(textAlignment)
+          .fixedSize(horizontal: false, vertical: true)
       }
       .frame(maxWidth: .infinity, alignment: alignment == .leading ? .leading : .center)
     } else {

@@ -165,6 +165,7 @@ targets:
       - path: RoonRemote/QueueRouting.swift
       - path: RoonRemote/QueueTimeline.swift
       - path: RoonRemote/ZoneTrackSelection.swift
+      - path: RoonRemote/ZoneSelection.swift
       - path: RoonRemote/EventLiveness.swift
       - path: RoonRemote/NowPlayingSnapshot.swift
       - path: Shared/RoonNowPlayingAttributes.swift
@@ -173,6 +174,7 @@ targets:
       - path: RoonRemote/RoomPresentation.swift
       - path: RoonRemote/SearchSelection.swift
       - path: RoonRemote/AIMusicSearch.swift
+      - path: RoonRemote/MusicDiscovery.swift
       - path: RoonRemote/MusicRequestInterpreter.swift
       - path: Shared/PlayRequest.swift
       - path: RoonRemote/Cinema/CinemaMusic.swift
@@ -340,11 +342,14 @@ targets:
         type: file
       - path: RoonRemote/ZoneTrackSelection.swift
         type: file
+      - path: RoonRemote/ZoneSelection.swift
+        type: file
       - path: RoonRemote/EventLiveness.swift
         type: file
       - path: RoonRemote/SearchSelection.swift
         type: file
       - path: RoonRemote/AIMusicSearch.swift
+      - path: RoonRemote/MusicDiscovery.swift
       - path: RoonRemote/MusicRequestInterpreter.swift
       - path: RoonRemote/API
     settings:

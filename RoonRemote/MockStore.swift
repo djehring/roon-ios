@@ -31,10 +31,21 @@ final class MockStore {
       guard aiQuery != oldValue else { return }
       aiSearchContext = nil
       aiResults = []
+      discoveryResponse = nil
       aiError = nil
     }
   }
   var aiResults: [SuggestedTrack] = []
+  var discoveryResponse: MusicDiscoveryResponse?
+  var discoveryMode: MusicSearchMode = .auto {
+    didSet {
+      guard oldValue != discoveryMode else { return }
+      discoveryResponse = nil
+      aiResults = []
+      aiError = nil
+    }
+  }
+  var aiPlaying = false
   var aiSearchContext: CapsuleSearchContext?
   var cinema = CapsuleLibrary()
   var aiLoading = false
@@ -604,20 +615,30 @@ final class MockStore {
 
   func runAISearch() {
     let query = aiQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !query.isEmpty, !aiLoading else { return }
+    guard !query.isEmpty, !aiLoading, !aiPlaying else { return }
     let searchContext = CapsuleSearchContext(query: query)
     aiSearchContext = nil
     aiLoading = true
     aiError = nil
     aiResults = []
+    discoveryResponse = nil
+    let mode = discoveryMode
+    let scope = siriMusicBridgeScope
     Task {
       defer { aiLoading = false }
       do {
         if try await playSearchCommand(query) { return }
+        #if os(tvOS)
         let items = try await AIMusicSearch.search(query, using: client.aiSearch)
         guard isCurrentAIQuery(query) else { return }
         aiSearchContext = searchContext
         aiResults = items
+        #else
+        let response = try await client.discoverMusic(query: query, mode: mode)
+        guard isCurrentAIQuery(query), discoveryMode == mode, siriMusicBridgeScope == scope else { return }
+        aiSearchContext = searchContext
+        discoveryResponse = response
+        #endif
       } catch RoonAPIError.missingOpenAI {
         guard isCurrentAIQuery(query) else { return }
         aiError = "OpenAI API key is missing. Add yours in the web Settings."
@@ -646,6 +667,43 @@ final class MockStore {
 
   private func isCurrentAIQuery(_ query: String) -> Bool {
     aiQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query
+  }
+
+  func playDiscoveryResults(_ results: [MusicDiscoveryResult], workOnly: Bool = false) {
+    let playable = results.filter(\.canPlay)
+    guard !playable.isEmpty, !aiPlaying else { return }
+    guard let zone = zones.first(where: { $0.id == selectedZoneId }) else {
+      aiError = "Choose an available room before playing."
+      return
+    }
+    let scope = siriMusicBridgeScope
+    let requestedAt = Date()
+    aiPlaying = true
+    aiError = nil
+    Task {
+      defer { aiPlaying = false }
+      do {
+        let playback = try await client.playDiscovery(ids: playable.map(\.id), zoneId: zone.id, workOnly: workOnly)
+        guard siriMusicBridgeScope == scope else { throw SiriMusicError.expiredSelection }
+        resumeSync()
+        try await confirmSiriPlayback(zone: zone, tracks: playback.tracks.map(\.suggestedTrack), requestedAt: requestedAt)
+        // Keep navigation aligned with the room the user is currently viewing.
+        if selectedZoneId == zone.id { selectedTab = .nowPlaying }
+      } catch {
+        guard siriMusicBridgeScope == scope else { return }
+        aiError = error.localizedDescription
+      }
+    }
+  }
+
+  func createDiscoveryCinema(_ results: [MusicDiscoveryResult]) {
+    guard let context = aiSearchContext else { return }
+    guard !cinema.preparing else { cinema.openLibrary(); return }
+    let tracks = results.filter(\.canPlay).flatMap(\.tracks)
+    guard !tracks.isEmpty else { return }
+    var request = CapsuleRequest(context: context, tracks: [])
+    request.tracks = tracks
+    cinema.setup = CapsuleSetup(request: request)
   }
 
   func playAIResults(_ tracks: [SuggestedTrack]? = nil) {
@@ -2064,17 +2122,19 @@ final class MockStore {
     syncState = state.state
     bridgeVersion = client.version ?? bridgeVersion
     houseOutputs = state.outputs
-    if zones.isEmpty {
-      zones = state.zones.map {
-        Zone(id: $0.zoneId, name: $0.displayName, track: nil, state: .stopped)
-      }
-    } else {
-      for description in state.zones where !zones.contains(where: { $0.id == description.zoneId }) {
-        zones.append(Zone(id: description.zoneId, name: description.displayName, track: nil, state: .stopped))
-      }
+    let snapshot = ZoneSelection.reconcile(current: zones, selectedZoneId: selectedZoneId, state: state)
+    zones = snapshot.zones
+    if state.state == .sync {
+      let currentIds = Set(zones.map(\.id))
+      queuesByZone = queuesByZone.filter { currentIds.contains($0.key) }
+      lastZoneEventAt = lastZoneEventAt.filter { currentIds.contains($0.key) }
     }
-    if selectedZoneId.isEmpty, let first = zones.first {
-      selectZone(first.id)
+    if snapshot.selectedZoneId != selectedZoneId {
+      outputs = []
+      groupedOutputIds = []
+      pendingGroupIds = []
+      NowPlayingDiagnostics.record("zone.selectionRecovered")
+      selectZone(snapshot.selectedZoneId)
     }
     #if os(iOS)
     RoonSiriSupport.roomsUpdated(zones)

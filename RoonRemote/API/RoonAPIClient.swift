@@ -19,6 +19,7 @@ final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
   /// inference. The general session's 20s request / 60s resource budget cut those
   /// off mid-flight and surfaced as "The request timed out".
   private let aiSession: URLSession
+  private let discoverySession: URLSession
   private var eventSession: URLSession?
   private var eventDelegate: EventStreamDelegate?
   private var eventTask: URLSessionDataTask?
@@ -63,6 +64,12 @@ final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
     ai.waitsForConnectivity = false
     ai.httpMaximumConnectionsPerHost = 2
     aiSession = URLSession(configuration: ai)
+    let discovery = URLSessionConfiguration.default
+    discovery.timeoutIntervalForRequest = 240
+    discovery.timeoutIntervalForResource = 360
+    discovery.waitsForConnectivity = false
+    discovery.httpMaximumConnectionsPerHost = 2
+    discoverySession = URLSession(configuration: discovery)
     if let savedHost = KeychainStore.get(Self.hostAccount),
        let savedPort = KeychainStore.get(Self.portAccount).flatMap(Int.init)
     {
@@ -229,6 +236,33 @@ final class RoonAPIClient: CinemaClient, HistoryClient, @unchecked Sendable {
     let (data, response) = try await data(for: request, using: aiSession)
     try throwIfOpenAI(response, data: data)
     return try decoder.decode([SuggestedTrackPayload].self, from: data)
+  }
+
+  func discoverMusic(query: String, mode: MusicSearchMode) async throws -> MusicDiscoveryResponse {
+    struct Input: Encodable { var query: String; var mode: MusicSearchMode }
+    return try decoder.decode(MusicDiscoveryResponse.self,
+      from: await discoveryRequest("", body: JSONEncoder().encode(Input(query: query, mode: mode))))
+  }
+
+  func playDiscovery(ids: [String], zoneId: String, workOnly: Bool) async throws -> MusicDiscoveryPlayback {
+    struct Input: Encodable { var ids: [String]; var zoneId: String; var workOnly: Bool }
+    return try decoder.decode(MusicDiscoveryPlayback.self,
+      from: await discoveryRequest("/play", body: JSONEncoder().encode(Input(ids: ids, zoneId: zoneId, workOnly: workOnly))))
+  }
+
+  private func discoveryRequest(_ suffix: String, body: Data) async throws -> Data {
+    let clientId = try requireClient()
+    var request = try rawRequest(path: "/api/\(clientId)/music-discovery\(suffix)", method: "POST")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = body
+    return try await MusicDiscoveryRequest.send(pathSuffix: suffix) {
+      let (bytes, response) = try await data(for: request, using: discoverySession)
+      if (response as? HTTPURLResponse)?.statusCode == 404 {
+        throw RoonAPIError.httpStatus(404, "Update the Roon bridge to use verified track and album search.")
+      }
+      try throwIfOpenAI(response, data: bytes)
+      return bytes
+    }
   }
 
   func interpretMusicRequest(_ text: String, rooms: [String]) async throws -> MusicPlayRequest {
