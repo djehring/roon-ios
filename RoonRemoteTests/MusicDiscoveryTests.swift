@@ -22,7 +22,7 @@ struct MusicDiscoveryTests {
     #expect(decoded.canPlayWork)
     #expect(decoded.tracks.map(\.track) == ["Theme", "Nimrod"])
     #expect(decoded.tracks.first?.roonPath == path)
-    #expect(decoded.dateLabel == "Release date unverified")
+    #expect(decoded.dateLabel == nil)
   }
 
   @Test func unresolvedOrUnavailableMusicCannotBePlayed() {
@@ -42,7 +42,10 @@ struct MusicDiscoveryTests {
     var result = album()
     result.release = MusicReleaseEvidence(title: "Elgar", artist: "Vasily Petrenko",
       releaseDate: "2026-09-01", recordingDate: "", reissue: true, source: "https://label.example/album")
-    #expect(result.dateLabel == "Reissue 2026-09-01")
+    #expect(result.dateLabel == "Reissue Sep 2026")
+    result.release?.reissue = false
+    result.release?.releaseDate = "2019"
+    #expect(result.dateLabel == "Released 2019")
     #expect(result.release?.sourceURL != nil)
     result.release?.source = "javascript:alert(1)"
     #expect(result.release?.sourceURL == nil)

@@ -111,7 +111,9 @@ struct AISearchView: View {
           Text(result.title).font(.headline)
           Text(result.artist).font(.subheadline).foregroundStyle(Palette.secondary)
           if result.isAlbum {
-            Text(result.dateLabel).font(.caption).foregroundStyle(Palette.secondary)
+            if let date = result.dateLabel {
+              Text(date).font(.caption).foregroundStyle(Palette.secondary)
+            }
             Text("\(result.tracks.count) tracks").font(.caption).foregroundStyle(Palette.tertiary)
           } else if !result.album.isEmpty {
             Text(result.album).font(.caption).foregroundStyle(Palette.secondary)
@@ -215,7 +217,7 @@ private struct MusicDiscoveryDetail: View {
     List {
       Section {
         Text(result.artist)
-        Text(result.dateLabel)
+        if let date = result.dateLabel { Text(date) }
         if let release = result.release {
           if !release.recordingDate.isEmpty { Text("Recorded \(release.recordingDate)") }
           if let url = release.sourceURL { Link("Release information", destination: url) }
