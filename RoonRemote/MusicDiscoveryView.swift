@@ -39,12 +39,7 @@ struct AISearchView: View {
           .accessibilityIdentifier("discovery-error")
       }
       if store.aiLoading {
-        Spacer()
-        ProgressView("Finding recordings and checking Roon…")
-          .tint(Palette.accent).accessibilityIdentifier("discovery-loading")
-        Text("Latest-release searches also check published release dates.")
-          .font(.footnote).foregroundStyle(Palette.secondary).multilineTextAlignment(.center)
-        Spacer()
+        DiscoverySearching(query: store.aiQuery, cancel: store.cancelAISearch)
       } else if let response = store.discoveryResponse {
         Text(response.message).font(.footnote).foregroundStyle(Palette.secondary)
           .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal)
@@ -157,6 +152,59 @@ struct AISearchView: View {
   }
 
   private func search() { queryFocused = false; store.runAISearch() }
+}
+
+/// Shown while a search runs, which can take from a few seconds to about a minute.
+private struct DiscoverySearching: View {
+  let query: String
+  let cancel: () -> Void
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var started = Date.now
+
+  var body: some View {
+    VStack(spacing: 18) {
+      Spacer()
+      ZStack {
+        if reduceMotion {
+          FindingVinyl(size: 96)
+        } else {
+          TimelineView(.animation) { context in
+            let elapsed = context.date.timeIntervalSince(started)
+            ZStack {
+              ForEach(0..<3, id: \.self) { ring in
+                // Three rings leave the record a third of a cycle apart and fade as they grow.
+                let phase = (elapsed / 2.4 + Double(ring) / 3).truncatingRemainder(dividingBy: 1)
+                Circle().stroke(Palette.accent, lineWidth: 2)
+                  .scaleEffect(0.5 + 0.5 * phase).opacity(0.8 * (1 - phase))
+              }
+              FindingVinyl(size: 96)
+              // A plain disc shows no rotation, so a pair of highlights turns with it.
+              Circle().fill(AngularGradient(
+                colors: [.clear, .white.opacity(0.28), .clear, .clear, .white.opacity(0.18), .clear, .clear],
+                center: .center))
+                .frame(width: 96, height: 96).blendMode(.plusLighter)
+                .rotationEffect(.degrees(elapsed * 200))
+              Circle().fill(Palette.accent).frame(width: 29, height: 29)
+              Circle().fill(Palette.background).frame(width: 8, height: 8)
+            }
+          }
+        }
+      }.frame(width: 190, height: 190).accessibilityHidden(true)
+      Text("Searching for “\(query.trimmingCharacters(in: .whitespacesAndNewlines))”")
+        .font(.headline).multilineTextAlignment(.center).lineLimit(3)
+        .accessibilityIdentifier("discovery-loading")
+      Text("Finding recordings and checking each one in Roon.")
+        .font(.footnote).foregroundStyle(Palette.secondary).multilineTextAlignment(.center)
+      TimelineView(.periodic(from: started, by: 1)) { context in
+        Text("Classical and latest-release searches can take up to a minute.")
+          .font(.footnote).foregroundStyle(Palette.secondary).multilineTextAlignment(.center)
+          .opacity(context.date.timeIntervalSince(started) >= 12 ? 1 : 0)
+      }
+      Button("Cancel", role: .cancel, action: cancel).buttonStyle(.bordered).controlSize(.large)
+        .accessibilityIdentifier("discovery-cancel")
+      Spacer()
+    }.padding(.horizontal, 24).frame(maxWidth: .infinity)
+  }
 }
 
 private struct MusicDiscoveryDetail: View {

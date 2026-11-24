@@ -276,7 +276,7 @@ private enum FindingServerRoute {
   }
 }
 
-private struct FindingVinyl: View {
+struct FindingVinyl: View {
   var size: CGFloat
 
   var body: some View {
