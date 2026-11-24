@@ -55,9 +55,15 @@ struct MusicDiscoveryResult: Codable, Identifiable, Equatable {
   var isAlbum: Bool { kind == "album" }
   var canPlay: Bool { available && !tracks.isEmpty && tracks.allSatisfy { $0.roonPath != nil } }
   var canPlayWork: Bool { canPlay && workTracks.count > 1 && workTracks.allSatisfy { $0.roonPath != nil } }
-  var dateLabel: String {
-    guard let release else { return "Release date unverified" }
-    return "\(release.reissue ? "Reissue" : "Released") \(release.releaseDate)"
+  /// "Released Aug 2019", whatever precision the date has, or nil when no date
+  /// is known. A date known only to the year shows the year alone.
+  var dateLabel: String? {
+    guard let release else { return nil }
+    let parts = release.releaseDate.split(separator: "-").map { Int($0) }
+    guard let year = parts.first ?? nil else { return nil }
+    let months = Calendar.current.shortMonthSymbols
+    let month = parts.count > 1 ? parts[1].flatMap { (1...months.count).contains($0) ? months[$0 - 1] : nil } : nil
+    return [release.reissue ? "Reissue" : "Released", month, String(year)].compactMap { $0 }.joined(separator: " ")
   }
 }
 

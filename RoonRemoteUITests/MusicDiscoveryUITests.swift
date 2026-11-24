@@ -11,7 +11,7 @@ final class MusicDiscoveryUITests: XCTestCase {
     XCTAssertTrue(app.buttons["Play album"].waitForExistence(timeout: 15))
     XCTAssertTrue(app.buttons["Play Enigma Variations only"].exists)
     XCTAssertTrue(app.staticTexts["19 tracks"].exists)
-    XCTAssertTrue(app.staticTexts["Release date unverified"].exists)
+    XCTAssertFalse(app.staticTexts["Release date unverified"].exists)
     XCTAssertTrue(app.segmentedControls["discovery-mode"].buttons["Auto"].isSelected)
     XCTAssertFalse(app.buttons["Play selected tracks"].exists)
     let screenshot = XCTAttachment(screenshot: app.screenshot())
