@@ -27,4 +27,23 @@ final class MusicDiscoveryUITests: XCTestCase {
     XCTAssertFalse(app.buttons["Play album"].exists)
     XCTAssertTrue(app.staticTexts["Ask for some music"].exists)
   }
+
+  @MainActor func testSearchingShowsQueryAndCanBeCancelled() throws {
+    let app = XCUIApplication()
+    app.launchArguments = ["-roon-demo-store"]
+    app.launchEnvironment["ROON_DISCOVERY_PREVIEW"] = "searching"
+    app.launch()
+    let searching = app.staticTexts["discovery-loading"]
+    XCTAssertTrue(searching.waitForExistence(timeout: 15))
+    XCTAssertEqual(searching.label, "Searching for “UK top ten from this week in 1985”")
+    let screenshot = XCTAttachment(screenshot: app.screenshot())
+    screenshot.name = "AI search in progress"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+    app.buttons["discovery-cancel"].tap()
+    XCTAssertTrue(app.staticTexts["Ask for some music"].waitForExistence(timeout: 5))
+    XCTAssertFalse(searching.exists)
+    XCTAssertEqual(app.textFields["discovery-query"].value as? String, "UK top ten from this week in 1985")
+    XCTAssertTrue(app.buttons["Go"].isEnabled)
+  }
 }

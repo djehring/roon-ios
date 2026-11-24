@@ -203,6 +203,13 @@ extension MockStore {
       aiResults = []
       recognizedAlbums = []
     }
+    if ProcessInfo.processInfo.environment["ROON_DISCOVERY_PREVIEW"] == "searching" {
+      aiQuery = "UK top ten from this week in 1985"
+      aiResults = []
+      aiLoading = true
+      searchSegment = .ai
+      selectedTab = .search
+    }
     if ProcessInfo.processInfo.environment["ROON_DISCOVERY_PREVIEW"] == "albums" {
       aiQuery = "Find recordings of Elgar’s Enigma Variations"
       aiSearchContext = CapsuleSearchContext(query: aiQuery)

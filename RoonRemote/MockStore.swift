@@ -49,6 +49,8 @@ final class MockStore {
   var aiSearchContext: CapsuleSearchContext?
   var cinema = CapsuleLibrary()
   var aiLoading = false
+  @ObservationIgnored private var aiSearchTask: Task<Void, Never>?
+  @ObservationIgnored private var aiSearchID = 0
   var aiError: String?
   var canSubmitAISearch: Bool {
     !aiLoading && !aiQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -624,29 +626,42 @@ final class MockStore {
     discoveryResponse = nil
     let mode = discoveryMode
     let scope = siriMusicBridgeScope
-    Task {
-      defer { aiLoading = false }
+    aiSearchID += 1
+    let id = aiSearchID
+    aiSearchTask = Task {
+      // A cancelled search must not end the loading state of the search that replaced it.
+      defer { if aiSearchID == id { aiLoading = false } }
       do {
         if try await playSearchCommand(query) { return }
         #if os(tvOS)
         let items = try await AIMusicSearch.search(query, using: client.aiSearch)
-        guard isCurrentAIQuery(query) else { return }
+        guard aiSearchID == id, isCurrentAIQuery(query) else { return }
         aiSearchContext = searchContext
         aiResults = items
         #else
         let response = try await client.discoverMusic(query: query, mode: mode)
-        guard isCurrentAIQuery(query), discoveryMode == mode, siriMusicBridgeScope == scope else { return }
+        guard aiSearchID == id, isCurrentAIQuery(query), discoveryMode == mode, siriMusicBridgeScope == scope
+        else { return }
         aiSearchContext = searchContext
         discoveryResponse = response
         #endif
       } catch RoonAPIError.missingOpenAI {
-        guard isCurrentAIQuery(query) else { return }
+        guard aiSearchID == id, isCurrentAIQuery(query) else { return }
         aiError = "OpenAI API key is missing. Add yours in the web Settings."
       } catch {
-        guard isCurrentAIQuery(query) else { return }
+        guard aiSearchID == id, isCurrentAIQuery(query) else { return }
         aiError = error.localizedDescription
       }
     }
+  }
+
+  /// Stops waiting for a search and discards its result. The query is kept for editing.
+  func cancelAISearch() {
+    guard aiLoading else { return }
+    aiSearchID += 1
+    aiSearchTask?.cancel()
+    aiSearchTask = nil
+    aiLoading = false
   }
 
   /// Plays "Play Radio 3 in the Kitchen" directly. A bare description without
