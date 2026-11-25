@@ -16,12 +16,13 @@ struct RegularNowPlayingView: View {
         if let folded = foldedLayout(geometry) {
           foldedContent(folded)
         } else {
-          ZStack(alignment: .top) {
-            content(mode: mode, size: geometry.size)
-            topControls
-              .padding(.horizontal, 24)
-              .padding(.top, 12)
-          }
+          // The header rides in the navigation bar rather than in a row of its
+          // own beneath it. That row would start below the sidebar button and
+          // push the whole page down; in the bar, the room selector sits beside
+          // that button and Volume and Queue take the trailing edge, which the
+          // iPhone Duo moves into its side strip in landscape.
+          content(mode: mode, size: geometry.size)
+            .toolbar { barControls }
         }
       }
       .frame(width: geometry.size.width, height: geometry.size.height)
@@ -48,20 +49,21 @@ struct RegularNowPlayingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 32)
-        .padding(.top, 72)
+        .padding(.top, 16)
         .padding(.bottom, 28)
       }
     case .sideBySide:
-      // Leave room for the header. Long metadata keeps its full height,
-      // with playback controls reachable by scrolling on shorter displays.
-      let contentHeight = max(0, size.height - 72 - 28)
+      // Long metadata keeps its full height, with playback controls reachable
+      // by scrolling on shorter displays.
+      let contentHeight = max(0, size.height - 16 - 28)
+      let scale = RegularNowPlayingLayout.textScale(contentHeight: contentHeight)
       HStack(spacing: 56) {
         artwork(width: min(
           RegularNowPlayingLayout.artWidth(containerWidth: size.width, mode: mode),
           contentHeight
         ))
         ScrollView {
-          controls(alignment: .leading)
+          controls(alignment: .leading, scale: scale)
             .frame(maxWidth: .infinity, minHeight: contentHeight, alignment: .leading)
         }
         .scrollBounceBehavior(.basedOnSize)
@@ -69,7 +71,7 @@ struct RegularNowPlayingView: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .padding(.horizontal, 48)
-      .padding(.top, 72)
+      .padding(.top, 16)
       .padding(.bottom, 28)
     }
   }
@@ -118,6 +120,35 @@ struct RegularNowPlayingView: View {
     .scrollBounceBehavior(.basedOnSize)
   }
 
+  @ToolbarContentBuilder
+  private var barControls: some ToolbarContent {
+    ToolbarItem(placement: .topBarLeading) {
+      Button {
+        store.showZonePicker = true
+      } label: {
+        HStack(spacing: 6) {
+          Image(systemName: "hifispeaker.fill")
+          Text(store.selectedZone.name)
+            .lineLimit(1)
+        }
+        .font(.subheadline.weight(.medium))
+        .foregroundStyle(Palette.primary)
+      }
+      .roomPickerPopover(store: store)
+      .accessibilityLabel("Room, \(store.selectedZone.name)")
+    }
+    ToolbarItemGroup(placement: .topBarTrailing) {
+      Button("Volume", systemImage: "speaker.wave.2.fill") {
+        store.showVolume = true
+      }
+      Button("Queue", systemImage: "list.bullet") {
+        store.showQueue.toggle()
+      }
+    }
+  }
+
+  /// Header for the folded layout, which keeps it inside the controls region
+  /// so nothing the hand reaches for sits across the crease.
   private var topControls: some View {
     HStack(spacing: 12) {
       Button {
@@ -132,21 +163,7 @@ struct RegularNowPlayingView: View {
           .overlay { Capsule().stroke(Palette.hairline, lineWidth: 1) }
       }
       .buttonStyle(.plain)
-      .popover(
-        isPresented: Binding(
-          get: { store.showZonePicker },
-          set: { store.showZonePicker = $0 }
-        ),
-        attachmentAnchor: .rect(.bounds),
-        arrowEdge: .top
-      ) {
-        RoomPickerContent(showsHeader: true)
-          .frame(
-            width: RoomPickerLayout.width,
-            height: RoomPickerLayout.height(roomCount: store.zones.count)
-          )
-          .presentationCompactAdaptation(.popover)
-      }
+      .roomPickerPopover(store: store)
 
       Spacer()
 
@@ -191,9 +208,12 @@ struct RegularNowPlayingView: View {
     .animation(Motion.sheet, value: store.currentTrack?.id)
   }
 
-  private func controls(alignment: HorizontalAlignment) -> some View {
-    VStack(alignment: alignment, spacing: 22) {
-      metadata(alignment: alignment)
+  private func controls(
+    alignment: HorizontalAlignment,
+    scale: RegularNowPlayingLayout.TextScale = .standard
+  ) -> some View {
+    VStack(alignment: alignment, spacing: scale == .compact ? 16 : 22) {
+      metadata(alignment: alignment, scale: scale)
 
       if let track = store.currentTrack {
         progress(track)
@@ -230,18 +250,26 @@ struct RegularNowPlayingView: View {
   }
 
   @ViewBuilder
-  private func metadata(alignment: HorizontalAlignment) -> some View {
+  private func metadata(
+    alignment: HorizontalAlignment,
+    scale: RegularNowPlayingLayout.TextScale
+  ) -> some View {
     let textAlignment: TextAlignment = alignment == .leading ? .leading : .center
     if let track = store.currentTrack {
-      VStack(alignment: alignment, spacing: 8) {
+      VStack(alignment: alignment, spacing: scale == .compact ? 6 : 8) {
         Text(track.title)
-          .font(.system(size: 44, weight: .bold))
+          .font(.system(size: scale == .compact ? 32 : 44, weight: .bold))
           .multilineTextAlignment(textAlignment)
+          // A short window caps the title so a long classical movement name
+          // cannot push the transport below the fold. It shrinks before it
+          // truncates.
+          .lineLimit(scale == .compact ? 3 : nil)
+          .minimumScaleFactor(scale == .compact ? 0.75 : 1)
           .fixedSize(horizontal: false, vertical: true)
         NowPlayingArtistLinks(track: track, alignment: alignment)
-          .font(.title2)
+          .font(scale == .compact ? .title3 : .title2)
         Text(track.album)
-          .font(.title3)
+          .font(scale == .compact ? .body : .title3)
           .foregroundStyle(Palette.tertiary)
           .multilineTextAlignment(textAlignment)
           .fixedSize(horizontal: false, vertical: true)
@@ -356,5 +384,25 @@ struct RegularNowPlayingView: View {
       startPoint: .top,
       endPoint: .bottom
     )
+  }
+}
+
+private extension View {
+  func roomPickerPopover(store: MockStore) -> some View {
+    popover(
+      isPresented: Binding(
+        get: { store.showZonePicker },
+        set: { store.showZonePicker = $0 }
+      ),
+      attachmentAnchor: .rect(.bounds),
+      arrowEdge: .top
+    ) {
+      RoomPickerContent(showsHeader: true)
+        .frame(
+          width: RoomPickerLayout.width,
+          height: RoomPickerLayout.height(roomCount: store.zones.count)
+        )
+        .presentationCompactAdaptation(.popover)
+    }
   }
 }

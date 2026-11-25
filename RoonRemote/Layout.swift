@@ -63,6 +63,20 @@ enum RegularNowPlayingLayout: Equatable {
       : .stacked
   }
 
+  enum TextScale: Equatable {
+    case standard
+    case compact
+  }
+
+  /// Below this height the side-by-side controls column cannot hold the full
+  /// type scale. An iPhone Duo in landscape, or an iPad mini, would otherwise
+  /// open with the transport scrolled out of view under a long title.
+  static let compactControlsMaximumHeight: CGFloat = 700
+
+  static func textScale(contentHeight: CGFloat) -> TextScale {
+    contentHeight < compactControlsMaximumHeight ? .compact : .standard
+  }
+
   static func artWidth(containerWidth: CGFloat, mode: Self) -> CGFloat {
     switch mode {
     case .stacked:

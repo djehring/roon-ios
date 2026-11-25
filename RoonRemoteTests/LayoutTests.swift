@@ -261,5 +261,16 @@ struct LayoutTests {
       #expect(rows.contains { $0.item.tab == tab && $0.title == tab.title })
     }
   }
-}
 
+  @Test("a short side-by-side window uses the compact type scale")
+  func nowPlayingTextScale() {
+    // iPhone Duo landscape leaves roughly 535pt for the controls column.
+    #expect(RegularNowPlayingLayout.textScale(contentHeight: 535) == .compact)
+    #expect(
+      RegularNowPlayingLayout.textScale(
+        contentHeight: RegularNowPlayingLayout.compactControlsMaximumHeight
+      ) == .standard
+    )
+    #expect(RegularNowPlayingLayout.textScale(contentHeight: 900) == .standard)
+  }
+}
